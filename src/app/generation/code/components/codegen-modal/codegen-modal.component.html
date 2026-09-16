@@ -1,0 +1,113 @@
+<div class="fixed inset-0 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
+  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-[90vw] max-w-[950px] h-[80vh] flex flex-col shadow-[0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-[#313244] bg-[#1e1e2e]">
+      <div class="flex items-center gap-3">
+        <span class="bg-[#a6e3a1]/[0.15] text-[#a6e3a1] border border-[#a6e3a1] text-[11px] font-bold px-2 py-1 rounded-md">Spring Boot</span>
+        <h3 class="m-0 text-base text-[#cdd6f4] font-semibold">Generador de Código Backend</h3>
+      </div>
+      <button
+        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        (click)="close()"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-3 px-6 py-3 bg-[#11111b] border-b border-[#313244]">
+      <div class="flex items-center gap-2 flex-1">
+        <label class="text-[#a6adc8] text-xs font-medium">Paquete Base:</label>
+        <input
+          type="text"
+          [(ngModel)]="basePackage"
+          placeholder="com.ejemplo.proyecto"
+          class="bg-[#181825] border border-[#313244] rounded-md px-3 py-1.5 text-[#cdd6f4] text-[13px] font-mono flex-1 outline-none focus:border-[#89b4fa]"
+        />
+      </div>
+      <button
+        class="bg-[#313244] text-[#cdd6f4] border-0 px-3.5 py-[7px] rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-200 hover:bg-[#45475a] disabled:opacity-50 disabled:cursor-not-allowed"
+        (click)="generate()"
+        [disabled]="loading()"
+      >
+        {{ loading() ? 'Generando...' : 'Regenerar' }}
+      </button>
+      <a
+        class="bg-[#89b4fa] text-[#11111b] no-underline px-3.5 py-[7px] rounded-md text-[13px] font-bold inline-flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
+        [href]="downloadUrl()"
+        target="_blank"
+        download
+        [class.opacity-50]="loading() || fileList().length === 0"
+        [class.pointer-events-none]="loading() || fileList().length === 0"
+      >
+        Descargar .ZIP
+      </a>
+    </div>
+
+    <!-- Content Body -->
+    <div class="flex-1 flex overflow-hidden relative">
+      @if (errorMsg()) {
+        <div class="absolute top-4 left-6 right-6 bg-[#f38ba8]/20 border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] z-10">
+          {{ errorMsg() }}
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="flex-1 flex flex-col items-center justify-center text-[#a6adc8] gap-4">
+          <div class="w-8 h-8 border-[3px] border-[#313244] border-t-[#89b4fa] rounded-full animate-spin"></div>
+          <p class="m-0">Traduciendo entidades y relaciones a código Spring Boot JPA...</p>
+        </div>
+      } @else if (fileList().length === 0) {
+        <div class="flex-1 flex flex-col items-center justify-center text-[#a6adc8] gap-4">
+          <p class="m-0">No se han generado archivos aún.</p>
+          <button
+            class="bg-[#89b4fa] text-[#11111b] border-0 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity"
+            (click)="generate()"
+          >
+            Generar Proyecto
+          </button>
+        </div>
+      } @else {
+        <div class="flex-1 flex overflow-hidden w-full">
+          <!-- File Tree Explorer -->
+          <div class="w-[280px] bg-[#181825] border-r border-[#313244] flex flex-col shrink-0">
+            <div class="px-4 py-2.5 text-[11px] uppercase tracking-[0.5px] text-[#6c7086] border-b border-[#313244] font-semibold">
+              Archivos Generados ({{ fileList().length }})
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
+              @for (file of fileList(); track file) {
+                <button
+                  class="bg-transparent border-0 text-left flex items-center gap-2 px-2.5 py-2 rounded-md text-[#a6adc8] text-xs cursor-pointer font-mono transition-all duration-150 hover:bg-[#1e1e2e] hover:text-[#cdd6f4]"
+                  [class.!bg-[#313244]]="selectedFile() === file"
+                  [class.!text-[#89b4fa]]="selectedFile() === file"
+                  [class.font-semibold]="selectedFile() === file"
+                  (click)="selectedFile.set(file)"
+                >
+                  <span class="shrink-0">{{ getFileIcon(file) }}</span>
+                  <span class="truncate">{{ getFileBaseName(file) }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Code Preview Area -->
+          <div class="flex-1 flex flex-col bg-[#11111b] overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-2 bg-[#181825] border-b border-[#313244]">
+              <span class="text-[#89b4fa] font-mono text-xs truncate">{{ selectedFile() }}</span>
+              <button
+                class="bg-[#313244] border-0 text-[#cdd6f4] px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer hover:bg-[#45475a] transition-colors"
+                (click)="copyCode()"
+              >
+                {{ copied() ? 'Copiado' : 'Copiar' }}
+              </button>
+            </div>
+            <pre class="flex-1 m-0 p-4 overflow-auto font-mono text-[13px] leading-[1.5] text-[#cdd6f4]"><code>{{ currentCode() }}</code></pre>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
