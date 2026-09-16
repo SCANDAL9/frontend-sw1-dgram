@@ -1,0 +1,121 @@
+<div class="fixed inset-0 bg-[#0a0a0f]/75 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
+  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[420px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-[#313244] bg-[#1e1e2e]">
+      <div class="flex gap-2">
+        <button
+          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+          [class.bg-[#313244]]="activeTab() === 'login'"
+          [class.text-[#cdd6f4]]="activeTab() === 'login'"
+          [class.text-[#a6adc8]]="activeTab() !== 'login'"
+          (click)="setTab('login')"
+        >
+          Iniciar Sesión
+        </button>
+        <button
+          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+          [class.bg-[#313244]]="activeTab() === 'register'"
+          [class.text-[#cdd6f4]]="activeTab() === 'register'"
+          [class.text-[#a6adc8]]="activeTab() !== 'register'"
+          (click)="setTab('register')"
+        >
+          Registrarse
+        </button>
+      </div>
+      <button
+        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        (click)="close()"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6 px-5">
+      @if (errorMsg()) {
+        <div class="bg-[#f38ba8]/[0.15] border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
+          {{ errorMsg() }}
+        </div>
+      }
+
+      @if (activeTab() === 'login') {
+        <form (ngSubmit)="handleLogin()">
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+            <input
+              type="email"
+              [(ngModel)]="loginEmail"
+              name="email"
+              placeholder="usuario@ejemplo.com"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="loginPassword"
+              name="password"
+              placeholder="••••••••"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Ingresando...' : 'Iniciar Sesión' }}
+          </button>
+        </form>
+      } @else {
+        <form (ngSubmit)="handleRegister()">
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nombre Completo</label>
+            <input
+              type="text"
+              [(ngModel)]="regFullName"
+              name="full_name"
+              placeholder="Juan Pérez"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+            <input
+              type="email"
+              [(ngModel)]="regEmail"
+              name="email"
+              placeholder="usuario@ejemplo.com"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña (mínimo 6 caracteres)</label>
+            <input
+              type="password"
+              [(ngModel)]="regPassword"
+              name="password"
+              placeholder="••••••••"
+              required
+              minlength="6"
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Creando cuenta...' : 'Crear Cuenta' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</div>
