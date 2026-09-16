@@ -1,0 +1,238 @@
+<div
+  class="fixed top-[50px] w-[360px] h-[calc(100vh-50px)] bg-[#181825] border-l border-[#313244] flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.4)] transition-[right] duration-250 ease-out z-[500]"
+  [class.right-0]="isOpen()"
+  [class.-right-[380px]]="!isOpen()"
+>
+  <!-- Header -->
+  <div class="flex items-center justify-between px-4 py-3 bg-[#1e1e2e] border-b border-[#313244]">
+    <div class="flex items-center gap-2.5">
+      <span class="text-[20px] flex items-center">
+        <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.17-6.83l-2.83 2.83m-8 8l-2.83 2.83m0-13.66l2.83 2.83m8 8l2.83 2.83"/>
+        </svg>
+      </span>
+      <div>
+        <h4 class="m-0 text-[#cdd6f4] text-sm font-semibold">Asistente IA dgram</h4>
+        <span class="text-[#a6adc8] text-[10px] font-mono">Vertex AI Gemini 3.6 Flash / ADK</span>
+      </div>
+    </div>
+    <button
+      class="bg-transparent border-0 text-[#6c7086] text-base cursor-pointer px-2 py-1 rounded hover:text-[#f38ba8] hover:bg-[#f38ba8]/10 transition-colors"
+      (click)="close()"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Message History -->
+  <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" #scrollContainer>
+    @if (messages().length === 0) {
+      <div class="flex flex-col items-center text-center mt-10 gap-2">
+        <div class="text-[32px] flex items-center justify-center">
+          <svg class="w-8 h-8 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="11" width="18" height="10" rx="2"/>
+            <circle cx="12" cy="5" r="2"/>
+            <path d="M12 7v4M8 16h.01M16 16h.01"/>
+          </svg>
+        </div>
+        <p class="text-[#cdd6f4] font-semibold text-sm m-0">¿En qué puedo ayudarte hoy?</p>
+        <p class="text-[#a6adc8] text-xs leading-[1.4] m-0 mb-3">
+          Pídeme crear entidades en lenguaje natural o sube una foto de tu pizarra para que la convierta en UML.
+        </p>
+        <div class="flex flex-col gap-1.5 w-full">
+          <button
+            class="bg-[#1e1e2e] border border-[#313244] text-[#89b4fa] px-3 py-2 rounded-lg text-[11px] text-left cursor-pointer transition-all duration-200 hover:bg-[#313244] hover:border-[#89b4fa]"
+            (click)="sendQuick('Crea una clase Usuario con email, nombre y rol')"
+          >
+            "Crea una clase Usuario con email y nombre"
+          </button>
+          <button
+            class="bg-[#1e1e2e] border border-[#313244] text-[#89b4fa] px-3 py-2 rounded-lg text-[11px] text-left cursor-pointer transition-all duration-200 hover:bg-[#313244] hover:border-[#89b4fa]"
+            (click)="sendQuick('Crea una entidad Factura con total y fecha')"
+          >
+            "Crea una entidad Factura con total"
+          </button>
+        </div>
+      </div>
+    }
+
+    @for (msg of messages(); track msg.id || $index) {
+      <div
+        class="max-w-[85%] px-3 py-2.5 rounded-xl text-[13px] leading-[1.4] flex flex-col gap-1"
+        [class.self-end]="msg.sender_type === 'user'"
+        [class.bg-[#89b4fa]]="msg.sender_type === 'user'"
+        [class.text-[#11111b]]="msg.sender_type === 'user'"
+        [class.rounded-br-[2px]]="msg.sender_type === 'user'"
+        [class.self-start]="msg.sender_type !== 'user'"
+        [class.bg-[#1e1e2e]]="msg.sender_type !== 'user'"
+        [class.border]="msg.sender_type !== 'user'"
+        [class.border-[#313244]]="msg.sender_type !== 'user'"
+        [class.text-[#cdd6f4]]="msg.sender_type !== 'user'"
+        [class.rounded-bl-[2px]]="msg.sender_type !== 'user'"
+      >
+        <div class="text-[10px] font-bold opacity-80 uppercase flex items-center gap-1.5">
+          <span>
+            {{ msg.sender_type === 'user' ? (auth.currentUser()?.full_name || 'Tú') : (msg.agent || 'Vertex AI') }}
+          </span>
+          @if (msg.agent) {
+            <span class="bg-[#89b4fa]/[0.18] text-[#89b4fa] border border-[#89b4fa]/30 px-1.5 py-[1px] rounded text-[9px] font-mono normal-case">
+              {{ msg.agent }}
+            </span>
+          }
+        </div>
+        <div [innerHTML]="formatMessage(msg.content)"></div>
+        @if (msg.traces && msg.traces.length > 0) {
+          <details class="mt-1.5 bg-black/20 border border-[#313244] rounded-md px-2 py-1 text-[11px]">
+            <summary class="cursor-pointer text-[#a6adc8] text-[10px] font-mono select-none hover:text-[#cdd6f4]">
+              <span>Agent Execution Trace ({{ msg.traces.length }})</span>
+            </summary>
+            <div class="mt-1.5 flex flex-col gap-1">
+              @for (t of msg.traces; track $index) {
+                <div
+                  class="flex justify-between items-center bg-white/[0.03] px-1.5 py-0.5 rounded font-mono text-[10px]"
+                >
+                  <span class="text-[#cdd6f4]">{{ t.action_name }}</span>
+                  <span
+                    class="text-[9px] px-1 py-[1px] rounded-[3px]"
+                    [ngClass]="{
+                      'bg-[#a6e3a1]/20 text-[#a6e3a1]': t.status === 'success',
+                      'bg-[#f38ba8]/20 text-[#f38ba8]': t.status === 'failed',
+                      'bg-[#6c7086]/20 text-[#a6adc8]': t.status !== 'success' && t.status !== 'failed'
+                    }"
+                  >
+                    {{ t.status }}
+                  </span>
+                </div>
+              }
+            </div>
+          </details>
+        }
+        @if (msg.commands && msg.commands.length > 0) {
+          <div class="text-[10px] bg-[#a6e3a1]/[0.15] text-[#a6e3a1] px-1.5 py-0.5 rounded self-start mt-1 font-semibold">
+            {{ msg.commands.length }} acción(es) aplicada(s) al diagrama
+          </div>
+        }
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="max-w-[85%] px-3 py-2.5 rounded-xl text-[13px] leading-[1.4] self-start bg-[#1e1e2e] border border-[#313244] text-[#cdd6f4] rounded-bl-[2px] flex flex-row items-center gap-2">
+        <div class="flex gap-1">
+          <span class="w-1.5 h-1.5 bg-[#89b4fa] rounded-full animate-bounce"></span>
+          <span class="w-1.5 h-1.5 bg-[#89b4fa] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+          <span class="w-1.5 h-1.5 bg-[#89b4fa] rounded-full animate-bounce [animation-delay:0.4s]"></span>
+        </div>
+        <span class="text-xs text-[#a6adc8]">{{ loadingStatus() }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Confirmation Banner (Vision OCR Preview or Destructive Action) -->
+  @if (pendingConfirmation(); as pending) {
+    <div
+      class="p-2.5 px-3.5 border-t flex flex-col gap-1.5"
+      [ngClass]="pending.isVision ? 'bg-[#89b4fa]/10 border-t-[#89b4fa]/30' : 'bg-[#f38ba8]/10 border-t-[#f38ba8]/30'"
+    >
+      <div>
+        <span
+          class="text-[11px] font-bold uppercase tracking-[0.5px]"
+          [ngClass]="pending.isVision ? 'text-[#89b4fa]' : 'text-[#f38ba8]'"
+        >
+          {{ pending.title || (pending.isVision ? 'Previsualización Vision OCR' : 'Confirmación requerida') }}
+        </span>
+      </div>
+      <p class="text-[11.5px] text-[#a6adc8] m-0 leading-[1.35]">{{ pending.description }}</p>
+      @if (pending.detectedEntities && pending.detectedEntities.length > 0) {
+        <div class="flex flex-wrap gap-1 mt-0.5">
+          @for (item of pending.detectedEntities; track item) {
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#313244] text-[#89b4fa]">{{ item }}</span>
+          }
+        </div>
+      }
+      <div class="flex justify-end gap-2 mt-1">
+        <button
+          class="px-2.5 py-1 rounded-md text-[11px] font-semibold cursor-pointer border-0 bg-[#313244] text-[#cdd6f4]"
+          (click)="cancelPendingCommands()"
+        >
+          {{ pending.isVision ? 'Descartar' : 'Cancelar' }}
+        </button>
+        <button
+          class="px-2.5 py-1 rounded-md text-[11px] font-semibold cursor-pointer border-0 text-[#11111b]"
+          [ngClass]="pending.isVision ? 'bg-[#89b4fa]' : 'bg-[#f38ba8]'"
+          (click)="applyPendingCommands()"
+        >
+          {{ pending.isVision ? 'Aplicar al Diagrama' : 'Confirmar y Aplicar' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Vision Upload Preview Banner if selected -->
+  @if (selectedImage()) {
+    <div class="flex items-center justify-between px-3 py-1.5 bg-[#1e1e2e] border-t border-[#313244] text-[11px] text-[#89b4fa]">
+      <span>{{ selectedImage()?.name }}</span>
+      <button class="bg-transparent border-0 text-[#f38ba8] cursor-pointer p-1" (click)="removeImage()">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Input Footer -->
+  <div class="flex items-center gap-2 px-4 py-3 bg-[#11111b] border-t border-[#313244]">
+    <input
+      type="file"
+      #fileInput
+      accept="image/png,image/jpeg,image/webp"
+      style="display: none"
+      (change)="onFileSelected($event)"
+    />
+    <button
+      class="bg-[#1e1e2e] border border-[#313244] text-[#cdd6f4] text-base w-9 h-9 rounded-lg cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-[#313244] hover:border-[#89b4fa]"
+      title="Subir foto de pizarra/boceto para OCR"
+      (click)="fileInput.click()"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </button>
+    @if (isSpeechSupported()) {
+      <button
+        class="bg-[#1e1e2e] border border-[#313244] text-[#cdd6f4] text-base w-9 h-9 rounded-lg cursor-pointer flex items-center justify-center transition-all duration-200 hover:bg-[#313244] hover:border-[#89b4fa]"
+        [ngClass]="isRecording() ? '!bg-[#f38ba8] !border-[#f38ba8] !text-[#11111b] animate-pulse' : ''"
+        [title]="isRecording() ? 'Detener dictado por voz' : 'Dictar por voz'"
+        (click)="toggleVoiceRecognition()"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    }
+    <textarea
+      [(ngModel)]="inputText"
+      (keydown.enter)="onEnterPress($event)"
+      placeholder="Ej. 'Crea entidad Producto con precio'..."
+      class="flex-1 bg-[#181825] border border-[#313244] rounded-lg px-3 py-2 text-[#cdd6f4] text-[13px] resize-none outline-none font-inherit focus:border-[#89b4fa]"
+      rows="1"
+    ></textarea>
+    <button
+      class="bg-[#89b4fa] text-[#11111b] border-0 w-9 h-9 rounded-lg text-sm font-bold cursor-pointer flex items-center justify-center transition-opacity duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      [disabled]="loading() || (!inputText.trim() && !selectedImage())"
+      (click)="sendMessage()"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
