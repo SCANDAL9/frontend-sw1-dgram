@@ -1,0 +1,212 @@
+<div
+  class="uml-class-node relative group/node select-none"
+  data-agent-target="entity:node"
+  [attr.data-agent-entity-id]="entity.id"
+  [attr.data-agent-name]="entity.name"
+>
+  <!-- Class Connectors (Left / Right / Top / Bottom) -->
+  <div
+    fConnector
+    fDragBlocker
+    fConnectorType="source-target"
+    [fConnectorId]="entity.id + '@class-in'"
+    class="uml-connector uml-connector-left uml-connector-class"
+    title="Conectar clase (In)"
+  ></div>
+  <div
+    fConnector
+    fDragBlocker
+    fConnectorType="source-target"
+    [fConnectorId]="entity.id + '@class-out'"
+    class="uml-connector uml-connector-right uml-connector-class"
+    title="Conectar clase (Out)"
+  ></div>
+  <div
+    fConnector
+    fDragBlocker
+    fConnectorType="source-target"
+    [fConnectorId]="entity.id + '@class-top'"
+    class="uml-connector uml-connector-top"
+    title="Conectar clase (Top)"
+  ></div>
+  <div
+    fConnector
+    fDragBlocker
+    fConnectorType="source-target"
+    [fConnectorId]="entity.id + '@class-bottom'"
+    class="uml-connector uml-connector-bottom"
+    title="Conectar clase (Bottom)"
+  ></div>
+
+  <!-- Header: Drag header to move class — Double-click to rename -->
+  <div
+    class="uml-class-header cursor-grab active:cursor-grabbing"
+    fDragHandle
+    (dblclick)="startEdit()"
+    title="Arrastrar para mover clase · Doble click para renombrar"
+  >
+    <!-- Stereotype Badge -->
+    @if (isEnum()) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+        «enumeration»
+      </span>
+    } @else if (isInterface()) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+        «interface»
+      </span>
+    } @else if (isDataType()) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
+        «dataType»
+      </span>
+    } @else if (entity.stereotype) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold" [ngClass]="getStereotypeClass(entity.stereotype)">
+        «{{ entity.stereotype }}»
+      </span>
+    }
+
+    <!-- Class Name -->
+    @if (editing()) {
+      <input
+        id="uml-name-{{entity.id}}"
+        class="uml-name-input"
+        [ngModel]="draft()"
+        (ngModelChange)="draft.set($event)"
+        (keyup.enter)="confirm()"
+        (keyup.escape)="cancel()"
+        (blur)="confirm()"
+        (click)="$event.stopPropagation()"
+        (mousedown)="$event.stopPropagation()"
+      />
+    } @else {
+      <span
+        class="uml-class-name"
+        [class.uml-abstract]="isAbstract()"
+      >
+        {{ entity.name }}
+      </span>
+    }
+
+    @if (isAbstract()) {
+      <span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider ml-1">/abs</span>
+    }
+  </div>
+
+  <!-- Attributes compartment — Doble-click vacío = nuevo atributo -->
+  <div class="uml-compartment" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
+    @for (col of entity.attributes; track col.name) {
+      <div
+        class="uml-attr-row group/row"
+        [class.editing]="editingAttr() === col.name"
+        (dblclick)="startEditAttr(col); $event.stopPropagation()"
+        [title]="isEnum() ? 'Doble click para editar valor' : 'Doble click para editar atributo'"
+      >
+        <!-- Connector In -->
+        <div
+          fConnector
+          fDragBlocker
+          fConnectorType="source-target"
+          [fConnectorId]="entity.id + ':' + col.name + '@in'"
+          class="uml-connector uml-connector-left"
+        ></div>
+
+        <!-- Inline Editor or Display -->
+        @if (editingAttr() === col.name) {
+          @if (isEnum()) {
+            <input
+              id="attr-{{entity.id}}-{{col.name}}"
+              class="uml-attr-input flex-1 min-w-0 font-mono uppercase font-bold text-purple-700 dark:text-purple-300"
+              [ngModel]="draftAttrName()"
+              (ngModelChange)="draftAttrName.set($event)"
+              (keyup.enter)="confirmAttr(col.name)"
+              (keyup.escape)="cancelAttr()"
+              (blur)="confirmAttr(col.name)"
+              (click)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation()"
+            />
+          } @else {
+            <span class="uml-visibility" [ngClass]="getVisibilityColor(col.visibility, col.pk)">
+              {{ formatVisibility(col.visibility, col.pk) }}
+            </span>
+            <input
+              id="attr-{{entity.id}}-{{col.name}}"
+              class="uml-attr-input flex-1 min-w-0 font-mono"
+              [ngModel]="draftAttrName()"
+              (ngModelChange)="draftAttrName.set($event)"
+              (keyup.enter)="confirmAttr(col.name)"
+              (keyup.escape)="cancelAttr()"
+              (blur)="confirmAttr(col.name)"
+              (click)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation()"
+            />
+            <span class="text-zinc-400 dark:text-zinc-500">:</span>
+            <input
+              class="uml-attr-input-type w-[75px] font-mono"
+              [ngModel]="draftAttrType()"
+              (ngModelChange)="draftAttrType.set($event)"
+              (keyup.enter)="confirmAttr(col.name)"
+              (keyup.escape)="cancelAttr()"
+              (blur)="confirmAttr(col.name)"
+              (click)="$event.stopPropagation()"
+              (mousedown)="$event.stopPropagation()"
+            />
+          }
+        } @else {
+          @if (isEnum()) {
+            <!-- Enum Constant Row -->
+            <span class="uml-attr-name truncate font-mono font-bold text-purple-700 dark:text-purple-300 text-[12px]">
+              {{ col.name }}
+            </span>
+          } @else {
+            <!-- Standard Class Attribute Row -->
+            <span class="uml-visibility" [ngClass]="getVisibilityColor(col.visibility, col.pk)">
+              {{ formatVisibility(col.visibility, col.pk) }}
+            </span>
+
+            <!-- Name & Indicators -->
+            <div class="flex items-center gap-1 min-w-0 flex-1">
+              <span
+                class="uml-attr-name truncate font-mono"
+                [class.line-through]="col.isDerived"
+                [class.text-zinc-400]="col.isDerived"
+                [title]="col.name"
+              >
+                {{ col.isDerived ? '/' : '' }}{{ col.name }}
+              </span>
+
+              @if (col.defaultValue) {
+                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono shrink-0">={{ col.defaultValue }}</span>
+              }
+            </div>
+
+            <span class="text-zinc-400 dark:text-zinc-500 text-xs shrink-0">:</span>
+
+            <!-- Type -->
+            <span class="uml-attr-type truncate font-mono text-right" [title]="col.type">{{ col.type }}</span>
+
+            <!-- Flags (PK / FK) -->
+            @if (col.pk) {
+              <span class="px-1 py-0.2 rounded text-[8px] font-mono font-semibold bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 shrink-0">PK</span>
+            }
+            @if (col.fk) {
+              <span class="px-1 py-0.2 rounded text-[8px] font-mono bg-zinc-100 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-750 shrink-0">FK</span>
+            }
+          }
+        }
+
+        <!-- Connector Out -->
+        <div
+          fConnector
+          fDragBlocker
+          fConnectorType="source-target"
+          [fConnectorId]="entity.id + ':' + col.name + '@out'"
+          class="uml-connector uml-connector-right"
+        ></div>
+      </div>
+    }
+    @empty {
+      <div class="uml-empty" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
+        {{ isEnum() ? '+ Añadir valor' : '+ Añadir atributo' }}
+      </div>
+    }
+  </div>
+</div>

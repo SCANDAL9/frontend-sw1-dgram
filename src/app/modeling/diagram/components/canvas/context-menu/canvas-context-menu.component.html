@@ -1,0 +1,76 @@
+@if (menu) {
+  <div
+    class="fixed z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl p-1 w-52 text-[12px] animate-fadeIn"
+    [style.left.px]="menu.x"
+    [style.top.px]="menu.y"
+    (click)="$event.stopPropagation()"
+  >
+    @if (menu.entityId) {
+      @if (entityName) {
+        <div class="px-3 py-1.5 font-bold text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-800 truncate">
+          {{ entityName }}
+        </div>
+      }
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+        (click)="inspectEntity.emit(menu.entityId); closed.emit()"
+      >
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Inspeccionar Atributos</span>
+      </button>
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+        (click)="duplicateEntity.emit(); closed.emit()"
+      >
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Duplicar Clase</span>
+      </button>
+      <div class="h-px bg-zinc-100 dark:bg-zinc-800 my-0.5"></div>
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg cursor-pointer text-[11.5px]"
+        (click)="detachEntity.emit(menu.entityId); closed.emit()"
+        title="Quita la clase del tablero actual pero la conserva en el catálogo del proyecto"
+      >
+        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <span>Quitar del Tablero</span>
+      </button>
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg cursor-pointer text-[11.5px]"
+        (click)="deleteEntityFromModel.emit(menu.entityId); closed.emit()"
+        title="Elimina la clase completamente del proyecto y de todos los diagramas"
+      >
+        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        <span>Eliminar del Modelo</span>
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+        (click)="openCommandPalette.emit(); closed.emit()"
+      >
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Command Palette</span>
+      </button>
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+        (click)="autoLayout.emit(); closed.emit()"
+      >
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Auto-Organizar</span>
+      </button>
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+        (click)="fitToScreen.emit(); closed.emit()"
+      >
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        <span>Ajustar a Pantalla (F)</span>
+      </button>
+    }
+  </div>
+}

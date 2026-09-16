@@ -1,0 +1,512 @@
+import { Component, inject, Input, Output, EventEmitter, signal, OnInit, effect, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { CommandService } from '../../services/command.service';
+import { DiagramService } from '../../services/diagram.service';
+import { SelectionService, UMLRelationKind } from '../../services/selection.service';
+import { ExportService } from '../../../../generation/schema/services/export.service';
+import { WebsocketService } from '../../services/websocket.service';
+import { AuthService } from '../../../../workspace/authentication/services/auth.service';
+import { DBAttribute, DBRelation, ClassifierType } from '../../models/diagram.model';
+import { ThemeService } from '../../../../core/services/theme.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { LayoutService } from '../../services/layout.service';
+import { AuthModalComponent } from '../../../../workspace/authentication/components/auth-modal/auth-modal.component';
+import { StudioDrawerComponent, DrawerTab } from '../../../ai/components/studio-drawer/studio-drawer.component';
+
+export interface UMLRelationDef {
+  kind: UMLRelationKind;
+  label: string;
+  description: string;
+  iconPath: string;
+  isDashed?: boolean;
+}
+
+@Component({
+  selector: 'app-toolbar',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    AuthModalComponent,
+    StudioDrawerComponent,
+  ],
+  templateUrl: './toolbar.component.html',
+  host: { class: 'block w-full' },
+})
+export class ToolbarComponent implements OnInit {
+  @Input() flowHost: HTMLElement | null = null;
+  @Input() boardId: string = 'default-board';
+  @Input() selectedRelationId: string | null = null;
+  @Output() openCommandPalette = new EventEmitter<void>();
+  @Output() triggerAutoLayout = new EventEmitter<void>();
+  @Output() deleteSelectedElements = new EventEmitter<void>();
+
+  cmd = inject(CommandService);
+  diagram = inject(DiagramService);
+  selection = inject(SelectionService);
+  exportSvc = inject(ExportService);
+  ws = inject(WebsocketService);
+  auth = inject(AuthService);
+  theme = inject(ThemeService);
+  toast = inject(ToastService);
+  layoutSvc = inject(LayoutService);
+  private route = inject(ActivatedRoute);
+
+  autoLayout(): void {
+    this.layoutSvc.autoLayout();
+    this.toast.info('Diagrama organizado automáticamente');
+  }
+
+  showClassifierDropdown = signal(false);
+  showRelationDropdown = signal(false);
+  showUserMenu = signal(false);
+  showProjectMenu = signal(false);
+  showExportMenu = signal(false);
+  showAuthModal = signal(false);
+
+  readonly classifierOptions = [
+    { type: 'class' as ClassifierType, label: 'Clase', icon: 'M3 3h18v18H3z', desc: 'Clase concreta estándar' },
+    { type: 'abstract_class' as ClassifierType, label: 'Clase Abstracta', icon: 'M3 3h18v18H3z', desc: 'Clase no instanciable (/abs)' },
+    { type: 'interface' as ClassifierType, label: 'Interfaz', icon: 'M3 3h18v18H3z', desc: 'Contrato «interface»' },
+    { type: 'enumeration' as ClassifierType, label: 'Enumeración', icon: 'M4 6h16M4 12h16M4 18h16', desc: 'Constantes «enumeration»' },
+    { type: 'datatype' as ClassifierType, label: 'DataType', icon: 'M12 2l9 5-9 5-9-5 9-5z', desc: 'Valor inmutable «dataType»' },
+  ];
+
+  // Studio Drawer State
+  showStudioDrawer = signal(false);
+  drawerTab = signal<DrawerTab>('chat');
+
+  toggleExportMenu(): void {
+    this.showExportMenu.update((v) => !v);
+    this.showProjectMenu.set(false);
+    this.showUserMenu.set(false);
+  }
+
+  exportSQL(): void {
+    this.exportSvc.downloadSql();
+    this.toast.success('Script SQL descargado');
+  }
+
+  exportJSON(): void {
+    this.exportSvc.downloadJson();
+    this.toast.success('Esquema JSON descargado');
+  }
+
+  async exportPNG(): Promise<void> {
+    if (!this.flowHost) return;
+    try {
+      await this.exportSvc.toPng(this.flowHost, 'diagram.png');
+      this.toast.success('Imagen PNG guardada');
+    } catch {
+      this.toast.error('Error al exportar PNG');
+    }
+  }
+
+  // The 6 Canonical UML Relationships (No repeated associations, no ASCII art)
+  readonly umlRelations: UMLRelationDef[] = [
+    {
+      kind: 'Association',
+      label: 'Asociación',
+      description: 'Conexión estructural entre dos clases',
+      iconPath: 'M3 12h18',
+    },
+    {
+      kind: 'Generalization',
+      label: 'Herencia / Generalización',
+      description: 'Subclase hereda estructura de superclase',
+      iconPath: 'M3 12h13 M16 7l6 5-6 5z',
+    },
+    {
+      kind: 'Aggregation',
+      label: 'Agregación',
+      description: 'Todo-parte débil (componente independiente)',
+      iconPath: 'M3 12h12 M15 12l3.5-4 3.5 4-3.5 4z',
+    },
+    {
+      kind: 'Composition',
+      label: 'Composición',
+      description: 'Todo-parte fuerte (vida ligada al contenedor)',
+      iconPath: 'M3 12h12 M15 12l3.5-4 3.5 4-3.5 4z',
+    },
+    {
+      kind: 'Dependency',
+      label: 'Dependencia',
+      description: 'Uso transitorio o parámetro de método',
+      iconPath: 'M3 12h15 M15 8l6 4-6 4',
+      isDashed: true,
+    },
+    {
+      kind: 'Realization',
+      label: 'Realización / Interfaz',
+      description: 'Implementación de contrato o interfaz',
+      iconPath: 'M3 12h13 M16 7l6 5-6 5z',
+      isDashed: true,
+    },
+  ];
+
+  readonly currentRelationDef = computed(() => {
+    const k = this.selection.currentRelationKind();
+    return this.umlRelations.find((r) => r.kind === k) ?? this.umlRelations[0];
+  });
+
+  readonly selectedEntity = computed(() => {
+    const id = this.selection.singleId();
+    return id ? this.diagram.getEntity(id) : null;
+  });
+
+  readonly selectedRelation = computed(() => {
+    if (!this.selectedRelationId) return null;
+    return this.diagram.relations().find((r) => r.id === this.selectedRelationId) ?? null;
+  });
+
+  private authModalEffect = effect(() => {
+    if (this.auth.showAuthModal()) {
+      this.showAuthModal.set(true);
+    }
+  });
+
+  ngOnInit() {
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (routeId) {
+      this.boardId = routeId;
+    }
+  }
+
+  openDrawer(tab: DrawerTab): void {
+    if (this.showStudioDrawer() && this.drawerTab() === tab) {
+      this.showStudioDrawer.set(false);
+    } else {
+      this.drawerTab.set(tab);
+      this.showStudioDrawer.set(true);
+    }
+  }
+
+  toggleChatDrawer(): void {
+    this.openDrawer('chat');
+  }
+
+  toggleCodegenModal(): void {
+    this.openDrawer('export');
+  }
+
+  toggleMembersModal(): void {
+    this.openDrawer('team');
+  }
+
+  exportSql(): void {
+    this.exportSvc.downloadSql();
+    this.toast.success('SQL DDL exportado');
+  }
+
+  async exportPng(): Promise<void> {
+    if (!this.flowHost) return;
+    try {
+      await this.exportSvc.toPng(this.flowHost, 'schema.png');
+      this.toast.success('Imagen PNG guardada');
+    } catch {
+      this.toast.error('Error al generar PNG');
+    }
+  }
+
+  toggleProjectMenu(): void {
+    this.showProjectMenu.update((v) => !v);
+    this.showExportMenu.set(false);
+    this.showUserMenu.set(false);
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu.update((v) => !v);
+    this.showExportMenu.set(false);
+    this.showProjectMenu.set(false);
+  }
+
+  toggleAuthModal(): void {
+    this.showAuthModal.set(!this.showAuthModal());
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.showUserMenu.set(false);
+  }
+
+  // --- Modeling Tools ---
+  setSelectTool(): void {
+    this.selection.setTool('select');
+  }
+
+  setHandTool(): void {
+    this.selection.setTool('hand');
+  }
+
+  selectRelationKind(kind: UMLRelationKind): void {
+    this.selection.setRelationKind(kind);
+    this.showRelationDropdown.set(false);
+    this.toast.info(`Herramienta: ${kind}`);
+  }
+
+  createClassifier(type: ClassifierType = 'class'): void {
+    const isEnum = type === 'enumeration';
+    const isAbs = type === 'abstract_class';
+    const isInterface = type === 'interface';
+    const isDataType = type === 'datatype';
+
+    let prefix = 'Clase';
+    if (isEnum) prefix = 'Enum';
+    else if (isInterface) prefix = 'Interface';
+    else if (isDataType) prefix = 'DataType';
+
+    let n = 1;
+    const names = new Set(this.diagram.entities().map(e => e.name));
+    while (names.has(`${prefix}${n}`)) n++;
+    const name = `${prefix}${n}`;
+    const id = this.nextUniqueId(name);
+
+    const count = this.diagram.entityCount();
+    const cols = 3;
+    const x = 100 + (count % cols) * 320;
+    const y = 100 + Math.floor(count / cols) * 220;
+
+    let initialCols: any[] = [];
+    if (isEnum) {
+      initialCols = [
+        { name: 'VALOR_1', type: 'String', pk: false, fk: false, nullable: false, references: null, visibility: '+' },
+        { name: 'VALOR_2', type: 'String', pk: false, fk: false, nullable: false, references: null, visibility: '+' },
+      ];
+    } else if (isDataType) {
+      initialCols = [
+        { name: 'value', type: 'String', pk: false, fk: false, nullable: false, references: null, visibility: '-' },
+      ];
+    } else if (isInterface) {
+      initialCols = [];
+    } else {
+      initialCols = [
+        { name: 'id', type: 'UUID', pk: true, fk: false, nullable: false, references: null, visibility: '+' },
+      ];
+    }
+
+    this.cmd.createEntity(
+      id,
+      name,
+      initialCols,
+      { x, y },
+      {
+        element_type: type,
+        elementType: type,
+        stereotype: type !== 'class' ? type : null,
+        is_abstract: isAbs,
+      }
+    );
+    this.selection.set([id]);
+    this.diagram.pendingEditId.set(id);
+    this.showClassifierDropdown.set(false);
+    this.toast.success(`${prefix} ${name} creada`);
+    setTimeout(() => this.diagram.pendingEditId.set(null), 2000);
+  }
+
+  createDirectTable(): void {
+    this.createClassifier('class');
+  }
+
+  // --- Contextual Actions for Selected Entity / Relation ---
+  addAttrToSelected(): void {
+    const e = this.selectedEntity();
+    if (!e) return;
+    const nextColName = `attr${e.attributes.length + 1}`;
+    this.cmd.addColumn(e.id, {
+      name: nextColName,
+      type: 'String',
+      pk: false,
+      fk: false,
+      nullable: true,
+      references: null,
+      visibility: '+',
+    });
+    this.toast.info(`Atributo añadido a ${e.name}`);
+  }
+
+  duplicateSelected(): void {
+    for (const id of [...this.selection.ids()]) {
+      const src = this.diagram.getEntity(id);
+      if (!src) continue;
+      const newId = this.nextUniqueId(`${src.name}_copy`);
+      this.cmd.createEntity(
+        newId,
+        `${src.name}_copy`,
+        src.attributes.map((a) => ({ ...a })),
+        { x: src.position.x + 36, y: src.position.y + 36 }
+      );
+    }
+    this.toast.info('Elemento duplicado');
+  }
+
+  deleteSelected(): void {
+    if (this.selection.hasSelection()) {
+      for (const id of [...this.selection.ids()]) {
+        this.cmd.deleteEntity(id);
+      }
+      this.selection.clear();
+      this.toast.info('Clase eliminada');
+      return;
+    }
+    if (this.selectedRelationId) {
+      this.cmd.deleteRelation(this.selectedRelationId);
+      this.deleteSelectedElements.emit();
+      this.toast.info('Relación eliminada');
+    }
+  }
+
+  // --- Cardinality & Relation Type Management ---
+  parseRelationKind(typeStr: string): UMLRelationKind {
+    if (!typeStr) return 'Association';
+    if (typeStr.startsWith('Generalization')) return 'Generalization';
+    if (typeStr.startsWith('Aggregation')) return 'Aggregation';
+    if (typeStr.startsWith('Composition')) return 'Composition';
+    if (typeStr.startsWith('Dependency')) return 'Dependency';
+    if (typeStr.startsWith('Realization')) return 'Realization';
+    return 'Association';
+  }
+
+  getSourceMultiplicity(rel: DBRelation): string {
+    const parts = rel.type.split(':');
+    if (parts.length === 3) return parts[1];
+    if (parts.length === 2) return parts[0];
+    return '';
+  }
+
+  getTargetMultiplicity(rel: DBRelation): string {
+    const parts = rel.type.split(':');
+    if (parts.length === 3) return parts[2];
+    if (parts.length === 2) return parts[1];
+    return '';
+  }
+
+  private wouldCreateGeneralizationCycle(childId: string, parentId: string, excludeRelId?: string): boolean {
+    if (childId === parentId) return true;
+
+    const visited = new Set<string>();
+    const queue = [parentId];
+
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      if (curr === childId) return true;
+      visited.add(curr);
+
+      const parentRelations = this.diagram.relations().filter(
+        (r) =>
+          r.id !== excludeRelId &&
+          r.sourceId === curr &&
+          (r.type.startsWith('Generalization') || r.type.startsWith('Realization'))
+      );
+
+      for (const pr of parentRelations) {
+        if (!visited.has(pr.targetId)) {
+          queue.push(pr.targetId);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  updateRelationKind(kind: UMLRelationKind): void {
+    const rel = this.selectedRelation();
+    if (!rel) return;
+    if (kind === 'Generalization' || kind === 'Realization') {
+      if (this.wouldCreateGeneralizationCycle(rel.sourceId, rel.targetId, rel.id)) {
+        this.toast.error('Herencia circular no permitida: crearía un ciclo en la jerarquía.');
+        return;
+      }
+      this.cmd.updateRelation(rel.id, { type: kind });
+    } else if (kind === 'Dependency') {
+      this.cmd.updateRelation(rel.id, { type: kind });
+    } else {
+      const src = this.getSourceMultiplicity(rel);
+      const tgt = this.getTargetMultiplicity(rel);
+      const type = (!src && !tgt) ? kind : `${kind}:${src}:${tgt}`;
+      this.cmd.updateRelation(rel.id, { type });
+    }
+    this.toast.info(`Tipo cambiado a ${kind}`);
+  }
+
+  updateSourceMultiplicity(val: string): void {
+    const rel = this.selectedRelation();
+    if (!rel) return;
+    const kind = this.parseRelationKind(rel.type);
+    const tgt = this.getTargetMultiplicity(rel);
+    const cleanVal = val.trim();
+    const type = (!cleanVal && !tgt) ? kind : `${kind}:${cleanVal}:${tgt}`;
+    this.cmd.updateRelation(rel.id, { type });
+  }
+
+  updateTargetMultiplicity(val: string): void {
+    const rel = this.selectedRelation();
+    if (!rel) return;
+    const kind = this.parseRelationKind(rel.type);
+    const src = this.getSourceMultiplicity(rel);
+    const cleanVal = val.trim();
+    const type = (!src && !cleanVal) ? kind : `${kind}:${src}:${cleanVal}`;
+    this.cmd.updateRelation(rel.id, { type });
+  }
+
+  private nextTablaName(): string {
+    let n = 1;
+    const names = new Set(this.diagram.entities().map(e => e.name));
+    while (names.has(`Tabla${n}`)) n++;
+    return `Tabla${n}`;
+  }
+
+  private nextUniqueId(name: string): string {
+    const base = name.toLowerCase().replace(/\s+/g, '_');
+    let id = base;
+    let n = 2;
+    while (this.diagram.getEntity(id)) {
+      id = `${base}_${n++}`;
+    }
+    return id;
+  }
+
+  createAndLinkAssociationClass(rel: DBRelation): void {
+    const srcName = this.diagram.getEntity(rel.sourceId)?.name || 'Origen';
+    const tgtName = this.diagram.getEntity(rel.targetId)?.name || 'Destino';
+    const baseName = `${srcName}${tgtName}`;
+    let name = baseName;
+    let n = 1;
+    const names = new Set(this.diagram.entities().map(e => e.name));
+    while (names.has(name)) {
+      name = `${baseName}${n++}`;
+    }
+    const classId = this.nextUniqueId(name);
+
+    const src = this.diagram.getEntity(rel.sourceId);
+    const tgt = this.diagram.getEntity(rel.targetId);
+    const srcPos = src?.position || { x: 100, y: 100 };
+    const tgtPos = tgt?.position || { x: 300, y: 300 };
+    const x = Math.round((srcPos.x + tgtPos.x) / 2);
+    const y = Math.round((srcPos.y + tgtPos.y) / 2) + 120;
+
+    const initialCols = [
+      { name: 'id', type: 'UUID', pk: true, fk: false, nullable: false, references: null, visibility: '+' },
+      { name: 'fecha', type: 'DateTime', pk: false, fk: false, nullable: false, references: null, visibility: '+' },
+    ];
+
+    this.cmd.createEntity(classId, name, initialCols, { x, y }, {
+      element_type: 'class',
+      elementType: 'class',
+    });
+
+    this.cmd.linkAssociationClass(rel.id, classId);
+    this.toast.success(`Clase de asociación ${name} vinculada`);
+  }
+
+  unlinkAssociationClass(rel: DBRelation): void {
+    this.cmd.unlinkAssociationClass(rel.id);
+    this.toast.info('Clase de asociación desvinculada');
+  }
+
+  getEntityName(id: string): string {
+    return this.diagram.getEntity(id)?.name || id;
+  }
+}
