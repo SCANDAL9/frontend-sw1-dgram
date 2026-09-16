@@ -1,0 +1,8 @@
+# Exclusiones de construcción de imagen Docker para Frontend
+tests/
+node_modules/
+dist/
+.angular/
+test-results/
+playwright-report/
+blob-report/

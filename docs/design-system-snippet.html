@@ -1,0 +1,88 @@
+<!-- Design System Snippet — UML Card + Floating Toolbar
+     Tailwind CSS + Tokens — copiar directo a cualquier proyecto.
+     Fuente: Inter para UI, JetBrains Mono para código. -->
+
+<!-- Tokens -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --radius-card: 4px;
+    --border-card: #E2E8F0; /* slate-200 */
+    --bg-card: #ffffff;
+    --bg-header: #F8FAFC; /* slate-50 */
+    --text-primary: #1E293B; /* slate-800 */
+    --text-secondary: #64748B; /* slate-500 */
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+</style>
+
+<!-- UML CARD -->
+<div class="w-[280px] bg-white border border-[#E2E8F0] rounded-[4px] overflow-hidden"
+     style="box-shadow: var(--shadow-card); font-family: Inter, ui-sans-serif;">
+  <!-- Header -->
+  <div class="flex flex-col items-center justify-center gap-0 px-3 py-[7px] bg-[#F8FAFC] border-b border-[#E2E8F0] text-center">
+    <!-- <span class="text-[10px] font-medium tracking-[0.04em] text-[#64748B]">«interface»</span> -->
+    <span class="text-[13.5px] font-semibold tracking-[-0.01em] text-[#1E293B]">User</span>
+  </div>
+  <!-- Attributes — grid 12px 1fr 8px 70px -->
+  <div class="py-0.5 bg-white">
+    <div class="grid items-center gap-1.5 px-2.5 py-[3px] text-[12px] leading-[1.35]"
+         style="grid-template-columns: 12px 1fr 8px 70px;">
+      <span class="text-center font-medium text-[#64748B]">+</span>
+      <span class="truncate font-mono text-[#1E293B]" style="font-family: 'JetBrains Mono', monospace;">email</span>
+      <span class="text-center text-[#94A3B8]">:</span>
+      <span class="truncate text-right font-mono text-[#64748B]" style="font-family: 'JetBrains Mono', monospace;">String</span>
+    </div>
+    <div class="grid items-center gap-1.5 px-2.5 py-[3px] text-[12px]"
+         style="grid-template-columns: 12px 1fr 8px 70px;">
+      <span class="text-center font-medium text-[#64748B]">−</span>
+      <span class="truncate font-mono text-[#1E293B]" style="font-family: 'JetBrains Mono', monospace;">id</span>
+      <span class="text-center text-[#94A3B8]">:</span>
+      <span class="truncate text-right font-mono text-[#64748B]" style="font-family: 'JetBrains Mono', monospace;">UUID</span>
+    </div>
+  </div>
+  <!-- Methods -->
+  <div class="bg-[#F8FAFC] border-t border-[#E2E8F0] py-0.5">
+    <div class="grid items-center gap-1.5 px-2.5 py-[3px] text-[12px] opacity-60"
+         style="grid-template-columns: 12px 1fr 8px 70px;">
+      <span class="text-center text-[#64748B]">+</span>
+      <span class="truncate font-mono text-[#1E293B]" style="font-family: 'JetBrains Mono', monospace;">login<span class="text-[#64748B]">()</span></span>
+      <span class="text-center text-[#94A3B8]">:</span>
+      <span class="truncate text-right font-mono text-[#64748B]" style="font-family: 'JetBrains Mono', monospace;">bool</span>
+    </div>
+  </div>
+  <!-- Handles (solo hover) — 6px #d4d4d8, 4px esquinas -->
+</div>
+
+<!-- FLOATING TOOLBAR — Figma/Eraser style -->
+<div class="flex items-center gap-1 px-1.5 py-1 bg-white border border-[#E2E8F0] rounded-full shadow-sm w-fit">
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Select (V)">
+    <!-- cursor icon -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4l7 16 2.5-6 6-2.5z"/></svg>
+  </button>
+  <div class="w-px h-5 bg-[#E2E8F0] mx-1"></div>
+  <button class="w-8 h-8 rounded-full bg-[#1E293B] text-white flex items-center justify-center hover:bg-[#0F172A]" title="New class">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Drag handle to link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h13"/><polyline points="11 7 16 12 11 17"/></svg>
+  </button>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Generalization">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h12"/><path d="M16 12l-6-5v10z" fill="white"/></svg>
+  </button>
+  <div class="w-px h-5 bg-[#E2E8F0] mx-1"></div>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Undo">↩</button>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Redo">↪</button>
+  <div class="w-px h-5 bg-[#E2E8F0] mx-1"></div>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-[#F1F5F9]" title="Duplicate">⧉</button>
+  <button class="w-8 h-8 rounded-full flex items-center justify-center text-[#475569] hover:bg-red-50 hover:text-red-600" title="Delete">✕</button>
+</div>
+
+<!-- CSS puro (si no usas Tailwind) -->
+<style>
+.uml-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow:hidden; width:280px; }
+.uml-header { display:flex; flex-direction:column; align-items:center; padding:7px 12px; background:var(--bg-header); border-bottom:1px solid var(--border-card); }
+.uml-row { display:grid; grid-template-columns:12px 1fr 8px 70px; gap:6px; padding:3px 10px; font-size:12px; line-height:1.35; }
+.uml-row:hover { background:#F1F5F9; }
+.uml-type { text-align:right; font-family:'JetBrains Mono',monospace; color:#64748B; }
+</style>
