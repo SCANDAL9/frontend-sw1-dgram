@@ -4,6 +4,8 @@ import { CommandType } from '../../../modeling/diagram/models/command_type';
 import { DiagramState, DBEntity, DBRelation } from '../../../modeling/diagram/models/diagram.model';
 
 
+
+
 /** Snapshot of diagram state BEFORE a command was applied. */
 export type StateSnapshot = DiagramState;
 
@@ -154,6 +156,50 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
     return {
       type: 'LINK_ASSOCIATION_CLASS',
       payload: { relation_id: relId, class_id: rel.associationClassId },
+    };
+  },
+
+  RESIZE_ENTITY: (cmd, snapshot) => {
+    const id = cmd.payload.entity_id ?? cmd.payload.class_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
+    if (!entity) return null;
+    return {
+      type: 'RESIZE_ENTITY',
+      payload: { entity_id: entity.id, width: entity.width, height: entity.height },
+    };
+  },
+
+  RESIZE_CLASS: (cmd, snapshot) => {
+    const id = cmd.payload.class_id ?? cmd.payload.entity_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
+    if (!entity) return null;
+    return {
+      type: 'RESIZE_CLASS',
+      payload: { class_id: entity.id, width: entity.width, height: entity.height },
+    };
+  },
+
+  ASSIGN_CLASS_PACKAGE: (cmd, snapshot) => {
+    const id = cmd.payload.entity_id ?? cmd.payload.class_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
+    if (!entity) return null;
+    return {
+      type: 'ASSIGN_CLASS_PACKAGE',
+      payload: { entity_id: entity.id, package_id: entity.packageId },
+    };
+  },
+
+  CREATE_PACKAGE: (cmd) => ({
+    type: 'DELETE_PACKAGE',
+    payload: { package_id: cmd.payload.package_id },
+  }),
+
+  DELETE_PACKAGE: (cmd, snapshot) => {
+    const pkg = snapshot.packages?.find((p) => p.id === cmd.payload.package_id);
+    if (!pkg) return null;
+    return {
+      type: 'CREATE_PACKAGE',
+      payload: { package_id: pkg.id, package_name: pkg.name },
     };
   },
 

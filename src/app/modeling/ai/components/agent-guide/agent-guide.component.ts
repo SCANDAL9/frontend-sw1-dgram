@@ -1,6 +1,6 @@
 import {
   Component,
-  Input,
+  input,
   inject,
   signal,
   computed,
@@ -22,7 +22,7 @@ import { OnboardingService } from '../../services/onboarding.service';
   templateUrl: './agent-guide.component.html',
 })
 export class AgentGuideComponent implements OnDestroy {
-  @Input({ required: true }) boardId!: string;
+  boardId = input.required<string>();
 
   guide = inject(AgentGuideService);
   onboarding = inject(OnboardingService);
@@ -159,7 +159,7 @@ export class AgentGuideComponent implements OnDestroy {
           name: entityName,
           id: entityId,
         };
-        this.guide.inspectTarget(this.boardId, {
+        this.guide.inspectTarget(this.boardId(), {
           type: targetType,
           meta,
           rawElement: this.currentHoveredEl,
@@ -213,7 +213,7 @@ export class AgentGuideComponent implements OnDestroy {
   }
 
   askFollowup(q: string): void {
-    this.guide.askQuestion(this.boardId, q);
+    this.guide.askQuestion(this.boardId(), q);
   }
 
   submitQuestion(event: Event): void {
@@ -221,7 +221,7 @@ export class AgentGuideComponent implements OnDestroy {
     if (!this.customQuestion.trim()) return;
     const q = this.customQuestion;
     this.customQuestion = '';
-    this.guide.askQuestion(this.boardId, q);
+    this.guide.askQuestion(this.boardId(), q);
   }
 
   ngOnDestroy(): void {
