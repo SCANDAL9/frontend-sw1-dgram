@@ -1,85 +1,92 @@
-import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BoardService } from '../../../../modeling/diagram/services/board.service';
+import { LayerFilterType } from '../../models/codegen.model';
+import { FileBasenamePipe, FileIconPipe } from '../../pipes/file-basename.pipe';
 
 @Component({
   selector: 'app-codegen-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FileBasenamePipe, FileIconPipe],
   templateUrl: './codegen-modal.component.html',
 })
 export class CodegenModalComponent implements OnInit {
-  private boardService = inject(BoardService);
+  boardId = input.required<string>();
+  files = input<Record<string, string>>({});
+  loading = input<boolean>(false);
+  errorMsg = input<string | null>(null);
+  downloadUrl = input<string>('');
 
-  @Input({ required: true }) boardId!: string;
-  @Output() closed = new EventEmitter<void>();
+  generate = output<string>();
+  closed = output<void>();
 
-  basePackage = 'com.dgram.generated';
-  loading = signal(false);
-  errorMsg = signal<string | null>(null);
-  files = signal<Record<string, string>>({});
+  basePackage = signal<string>('com.dgram.generated');
   selectedFile = signal<string | null>(null);
-  copied = signal(false);
+  copied = signal<boolean>(false);
+  layerFilter = signal<LayerFilterType>('ALL');
 
-  fileList = signal<string[]>([]);
+  readonly fileList = computed<string[]>(() => {
+    return Object.keys(this.files() || {});
+  });
 
-  ngOnInit() {
-    this.generate();
-  }
+  readonly currentCode = computed(() => {
+    const sel = this.selectedFile();
+    return sel ? this.files()[sel] || '' : '';
+  });
 
-  close() {
-    this.closed.emit();
-  }
+  readonly filteredFileList = computed(() => {
+    const list = this.fileList();
+    const filter = this.layerFilter();
+    if (filter === 'ALL') return list;
+    if (filter === 'ENTITY') return list.filter((f) => f.includes('/entity/'));
+    if (filter === 'SERVICE') return list.filter((f) => f.includes('/service/'));
+    if (filter === 'CONTROLLER') return list.filter((f) => f.includes('/controller/'));
+    if (filter === 'REPOSITORY') return list.filter((f) => f.includes('/repository/'));
+    if (filter === 'DTO_MAPPER') return list.filter((f) => f.includes('/dto/') || f.includes('/mapper/'));
+    if (filter === 'OTHER') {
+      return list.filter(
+        (f) =>
+          !f.includes('/entity/') &&
+          !f.includes('/service/') &&
+          !f.includes('/controller/') &&
+          !f.includes('/repository/') &&
+          !f.includes('/dto/') &&
+          !f.includes('/mapper/')
+      );
+    }
+    return list;
+  });
 
-  downloadUrl(): string {
-    return this.boardService.downloadCodeZipUrl(this.boardId, this.basePackage);
-  }
-
-  generate() {
-    this.loading.set(true);
-    this.errorMsg.set(null);
-
-    this.boardService.generateCode(this.boardId, this.basePackage).subscribe({
-      next: (res) => {
-        this.loading.set(false);
-        this.files.set(res.files || {});
-        const keys = Object.keys(res.files || {});
-        this.fileList.set(keys);
-        if (keys.length > 0) {
-          this.selectedFile.set(keys[0]);
-        }
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.errorMsg.set(err.error?.detail || 'Error al generar código Spring Boot');
-      },
+  constructor() {
+    effect(() => {
+      const keys = this.fileList();
+      const current = this.selectedFile();
+      if (keys.length > 0 && (!current || !keys.includes(current))) {
+        this.selectedFile.set(keys[0]);
+      }
     });
   }
 
-  currentCode(): string {
-    const sel = this.selectedFile();
-    return sel ? this.files()[sel] || '' : '';
+  ngOnInit(): void {
+    if (Object.keys(this.files()).length === 0) {
+      this.generateCode();
+    }
   }
 
-  copyCode() {
+  close(): void {
+    this.closed.emit();
+  }
+
+  generateCode(): void {
+    this.generate.emit(this.basePackage());
+  }
+
+  copyCode(): void {
     const code = this.currentCode();
     if (!code) return;
     navigator.clipboard.writeText(code).then(() => {
       this.copied.set(true);
       setTimeout(() => this.copied.set(false), 2000);
     });
-  }
-
-  getFileBaseName(path: string): string {
-    const parts = path.split('/');
-    return parts[parts.length - 1];
-  }
-
-  getFileIcon(path: string): string {
-    if (path.endsWith('.java')) return 'JAVA';
-    if (path.endsWith('.xml')) return 'XML';
-    if (path.endsWith('.properties') || path.endsWith('.yml')) return 'CONF';
-    return 'FILE';
   }
 }

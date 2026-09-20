@@ -23,14 +23,15 @@
         <label class="text-[#a6adc8] text-xs font-medium">Paquete Base:</label>
         <input
           type="text"
-          [(ngModel)]="basePackage"
+          [ngModel]="basePackage()"
+          (ngModelChange)="basePackage.set($event)"
           placeholder="com.ejemplo.proyecto"
           class="bg-[#181825] border border-[#313244] rounded-md px-3 py-1.5 text-[#cdd6f4] text-[13px] font-mono flex-1 outline-none focus:border-[#89b4fa]"
         />
       </div>
       <button
         class="bg-[#313244] text-[#cdd6f4] border-0 px-3.5 py-[7px] rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-200 hover:bg-[#45475a] disabled:opacity-50 disabled:cursor-not-allowed"
-        (click)="generate()"
+        (click)="generateCode()"
         [disabled]="loading()"
       >
         {{ loading() ? 'Generando...' : 'Regenerar' }}
@@ -65,7 +66,7 @@
           <p class="m-0">No se han generado archivos aún.</p>
           <button
             class="bg-[#89b4fa] text-[#11111b] border-0 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity"
-            (click)="generate()"
+            (click)="generateCode()"
           >
             Generar Proyecto
           </button>
@@ -73,12 +74,78 @@
       } @else {
         <div class="flex-1 flex overflow-hidden w-full">
           <!-- File Tree Explorer -->
-          <div class="w-[280px] bg-[#181825] border-r border-[#313244] flex flex-col shrink-0">
-            <div class="px-4 py-2.5 text-[11px] uppercase tracking-[0.5px] text-[#6c7086] border-b border-[#313244] font-semibold">
-              Archivos Generados ({{ fileList().length }})
+          <div class="w-[300px] bg-[#181825] border-r border-[#313244] flex flex-col shrink-0">
+            <div class="px-4 py-2.5 text-[11px] uppercase tracking-[0.5px] text-[#6c7086] border-b border-[#313244] font-semibold flex items-center justify-between">
+              <span>Archivos ({{ filteredFileList().length }} / {{ fileList().length }})</span>
+            </div>
+            <!-- Layer filter chips -->
+            <div class="flex flex-wrap gap-1 p-2 border-b border-[#313244] bg-[#11111b]/50 text-[10px]">
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'ALL'"
+                [class.text-[#11111b]]="layerFilter() === 'ALL'"
+                [class.font-bold]="layerFilter() === 'ALL'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'ALL'"
+                (click)="layerFilter.set('ALL')"
+              >Todos</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'ENTITY'"
+                [class.text-[#11111b]]="layerFilter() === 'ENTITY'"
+                [class.font-bold]="layerFilter() === 'ENTITY'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'ENTITY'"
+                (click)="layerFilter.set('ENTITY')"
+              >JPA</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'SERVICE'"
+                [class.text-[#11111b]]="layerFilter() === 'SERVICE'"
+                [class.font-bold]="layerFilter() === 'SERVICE'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'SERVICE'"
+                (click)="layerFilter.set('SERVICE')"
+              >Service</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'CONTROLLER'"
+                [class.text-[#11111b]]="layerFilter() === 'CONTROLLER'"
+                [class.font-bold]="layerFilter() === 'CONTROLLER'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'CONTROLLER'"
+                (click)="layerFilter.set('CONTROLLER')"
+              >REST</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'REPOSITORY'"
+                [class.text-[#11111b]]="layerFilter() === 'REPOSITORY'"
+                [class.font-bold]="layerFilter() === 'REPOSITORY'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'REPOSITORY'"
+                (click)="layerFilter.set('REPOSITORY')"
+              >Repo</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'DTO_MAPPER'"
+                [class.text-[#11111b]]="layerFilter() === 'DTO_MAPPER'"
+                [class.font-bold]="layerFilter() === 'DTO_MAPPER'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'DTO_MAPPER'"
+                (click)="layerFilter.set('DTO_MAPPER')"
+              >DTO/Map</button>
+              <button
+                type="button"
+                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                [class.bg-[#89b4fa]]="layerFilter() === 'OTHER'"
+                [class.text-[#11111b]]="layerFilter() === 'OTHER'"
+                [class.font-bold]="layerFilter() === 'OTHER'"
+                [class.text-[#a6adc8]]="layerFilter() !== 'OTHER'"
+                (click)="layerFilter.set('OTHER')"
+              >Config/Test</button>
             </div>
             <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
-              @for (file of fileList(); track file) {
+              @for (file of filteredFileList(); track file) {
                 <button
                   class="bg-transparent border-0 text-left flex items-center gap-2 px-2.5 py-2 rounded-md text-[#a6adc8] text-xs cursor-pointer font-mono transition-all duration-150 hover:bg-[#1e1e2e] hover:text-[#cdd6f4]"
                   [class.!bg-[#313244]]="selectedFile() === file"
@@ -86,8 +153,8 @@
                   [class.font-semibold]="selectedFile() === file"
                   (click)="selectedFile.set(file)"
                 >
-                  <span class="shrink-0">{{ getFileIcon(file) }}</span>
-                  <span class="truncate">{{ getFileBaseName(file) }}</span>
+                  <span class="shrink-0 text-[10px] font-bold px-1 py-0.5 bg-[#313244] text-[#89b4fa] rounded">{{ file | fileIcon }}</span>
+                  <span class="truncate">{{ file | fileBasename }}</span>
                 </button>
               }
             </div>
