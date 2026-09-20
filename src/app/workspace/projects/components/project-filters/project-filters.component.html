@@ -1,0 +1,139 @@
+<!-- Navigation Tabs: Tableros vs Proyectos -->
+<div class="flex items-center justify-between gap-4 mb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-3">
+  <div class="flex items-center gap-2">
+    <button
+      type="button"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+      [class.bg-zinc-900]="activeTab() === 'boards'"
+      [class.text-white]="activeTab() === 'boards'"
+      [class.dark:bg-zinc-100]="activeTab() === 'boards'"
+      [class.dark:text-zinc-900]="activeTab() === 'boards'"
+      [class.text-zinc-600]="activeTab() !== 'boards'"
+      [class.dark:text-zinc-400]="activeTab() !== 'boards'"
+      [class.hover:bg-zinc-100]="activeTab() !== 'boards'"
+      [class.dark:hover:bg-zinc-800]="activeTab() !== 'boards'"
+      (click)="activeTabChange.emit('boards')"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18M9 21V9" />
+      </svg>
+      <span>Tableros</span>
+      <span class="text-xs px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 font-mono text-zinc-700 dark:text-zinc-300">{{ boardCount() }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+      [class.bg-zinc-900]="activeTab() === 'projects'"
+      [class.text-white]="activeTab() === 'projects'"
+      [class.dark:bg-zinc-100]="activeTab() === 'projects'"
+      [class.dark:text-zinc-900]="activeTab() === 'projects'"
+      [class.text-zinc-600]="activeTab() !== 'projects'"
+      [class.dark:text-zinc-400]="activeTab() !== 'projects'"
+      [class.hover:bg-zinc-100]="activeTab() !== 'projects'"
+      [class.dark:hover:bg-zinc-800]="activeTab() !== 'projects'"
+      (click)="activeTabChange.emit('projects')"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+      <span>Proyectos</span>
+      <span class="text-xs px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 font-mono text-zinc-700 dark:text-zinc-300">{{ projectCount() }}</span>
+    </button>
+  </div>
+
+  @if (activeTab() === 'projects') {
+    <button
+      type="button"
+      class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs"
+      (click)="openCreateProject.emit()"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      <span>Nuevo Proyecto</span>
+    </button>
+  }
+</div>
+
+<!-- Header row of active section: Title + View Mode Switcher -->
+@if (activeTab() === 'boards') {
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 mb-8">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Tableros de Diseño</h1>
+        <span class="text-[11.5px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+          {{ boardCount() }}
+        </span>
+      </div>
+      <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400">Diagramas de clases UML 2.5 y generación de código en tiempo real.</p>
+    </div>
+
+    <!-- Controls: View Mode Switcher -->
+    <div class="flex items-center gap-3 self-start sm:self-auto">
+      <div class="flex items-center p-1 bg-zinc-200/70 dark:bg-zinc-800/90 rounded-xl border border-zinc-200 dark:border-zinc-700/80 gap-1">
+        <button
+          type="button"
+          class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
+          [class.bg-white]="viewMode() === 'grid'"
+          [class.dark:bg-zinc-900]="viewMode() === 'grid'"
+          [class.text-zinc-900]="viewMode() === 'grid'"
+          [class.dark:text-zinc-100]="viewMode() === 'grid'"
+          [class.shadow-xs]="viewMode() === 'grid'"
+          [class.text-zinc-500]="viewMode() !== 'grid'"
+          [class.dark:text-zinc-400]="viewMode() !== 'grid'"
+          (click)="viewModeChange.emit('grid')"
+          title="Vista en cuadrícula"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+          <span>Cuadrícula</span>
+        </button>
+
+        <button
+          type="button"
+          class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
+          [class.bg-white]="viewMode() === 'list'"
+          [class.dark:bg-zinc-900]="viewMode() === 'list'"
+          [class.text-zinc-900]="viewMode() === 'list'"
+          [class.dark:text-zinc-100]="viewMode() === 'list'"
+          [class.shadow-xs]="viewMode() === 'list'"
+          [class.text-zinc-500]="viewMode() !== 'list'"
+          [class.dark:text-zinc-400]="viewMode() !== 'list'"
+          (click)="viewModeChange.emit('list')"
+          title="Vista en lista"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          <span>Lista</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (activeTab() === 'projects') {
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 mb-8">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Proyectos</h1>
+        <span class="text-[11.5px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+          {{ projectCount() }}
+        </span>
+      </div>
+      <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400">Organiza tus diagramas UML en proyectos colaborativos con control de acceso por roles.</p>
+    </div>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs active:scale-95 self-start sm:self-auto"
+      (click)="openCreateProject.emit()"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+      <span>Crear Proyecto</span>
+    </button>
+  </div>
+}

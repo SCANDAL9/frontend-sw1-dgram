@@ -1,474 +1,187 @@
 <div class="w-full h-full flex flex-col bg-zinc-50 dark:bg-[#0c0e14] text-zinc-900 dark:text-zinc-100 transition-colors selection:bg-indigo-500/20 selection:text-indigo-400">
-  <!-- Topbar Header -->
-  <header class="w-full h-14 shrink-0 flex items-center justify-between gap-4 px-6 sm:px-10 lg:px-16 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 sticky top-0 z-30">
-    <!-- Brand / Logo -->
-    <a routerLink="/" class="flex items-center gap-2.5 group shrink-0">
-      <div class="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-800 border border-zinc-800 dark:border-zinc-700 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <ellipse cx="12" cy="5" rx="9" ry="3" />
-          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-        </svg>
-      </div>
-      <div class="flex items-center gap-1.5">
-        <span class="font-bold tracking-tight text-[15px] text-zinc-900 dark:text-zinc-100">dgram</span>
-        <span class="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60">Studio</span>
-      </div>
-    </a>
-
-    <!-- Center Search Bar (Flex Container - No Overlap Guaranteed) -->
-    <div class="flex-1 max-w-sm mx-auto hidden md:block">
-      <div class="flex items-center gap-2 px-3 py-1.5 bg-zinc-100/90 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded-lg focus-within:ring-2 focus-within:ring-zinc-400/30 focus-within:border-zinc-400 dark:focus-within:border-zinc-600 transition-all shadow-2xs">
-        <svg class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          type="text"
-          placeholder="Buscar tableros o esquemas..."
-          style="padding: 0; margin: 0; background: transparent; border: none; outline: none; box-shadow: none;"
-          class="w-full text-[12.5px] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-        />
-        @if (searchQuery()) {
-          <button
-            type="button"
-            class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer shrink-0"
-            (click)="searchQuery.set('')"
-            title="Limpiar búsqueda"
-          >
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        } @else {
-          <kbd class="hidden sm:inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-700/80 text-zinc-500 dark:text-zinc-400 shrink-0 font-medium">⌘K</kbd>
-        }
-      </div>
-    </div>
-
-    <!-- Right Actions -->
-    <div class="flex items-center gap-2.5 shrink-0">
-      <!-- Theme Toggle -->
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg flex items-center justify-center bg-white dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-700/80 text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-700/80 shadow-2xs"
-        (click)="theme.toggleTheme()"
-        [title]="theme.isDark() ? 'Modo Claro' : 'Modo Oscuro'"
-      >
-        @if (theme.isDark()) {
-          <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        } @else {
-          <svg class="w-4 h-4 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        }
-      </button>
-
-      <!-- Auth State -->
-      @if (auth.isAuthenticated()) {
-        <div class="flex items-center gap-2 pl-2 pr-1 py-1 bg-white dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/80 text-[12px] shadow-2xs">
-          <span class="w-6 h-6 rounded-md bg-zinc-900 dark:bg-zinc-700 text-white flex items-center justify-center text-[11px] font-bold">
-            {{ auth.currentUser()?.full_name?.charAt(0)?.toUpperCase() || 'U' }}
-          </span>
-          <span class="font-medium text-zinc-800 dark:text-zinc-200 hidden sm:inline">{{ auth.currentUser()?.full_name }}</span>
-          <button class="w-6 h-6 rounded flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer" (click)="auth.logout()" title="Cerrar sesión">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
-        </div>
-      } @else {
-        <button
-          type="button"
-          class="px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium bg-white dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/80 border border-zinc-200 dark:border-zinc-700/80 transition-colors cursor-pointer shadow-2xs"
-          (click)="showAuthModal.set(true)"
-        >
-          Iniciar Sesión
-        </button>
-      }
-
-      <!-- Import XMI Button -->
-      <input type="file" #homeXmiInput accept=".xmi,.xml" class="hidden" (change)="onXmiSelected($event)">
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 transition-all cursor-pointer shadow-2xs"
-        (click)="homeXmiInput.click()"
-        title="Importar modelo Enterprise Architect (.xmi / .xml)"
-      >
-        <svg class="w-3.5 h-3.5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span>Importar XMI</span>
-      </button>
-
-      <!-- Primary Action: New Board -->
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white transition-all cursor-pointer shadow-xs active:scale-95"
-        (click)="openCreate()"
-      >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>Nuevo Tablero</span>
-      </button>
-    </div>
-  </header>
+  <!-- Topbar Header Component (Dumb) -->
+  <app-project-header
+    [searchQuery]="searchQuery()"
+    [currentUser]="auth.currentUser()"
+    [isDark]="theme.isDark()"
+    (searchQueryChange)="searchQuery.set($event)"
+    (toggleTheme)="theme.toggleTheme()"
+    (openProfile)="auth.showProfileModal.set(true)"
+    (openAuth)="showAuthModal.set(true)"
+    (logout)="auth.logout()"
+    (createBoard)="openCreateBoard()"
+  />
 
   <!-- Main Body Content -->
-  <main class="w-full flex-1 overflow-y-auto flex flex-col items-center" style="padding-top: 48px; padding-bottom: 80px;">
+  <main class="w-full flex-1 overflow-y-auto flex flex-col items-center py-12 pb-20">
     <div class="w-full max-w-6xl px-6 sm:px-10 lg:px-12">
-      <!-- Section Header & Controls -->
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/80" style="margin-bottom: 36px; padding-bottom: 24px;">
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <div class="flex items-center gap-3">
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Tableros de Diseño</h1>
-            <span class="text-[11.5px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-              {{ filteredBoards().length }}
-            </span>
-          </div>
-          <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400">Diagramas de clases UML 2.5 y generación de código en tiempo real.</p>
-        </div>
+      <!-- Filter and View Controls (Dumb) -->
+      <app-project-filters
+        [activeTab]="activeTab()"
+        [boardCount]="filteredBoards().length"
+        [projectCount]="filteredProjects().length"
+        [viewMode]="viewMode()"
+        (activeTabChange)="onTabChange($event)"
+        (viewModeChange)="viewMode.set($event)"
+        (openCreateProject)="openCreateProject()"
+      />
 
-        <!-- Controls: View Mode Switcher -->
-        <div class="flex items-center gap-3 self-start sm:self-auto">
-          <div class="flex items-center p-1 bg-zinc-200/70 dark:bg-zinc-800/90 rounded-xl border border-zinc-200 dark:border-zinc-700/80 gap-1">
-            <!-- Grid View Button -->
-            <button
-              type="button"
-              class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
-              [class.bg-white]="viewMode() === 'grid'"
-              [class.dark:bg-zinc-900]="viewMode() === 'grid'"
-              [class.text-zinc-900]="viewMode() === 'grid'"
-              [class.dark:text-zinc-100]="viewMode() === 'grid'"
-              [class.shadow-xs]="viewMode() === 'grid'"
-              [class.text-zinc-500]="viewMode() !== 'grid'"
-              [class.dark:text-zinc-400]="viewMode() !== 'grid'"
-              (click)="viewMode.set('grid')"
-              title="Vista en cuadrícula"
-            >
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
-              </svg>
-              <span>Cuadrícula</span>
-            </button>
-
-            <!-- List View Button -->
-            <button
-              type="button"
-              class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
-              [class.bg-white]="viewMode() === 'list'"
-              [class.dark:bg-zinc-900]="viewMode() === 'list'"
-              [class.text-zinc-900]="viewMode() === 'list'"
-              [class.dark:text-zinc-100]="viewMode() === 'list'"
-              [class.shadow-xs]="viewMode() === 'list'"
-              [class.text-zinc-500]="viewMode() !== 'list'"
-              [class.dark:text-zinc-400]="viewMode() !== 'list'"
-              (click)="viewMode.set('list')"
-              title="Vista en lista"
-            >
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <span>Lista</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile Search Field -->
-      <div class="md:hidden" style="margin-bottom: 24px;">
-        <div class="flex items-center gap-2.5 px-3.5 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
-          <svg class="w-4 h-4 text-zinc-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input
-            type="text"
-            placeholder="Buscar tableros..."
-            style="padding: 0; margin: 0; background: transparent; border: none; outline: none;"
-            class="w-full text-[13px] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
-            [ngModel]="searchQuery()"
-            (ngModelChange)="searchQuery.set($event)"
-          />
-        </div>
-      </div>
-
-      <!-- Loading Skeleton State -->
-      @if (loading()) {
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-5 animate-pulse space-y-4">
-              <div class="h-36 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl"></div>
-              <div class="space-y-2.5">
-                <div class="h-4 bg-zinc-100 dark:bg-zinc-800/60 rounded w-2/3"></div>
-                <div class="h-3 bg-zinc-100 dark:bg-zinc-800/60 rounded w-1/3"></div>
-              </div>
-            </div>
-          }
-        </div>
-      } @else if (error()) {
-        <!-- Error State Banner -->
-        <div class="max-w-xl mx-auto bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-6 flex gap-4">
-          <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <div class="space-y-2">
-            <p class="text-[13.5px] font-medium text-amber-900 dark:text-amber-200">{{ error() }}</p>
-            <button
-              type="button"
-              class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white cursor-pointer transition-colors shadow-2xs"
-              (click)="continueLocal()"
-            >
-              <span>Continuar en modo local</span>
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </button>
-          </div>
-        </div>
-      } @else if (filteredBoards().length === 0 && boardsList().length === 0) {
-        <!-- Zero State (No boards exist) -->
-        <div class="flex flex-col items-center justify-center py-24 px-6 text-center border border-dashed border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/30 rounded-2xl max-w-lg mx-auto space-y-5">
-          <div class="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 shadow-2xs">
-            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
-            </svg>
-          </div>
-          <div class="space-y-1.5">
-            <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sin tableros aún</h3>
-            <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">Crea tu primer diagrama UML para comenzar a modelar clases y generar código.</p>
-          </div>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white cursor-pointer transition-all shadow-xs"
-            (click)="openCreate()"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Crear primer tablero</span>
-          </button>
-        </div>
-      } @else if (filteredBoards().length === 0) {
-        <!-- Search No-Results -->
-        <div class="text-center py-20 text-[13.5px] text-zinc-500 dark:text-zinc-400 space-y-2.5">
-          <p>No se encontraron tableros que coincidan con <span class="font-semibold text-zinc-700 dark:text-zinc-300">"{{ searchQuery() }}"</span></p>
-          <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer text-[13px]" (click)="searchQuery.set('')">Limpiar filtro de búsqueda</button>
-        </div>
-      } @else {
-        <!-- 1. GRID VIEW MODE (Linear / Vercel Workspace Style) -->
-        @if (viewMode() === 'grid') {
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style="gap: 16px;">
-            <!-- First interactive Card: "+ Crear nuevo tablero" -->
-            <div
-              class="group rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white/40 dark:bg-zinc-900/20 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/60 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 select-none shadow-2xs"
-              style="min-height: 200px; padding: 20px;"
-              (click)="openCreate()"
-            >
-              <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 group-hover:bg-zinc-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-zinc-900 text-zinc-500 dark:text-zinc-400 flex items-center justify-center transition-all duration-150 shadow-2xs group-hover:scale-110 mb-2">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </div>
-              <span class="text-[13.5px] font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">Nuevo Tablero</span>
-              <span class="text-[11.5px] text-zinc-400 dark:text-zinc-500 mt-0.5">Crear diagrama UML en blanco</span>
-            </div>
-
-            <!-- Existing Board Cards -->
-            @for (b of filteredBoards(); track b.id) {
-              <div
-                class="group relative bg-white dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800/90 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-150 cursor-pointer flex flex-col select-none"
-                [routerLink]="['/board', b.id]"
-              >
-                <!-- Card Blueprint Canvas Thumbnail -->
-                <div class="bg-zinc-100/70 dark:bg-[#080b11] border-b border-zinc-200/60 dark:border-zinc-800/80 flex items-center justify-center relative overflow-hidden group-hover:bg-zinc-100 dark:group-hover:bg-[#0a0e16] transition-colors" style="height: 105px; padding: 10px;">
-                  <!-- Subtle Blueprint Dot Grid -->
-                  <div
-                    class="absolute inset-0 opacity-[0.25] dark:opacity-[0.18] pointer-events-none"
-                    style="background-image: radial-gradient(circle, currentColor 1px, transparent 1px); background-size: 14px 14px; color: #94a3b8;"
-                  ></div>
-
-                  @let preview = previewEntities(b);
-                  @if (preview.length > 0) {
-                    <!-- Floating Abstract UML Entity Schema Cards -->
-                    <div class="relative z-10 flex items-center justify-center -space-x-2 max-w-full overflow-hidden py-0.5">
-                      @for (name of preview.slice(0, 3); track name; let idx = $index) {
-                        <div
-                          class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/90 rounded-lg shadow-sm w-[88px] shrink-0 overflow-hidden transform transition-transform group-hover:-translate-y-0.5"
-                          [style.z-index]="10 - idx"
-                          [style.transform]="idx === 0 ? 'rotate(-2deg)' : (idx === 2 ? 'rotate(2deg)' : 'scale(1.02)')"
-                        >
-                          <!-- Class Header -->
-                          <div class="px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-800/90 border-b border-zinc-100 dark:border-zinc-700/80 flex items-center gap-1">
-                            <div class="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500"></div>
-                            <span class="text-[8.5px] font-mono font-semibold text-zinc-800 dark:text-zinc-200 truncate" [title]="name">{{ name }}</span>
-                          </div>
-                          <!-- Class Attribute Mock Rows -->
-                          <div class="p-1.5 space-y-1 bg-white/50 dark:bg-zinc-900/40">
-                            <div class="flex items-center justify-between gap-1">
-                              <div class="h-1 w-8 bg-zinc-300 dark:bg-zinc-700 rounded-full"></div>
-                              <div class="h-1 w-3.5 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
-                            </div>
-                            <div class="flex items-center justify-between gap-1">
-                              <div class="h-1 w-6 bg-zinc-300 dark:bg-zinc-700 rounded-full"></div>
-                              <div class="h-1 w-4 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
-                            </div>
-                          </div>
-                        </div>
-                      }
-                      @if (entityCount(b) > 3) {
-                        <div class="relative z-20 shrink-0 ml-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full shadow-xs">
-                          +{{ entityCount(b) - 3 }}
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <!-- Empty Board Blueprint -->
-                    <div class="relative z-10 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-600">
-                      <div class="w-7 h-7 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center">
-                        <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                        </svg>
-                      </div>
-                      <span class="text-[10.5px] font-mono text-zinc-400 dark:text-zinc-500">Lienzo en blanco</span>
-                    </div>
-                  }
-                </div>
-
-                <!-- Card Info Body -->
-                <div class="flex-1 flex flex-col justify-between" style="padding: 14px;">
-                  <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div class="flex items-start justify-between gap-2">
-                      @if (editingId() === b.id) {
-                        <input
-                          type="text"
-                          class="flex-1 px-2 py-0.5 bg-white dark:bg-zinc-800 border border-zinc-400 dark:border-zinc-600 rounded-lg text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none"
-                          [ngModel]="editName()"
-                          (ngModelChange)="editName.set($event)"
-                          (click)="$event.stopPropagation()"
-                          (keyup.enter)="saveEdit(b)"
-                          (keyup.escape)="cancelEdit()"
-                          (blur)="saveEdit(b)"
-                          autofocus
-                        />
-                      } @else {
-                        <h3 class="font-semibold text-[13.5px] text-zinc-900 dark:text-zinc-100 truncate group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors" [title]="b.name">
-                          {{ b.name }}
-                        </h3>
-                      }
-
-                      <!-- Quick Action Buttons -->
-                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" (click)="$event.stopPropagation()">
-                        <button
-                          type="button"
-                          class="w-6.5 h-6.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
-                          (click)="startEdit(b, $event)"
-                          title="Renombrar tablero"
-                        >
-                          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </button>
-                        <button
-                          type="button"
-                          class="w-6.5 h-6.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
-                          (click)="askDelete(b, $event)"
-                          title="Eliminar tablero"
-                        >
-                          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Schema Badges -->
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center gap-1">
-                        <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                        <span>{{ entityCount(b) }} {{ entityCount(b) === 1 ? 'clase' : 'clases' }}</span>
-                      </span>
-                      @if (relationsCount(b) > 0) {
-                        <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center gap-1">
-                          <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                          <span>{{ relationsCount(b) }} {{ relationsCount(b) === 1 ? 'relación' : 'relaciones' }}</span>
-                        </span>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Card Footer (Linear Style) -->
-                  <div class="border-t border-zinc-100 dark:border-zinc-800/70 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-500 font-mono" style="margin-top: 10px; padding-top: 8px;">
-                    <span>{{ boardDate(b) }}</span>
-                    <span class="truncate" [title]="b.id">{{ b.id.slice(0, 8) }}</span>
-                  </div>
+      <!-- TAB 1: TABLEROS -->
+      @if (activeTab() === 'boards') {
+        @if (loading()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+              <div class="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-5 animate-pulse space-y-4">
+                <div class="h-28 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl"></div>
+                <div class="space-y-2.5">
+                  <div class="h-4 bg-zinc-100 dark:bg-zinc-800/60 rounded w-2/3"></div>
+                  <div class="h-3 bg-zinc-100 dark:bg-zinc-800/60 rounded w-1/3"></div>
                 </div>
               </div>
             }
           </div>
-        } @else {
-          <!-- 2. LIST VIEW MODE (Clean Linear Table Style) -->
-          <div class="bg-white dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden shadow-2xs">
-            <!-- Table Header -->
-            <div class="grid grid-cols-12 gap-4 bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-200/80 dark:border-zinc-800/80 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none" style="padding: 10px 20px;">
-              <div class="col-span-6 sm:col-span-5">Tablero</div>
-              <div class="col-span-3 sm:col-span-3">Entidades</div>
-              <div class="col-span-3 sm:col-span-3">Última Modificación</div>
-              <div class="hidden sm:block sm:col-span-1 text-right">Acciones</div>
+        } @else if (error()) {
+          <div class="max-w-xl mx-auto bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-6 flex gap-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             </div>
-
-            <!-- Table Rows -->
-            <div class="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-              @for (b of filteredBoards(); track b.id) {
-                <div
-                  class="grid grid-cols-12 gap-4 items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer group select-none"
-                  style="padding: 11px 20px;"
-                  [routerLink]="['/board', b.id]"
-                >
-                  <!-- Col 1: Name & ID -->
-                  <div class="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
-                    <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">
-                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
-                      </svg>
-                    </div>
-                    <div class="min-w-0 flex-1 space-y-0.5">
-                      @if (editingId() === b.id) {
-                        <input
-                          type="text"
-                          class="w-full px-2 py-0.5 bg-white dark:bg-zinc-800 border border-zinc-400 dark:border-zinc-600 rounded text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none"
-                          [ngModel]="editName()"
-                          (ngModelChange)="editName.set($event)"
-                          (click)="$event.stopPropagation()"
-                          (keyup.enter)="saveEdit(b)"
-                          (keyup.escape)="cancelEdit()"
-                          (blur)="saveEdit(b)"
-                          autofocus
-                        />
-                      } @else {
-                        <div class="font-semibold text-[13.5px] text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" [title]="b.name">
-                          {{ b.name }}
-                        </div>
-                        <div class="text-[10.5px] text-zinc-400 dark:text-zinc-500 font-mono truncate" [title]="b.id">
-                          ID: {{ b.id.slice(0, 8) }}
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Col 2: Entity count badge -->
-                  <div class="col-span-3 sm:col-span-3">
-                    <span class="inline-flex items-center gap-1.5 text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-                      {{ entityCount(b) }} {{ entityCount(b) === 1 ? 'clase' : 'clases' }}
-                    </span>
-                  </div>
-
-                  <!-- Col 3: Date -->
-                  <div class="col-span-3 sm:col-span-3 text-[12px] text-zinc-500 dark:text-zinc-400 font-mono">
-                    {{ boardDate(b) }}
-                  </div>
-
-                  <!-- Col 4: Action Menu -->
-                  <div class="col-span-12 sm:col-span-1 flex items-center justify-end gap-1" (click)="$event.stopPropagation()">
-                    <button
-                      type="button"
-                      class="w-7 h-7 rounded-md bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 flex items-center justify-center transition-colors cursor-pointer"
-                      (click)="startEdit(b, $event)"
-                      title="Renombrar tablero"
-                    >
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="w-7 h-7 rounded-md bg-transparent hover:bg-red-50 dark:hover:bg-red-950/40 text-zinc-400 hover:text-red-600 flex items-center justify-center transition-colors cursor-pointer"
-                      (click)="askDelete(b, $event)"
-                      title="Eliminar tablero"
-                    >
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  </div>
+            <div class="space-y-2">
+              <p class="text-[13.5px] font-medium text-amber-900 dark:text-amber-200">{{ error() }}</p>
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white cursor-pointer transition-colors shadow-2xs"
+                (click)="continueLocal()"
+              >
+                <span>Continuar en modo local</span>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              </button>
+            </div>
+          </div>
+        } @else if (filteredBoards().length === 0 && boardsList().length === 0) {
+          <div class="flex flex-col items-center justify-center py-24 px-6 text-center border border-dashed border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/30 rounded-2xl max-w-lg mx-auto space-y-5">
+            <div class="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 shadow-2xs">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sin tableros aún</h3>
+              <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">Crea tu primer diagrama UML para comenzar a modelar clases y generar código.</p>
+            </div>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white cursor-pointer transition-all shadow-xs"
+              (click)="openCreateBoard()"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              <span>Crear primer tablero</span>
+            </button>
+          </div>
+        } @else if (filteredBoards().length === 0) {
+          <div class="text-center py-20 text-[13.5px] text-zinc-500 dark:text-zinc-400 space-y-2.5">
+            <p>No se encontraron tableros que coincidan con <span class="font-semibold text-zinc-700 dark:text-zinc-300">"{{ searchQuery() }}"</span></p>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer text-[13px]" (click)="searchQuery.set('')">Limpiar filtro de búsqueda</button>
+          </div>
+        } @else {
+          @if (viewMode() === 'grid') {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                class="group rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white/40 dark:bg-zinc-900/20 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/60 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 select-none shadow-2xs min-h-[200px] p-5"
+                (click)="openCreateBoard()"
+              >
+                <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 group-hover:bg-zinc-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-zinc-900 text-zinc-500 dark:text-zinc-400 flex items-center justify-center transition-all duration-150 shadow-2xs group-hover:scale-110 mb-2">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 </div>
+                <span class="text-[13.5px] font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">Nuevo Tablero</span>
+                <span class="text-[11.5px] text-zinc-400 dark:text-zinc-500 mt-0.5">Crear diagrama UML en blanco</span>
+              </div>
+
+              @for (b of filteredBoards(); track b.id) {
+                <app-board-card
+                  [board]="b"
+                  [viewMode]="'grid'"
+                  [isEditing]="editingId() === b.id"
+                  [editName]="editName()"
+                  (startEdit)="startBoardEdit($event)"
+                  (cancelEdit)="cancelBoardEdit()"
+                  (saveEdit)="saveBoardEdit($event)"
+                  (delete)="askDeleteBoard($event)"
+                />
               }
             </div>
+          } @else {
+            <div class="flex flex-col gap-2">
+              @for (b of filteredBoards(); track b.id) {
+                <app-board-card
+                  [board]="b"
+                  [viewMode]="'list'"
+                  [isEditing]="editingId() === b.id"
+                  [editName]="editName()"
+                  (startEdit)="startBoardEdit($event)"
+                  (cancelEdit)="cancelBoardEdit()"
+                  (saveEdit)="saveBoardEdit($event)"
+                  (delete)="askDeleteBoard($event)"
+                />
+              }
+            </div>
+          }
+        }
+      }
+
+      <!-- TAB 2: PROYECTOS -->
+      @if (activeTab() === 'projects') {
+        @if (!auth.isAuthenticated()) {
+          <div class="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100">Inicia sesión para gestionar proyectos</h3>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Los proyectos te permiten agrupar diagramas y colaborar en tiempo real con permisos de editor y lector.</p>
+            </div>
+            <button
+              type="button"
+              class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs"
+              (click)="showAuthModal.set(true)"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+        } @else if (loadingProjects()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-5 animate-pulse space-y-4">
+                <div class="h-6 bg-zinc-100 dark:bg-zinc-800/60 rounded w-1/2"></div>
+                <div class="h-16 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+              </div>
+            }
+          </div>
+        } @else if (filteredProjects().length === 0) {
+          <div class="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-10 text-center max-w-md mx-auto my-12 space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center mx-auto">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100">No hay proyectos todavía</h3>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Crea tu primer proyecto para organizar tus diagramas y colaborar con tu equipo.</p>
+            </div>
+            <button
+              type="button"
+              class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs"
+              (click)="openCreateProject()"
+            >
+              Crear Proyecto
+            </button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @for (p of filteredProjects(); track p.id) {
+              <app-project-card
+                [project]="p"
+                (createBoard)="createBoardInProject($event)"
+                (delete)="askDeleteProject($event)"
+              />
+            }
           </div>
         }
       }
@@ -476,103 +189,77 @@
   </main>
 </div>
 
-<!-- Modal Dialog: Create New Board -->
-@if (showCreate()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn" (click)="showCreate.set(false)">
-    <div
-      class="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-5"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-800 border border-zinc-800 dark:border-zinc-700 flex items-center justify-center text-white">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </div>
-          <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100">Nuevo Tablero de Diseño</h3>
-        </div>
-        <button
-          type="button"
-          class="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          (click)="showCreate.set(false)"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
+<!-- Dedicated Modals (Dumb Components) -->
+<app-create-board-modal
+  [isOpen]="showCreateBoard()"
+  [creating]="creatingBoard()"
+  (closed)="showCreateBoard.set(false)"
+  (create)="onCreateBoard($event)"
+  (importXmi)="onImportXmi($event)"
+/>
 
-      <div class="space-y-1.5">
-        <label class="text-[12px] font-semibold text-zinc-700 dark:text-zinc-300">Nombre del Diagrama</label>
-        <input
-          type="text"
-          placeholder="ej. Arquitectura E-Commerce, Microservicios..."
-          class="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 rounded-xl text-[13px] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-900 dark:focus:border-white focus:ring-1 focus:ring-zinc-900 dark:focus:ring-white transition-all"
-          [ngModel]="newName()"
-          (ngModelChange)="newName.set($event)"
-          (keyup.enter)="confirmCreate()"
-          (keyup.escape)="showCreate.set(false)"
-          autofocus
-        />
-      </div>
+<app-create-project-modal
+  [isOpen]="showCreateProject()"
+  [creating]="creatingProject()"
+  (closed)="showCreateProject.set(false)"
+  (create)="onCreateProject($event)"
+/>
 
-      <div class="flex items-center justify-end gap-2.5 pt-2">
-        <button
-          type="button"
-          class="px-4 py-2 rounded-lg text-[12.5px] font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          (click)="showCreate.set(false)"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          class="px-5 py-2 rounded-lg text-[12.5px] font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white disabled:opacity-40 transition-all cursor-pointer shadow-xs active:scale-95"
-          [disabled]="creating() || !newName().trim()"
-          (click)="confirmCreate()"
-        >
-          {{ creating() ? 'Creando...' : 'Crear Tablero' }}
-        </button>
-      </div>
-    </div>
-  </div>
+<!-- Confirm Delete Board Dialog -->
+@if (deleteBoardTarget(); as b) {
+  <app-confirm-dialog
+    [isOpen]="true"
+    title="¿Eliminar tablero?"
+    [message]="'Estás a punto de eliminar el tablero ' + b.name + '. Esta acción es irreversible.'"
+    confirmText="Eliminar Tablero"
+    cancelText="Cancelar"
+    [danger]="true"
+    [loading]="deleting()"
+    (confirmed)="confirmDeleteBoard()"
+    (cancelled)="deleteBoardTarget.set(null)"
+  />
 }
 
-<!-- Modal Dialog: Delete Board Confirmation -->
-@if (deleteTarget(); as t) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn" (click)="deleteTarget.set(null)">
-    <div
-      class="w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-4"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center">
-        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </div>
-
-      <div class="space-y-1">
-        <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-100">¿Eliminar tablero?</h3>
-        <p class="text-[12.5px] text-zinc-500 dark:text-zinc-400">
-          Estás a punto de eliminar <strong class="text-zinc-900 dark:text-zinc-100 font-semibold">"{{ t.name }}"</strong>. Esta acción es irreversible.
-        </p>
-      </div>
-
-      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-        <button
-          type="button"
-          class="px-4 py-2 rounded-lg text-[12.5px] font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          (click)="deleteTarget.set(null)"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          class="px-4 py-2 rounded-lg text-[12.5px] font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shadow-xs active:scale-95"
-          (click)="confirmDelete()"
-        >
-          Eliminar
-        </button>
-      </div>
-    </div>
-  </div>
+<!-- Confirm Delete Project Dialog -->
+@if (deleteProjectTarget(); as p) {
+  <app-confirm-dialog
+    [isOpen]="true"
+    title="¿Eliminar proyecto?"
+    [message]="'Estás a punto de eliminar el proyecto ' + p.name + '. Esta acción no se puede deshacer.'"
+    confirmText="Eliminar Proyecto"
+    cancelText="Cancelar"
+    [danger]="true"
+    [loading]="deleting()"
+    (confirmed)="confirmDeleteProject()"
+    (cancelled)="deleteProjectTarget.set(null)"
+  />
 }
 
-<!-- Auth Modal Component -->
-@if (showAuthModal()) {
-  <app-auth-modal (closed)="showAuthModal.set(false)"></app-auth-modal>
+<!-- Auth Modal Component (Dumb) -->
+@if (showAuthModal() || auth.showAuthModal()) {
+  <app-auth-modal
+    [loading]="authLoading()"
+    [errorMsg]="authError()"
+    [successMsg]="authSuccess()"
+    [initialResetToken]="auth.resetToken()"
+    (loginSubmitted)="handleLogin($event)"
+    (registerSubmitted)="handleRegister($event)"
+    (forgotPasswordSubmitted)="handleForgotPassword($event)"
+    (resetPasswordSubmitted)="handleResetPassword($event)"
+    (closed)="showAuthModal.set(false); auth.showAuthModal.set(false)"
+  />
+}
+
+<!-- Profile Modal Component (Dumb) -->
+@if (auth.showProfileModal()) {
+  <app-profile-modal
+    [currentUser]="auth.currentUser()"
+    [loading]="profileLoading()"
+    [errorMsg]="profileError()"
+    [successMsg]="profileSuccess()"
+    (updateProfileSubmitted)="handleUpdateProfile($event)"
+    (changePasswordSubmitted)="handleChangePassword($event)"
+    (logout)="auth.logout()"
+    (closed)="auth.showProfileModal.set(false)"
+  />
 }
