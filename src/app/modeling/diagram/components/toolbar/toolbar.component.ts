@@ -1,4 +1,4 @@
-import { Component, inject, Input, Output, EventEmitter, signal, OnInit, effect, computed } from '@angular/core';
+import { Component, inject, input, output, signal, OnInit, effect, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -7,13 +7,12 @@ import { DiagramService } from '../../services/diagram.service';
 import { SelectionService, UMLRelationKind } from '../../services/selection.service';
 import { ExportService } from '../../../../generation/schema/services/export.service';
 import { WebsocketService } from '../../services/websocket.service';
-import { AuthService } from '../../../../workspace/authentication/services/auth.service';
 import { DBAttribute, DBRelation, ClassifierType } from '../../models/diagram.model';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LayoutService } from '../../services/layout.service';
-import { AuthModalComponent } from '../../../../workspace/authentication/components/auth-modal/auth-modal.component';
-import { StudioDrawerComponent, DrawerTab } from '../../../ai/components/studio-drawer/studio-drawer.component';
+
+export type DrawerTab = 'chat' | 'export' | 'team';
 
 export interface UMLRelationDef {
   kind: UMLRelationKind;
@@ -30,26 +29,43 @@ export interface UMLRelationDef {
     CommonModule,
     FormsModule,
     RouterLink,
-    AuthModalComponent,
-    StudioDrawerComponent,
   ],
   templateUrl: './toolbar.component.html',
   host: { class: 'block w-full' },
 })
 export class ToolbarComponent implements OnInit {
-  @Input() flowHost: HTMLElement | null = null;
-  @Input() boardId: string = 'default-board';
-  @Input() selectedRelationId: string | null = null;
-  @Output() openCommandPalette = new EventEmitter<void>();
-  @Output() triggerAutoLayout = new EventEmitter<void>();
-  @Output() deleteSelectedElements = new EventEmitter<void>();
+  flowHost = input<HTMLElement | null>(null);
+  boardId = input<string>('default-board');
+  selectedRelationId = input<string | null>(null);
+  isHistoryOpen = input<boolean>(false);
+  isStudioOpen = input<boolean>(false);
+  currentStudioTab = input<DrawerTab>('chat');
+
+  openCommandPalette = output<void>();
+  triggerAutoLayout = output<void>();
+  deleteSelectedElements = output<void>();
+  openHistory = output<void>();
+  openStudioDrawer = output<DrawerTab>();
+
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+      e.preventDefault();
+      this.toggleHistoryDrawer();
+    }
+  }
+
+  toggleHistoryDrawer(): void {
+    this.openHistory.emit();
+  }
+
+
 
   cmd = inject(CommandService);
   diagram = inject(DiagramService);
   selection = inject(SelectionService);
   exportSvc = inject(ExportService);
   ws = inject(WebsocketService);
-  auth = inject(AuthService);
   theme = inject(ThemeService);
   toast = inject(ToastService);
   layoutSvc = inject(LayoutService);
@@ -62,10 +78,8 @@ export class ToolbarComponent implements OnInit {
 
   showClassifierDropdown = signal(false);
   showRelationDropdown = signal(false);
-  showUserMenu = signal(false);
   showProjectMenu = signal(false);
   showExportMenu = signal(false);
-  showAuthModal = signal(false);
 
   readonly classifierOptions = [
     { type: 'class' as ClassifierType, label: 'Clase', icon: 'M3 3h18v18H3z', desc: 'Clase concreta estándar' },
@@ -75,14 +89,10 @@ export class ToolbarComponent implements OnInit {
     { type: 'datatype' as ClassifierType, label: 'DataType', icon: 'M12 2l9 5-9 5-9-5 9-5z', desc: 'Valor inmutable «dataType»' },
   ];
 
-  // Studio Drawer State
-  showStudioDrawer = signal(false);
-  drawerTab = signal<DrawerTab>('chat');
 
   toggleExportMenu(): void {
     this.showExportMenu.update((v) => !v);
     this.showProjectMenu.set(false);
-    this.showUserMenu.set(false);
   }
 
   exportSQL(): void {
@@ -96,9 +106,10 @@ export class ToolbarComponent implements OnInit {
   }
 
   async exportPNG(): Promise<void> {
-    if (!this.flowHost) return;
+    const host = this.flowHost();
+    if (!host) return;
     try {
-      await this.exportSvc.toPng(this.flowHost, 'diagram.png');
+      await this.exportSvc.toPng(host, 'diagram.png');
       this.toast.success('Imagen PNG guardada');
     } catch {
       this.toast.error('Error al exportar PNG');
@@ -158,30 +169,15 @@ export class ToolbarComponent implements OnInit {
   });
 
   readonly selectedRelation = computed(() => {
-    if (!this.selectedRelationId) return null;
-    return this.diagram.relations().find((r) => r.id === this.selectedRelationId) ?? null;
+    const relId = this.selectedRelationId();
+    if (!relId) return null;
+    return this.diagram.relations().find((r) => r.id === relId) ?? null;
   });
 
-  private authModalEffect = effect(() => {
-    if (this.auth.showAuthModal()) {
-      this.showAuthModal.set(true);
-    }
-  });
-
-  ngOnInit() {
-    const routeId = this.route.snapshot.paramMap.get('id');
-    if (routeId) {
-      this.boardId = routeId;
-    }
-  }
+  ngOnInit() {}
 
   openDrawer(tab: DrawerTab): void {
-    if (this.showStudioDrawer() && this.drawerTab() === tab) {
-      this.showStudioDrawer.set(false);
-    } else {
-      this.drawerTab.set(tab);
-      this.showStudioDrawer.set(true);
-    }
+    this.openStudioDrawer.emit(tab);
   }
 
   toggleChatDrawer(): void {
@@ -202,9 +198,10 @@ export class ToolbarComponent implements OnInit {
   }
 
   async exportPng(): Promise<void> {
-    if (!this.flowHost) return;
+    const host = this.flowHost();
+    if (!host) return;
     try {
-      await this.exportSvc.toPng(this.flowHost, 'schema.png');
+      await this.exportSvc.toPng(host, 'schema.png');
       this.toast.success('Imagen PNG guardada');
     } catch {
       this.toast.error('Error al generar PNG');
@@ -214,22 +211,6 @@ export class ToolbarComponent implements OnInit {
   toggleProjectMenu(): void {
     this.showProjectMenu.update((v) => !v);
     this.showExportMenu.set(false);
-    this.showUserMenu.set(false);
-  }
-
-  toggleUserMenu(): void {
-    this.showUserMenu.update((v) => !v);
-    this.showExportMenu.set(false);
-    this.showProjectMenu.set(false);
-  }
-
-  toggleAuthModal(): void {
-    this.showAuthModal.set(!this.showAuthModal());
-  }
-
-  logout(): void {
-    this.auth.logout();
-    this.showUserMenu.set(false);
   }
 
   // --- Modeling Tools ---
@@ -351,8 +332,9 @@ export class ToolbarComponent implements OnInit {
       this.toast.info('Clase eliminada');
       return;
     }
-    if (this.selectedRelationId) {
-      this.cmd.deleteRelation(this.selectedRelationId);
+    const relId = this.selectedRelationId();
+    if (relId) {
+      this.cmd.deleteRelation(relId);
       this.deleteSelectedElements.emit();
       this.toast.info('Relación eliminada');
     }

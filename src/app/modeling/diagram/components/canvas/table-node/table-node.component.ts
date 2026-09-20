@@ -1,11 +1,8 @@
-import { Component, Input, inject, signal, effect } from '@angular/core';
+import { Component, input, output, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FFlowModule } from '@foblex/flow';
 import { DBEntity, DBAttribute } from '../../../models/diagram.model';
-import { CommandService } from '../../../services/command.service';
-import { DiagramService } from '../../../services/diagram.service';
-import { WebsocketService } from '../../../services/websocket.service';
 
 @Component({
   selector: 'app-table-node',
@@ -14,10 +11,16 @@ import { WebsocketService } from '../../../services/websocket.service';
   templateUrl: './table-node.component.html',
 })
 export class TableNodeComponent {
-  @Input({ required: true }) entity!: DBEntity;
-  private cmd = inject(CommandService);
-  private diagram = inject(DiagramService);
-  private ws = inject(WebsocketService);
+  entity = input.required<DBEntity>();
+  packageName = input<string | null>(null);
+  isPendingEdit = input<boolean>(false);
+
+  editStarted = output<string>();
+  editEnded = output<string>();
+  entityRenamed = output<{ id: string; name: string }>();
+  attrUpdated = output<{ entityId: string; origName: string; changes: { name?: string; type?: string } }>();
+  attrAdded = output<{ entityId: string; attr: Partial<DBAttribute> }>();
+  entityResized = output<{ id: string; width: number; height: number }>();
 
   editing = signal(false);
   draft = signal('');
@@ -25,28 +28,32 @@ export class TableNodeComponent {
   draftAttrName = signal('');
   draftAttrType = signal('');
 
+  readonly isEnum = computed(() => {
+    const e = this.entity();
+    return e?.elementType === 'enumeration' || e?.stereotype?.toLowerCase() === 'enumeration';
+  });
+
+  readonly isInterface = computed(() => {
+    const e = this.entity();
+    return e?.elementType === 'interface' || e?.stereotype?.toLowerCase() === 'interface';
+  });
+
+  readonly isDataType = computed(() => {
+    const e = this.entity();
+    return e?.elementType === 'datatype' || e?.stereotype?.toLowerCase() === 'datatype';
+  });
+
+  readonly isAbstract = computed(() => {
+    const e = this.entity();
+    return !!e?.isAbstract || e?.elementType === 'abstract_class' || e?.stereotype?.toLowerCase() === 'abstract';
+  });
+
   constructor() {
     effect(() => {
-      if (this.diagram.pendingEditId() === this.entity?.id) {
+      if (this.isPendingEdit()) {
         setTimeout(() => this.startEdit(), 30);
       }
     });
-  }
-
-  isEnum(): boolean {
-    return this.entity?.elementType === 'enumeration' || this.entity?.stereotype?.toLowerCase() === 'enumeration';
-  }
-
-  isInterface(): boolean {
-    return this.entity?.elementType === 'interface' || this.entity?.stereotype?.toLowerCase() === 'interface';
-  }
-
-  isDataType(): boolean {
-    return this.entity?.elementType === 'datatype' || this.entity?.stereotype?.toLowerCase() === 'datatype';
-  }
-
-  isAbstract(): boolean {
-    return !!this.entity?.isAbstract || this.entity?.elementType === 'abstract_class' || this.entity?.stereotype?.toLowerCase() === 'abstract';
   }
 
   getStereotypeClass(st: string | null | undefined): string {
@@ -82,75 +89,81 @@ export class TableNodeComponent {
   }
 
   startEdit(): void {
-    this.draft.set(this.entity.name);
+    const e = this.entity();
+    this.draft.set(e.name);
     this.editing.set(true);
-    this.ws.sendSelection([this.entity.id], this.entity.id);
+    this.editStarted.emit(e.id);
     setTimeout(() => {
-      const el = document.getElementById(`uml-name-${this.entity.id}`) as HTMLInputElement | null;
+      const el = document.getElementById(`uml-name-${e.id}`) as HTMLInputElement | null;
       el?.focus();
       el?.select();
     }, 0);
   }
 
   confirm(): void {
+    const e = this.entity();
     const v = this.draft().trim();
-    if (v && v !== this.entity.name) this.cmd.updateEntity(this.entity.id, v);
+    if (v && v !== e.name) {
+      this.entityRenamed.emit({ id: e.id, name: v });
+    }
     this.editing.set(false);
-    this.ws.sendSelection([this.entity.id], null);
+    this.editEnded.emit(e.id);
   }
 
   cancel(): void {
     this.editing.set(false);
-    this.ws.sendSelection([this.entity.id], null);
+    this.editEnded.emit(this.entity().id);
   }
 
   startEditAttr(col: DBAttribute): void {
+    const e = this.entity();
     this.editingAttr.set(col.name);
     this.draftAttrName.set(col.name);
     this.draftAttrType.set(col.type);
-    this.ws.sendSelection([this.entity.id], this.entity.id);
+    this.editStarted.emit(e.id);
     setTimeout(() => {
-      const el = document.getElementById(`attr-${this.entity.id}-${col.name}`) as HTMLInputElement | null;
+      const el = document.getElementById(`attr-${e.id}-${col.name}`) as HTMLInputElement | null;
       el?.focus();
       el?.select();
     }, 0);
   }
 
   confirmAttr(origName: string): void {
+    const e = this.entity();
     const name = this.draftAttrName().trim();
     const type = this.draftAttrType().trim() || 'String';
     if (!name) {
       this.editingAttr.set(null);
-      this.ws.sendSelection([this.entity.id], null);
+      this.editEnded.emit(e.id);
       return;
     }
     if (name !== origName) {
-      const col = this.entity.attributes.find((a) => a.name === origName);
-      if (col) {
-        this.cmd.updateColumn(this.entity.id, origName, { name, type });
-      }
+      this.attrUpdated.emit({ entityId: e.id, origName, changes: { name, type } });
     } else {
-      const col = this.entity.attributes.find((a) => a.name === origName);
-      if (col && type !== col.type) this.cmd.updateColumn(this.entity.id, origName, { type });
+      const col = e.attributes.find((a) => a.name === origName);
+      if (col && type !== col.type) {
+        this.attrUpdated.emit({ entityId: e.id, origName, changes: { type } });
+      }
     }
     this.editingAttr.set(null);
-    this.ws.sendSelection([this.entity.id], null);
+    this.editEnded.emit(e.id);
   }
 
   cancelAttr(): void {
     this.editingAttr.set(null);
-    this.ws.sendSelection([this.entity.id], null);
+    this.editEnded.emit(this.entity().id);
   }
 
   addAttrInline(): void {
+    const e = this.entity();
     const base = 'newAttr';
     let n = 1;
     let name = `${base}${n}`;
-    while (this.entity.attributes.some((a) => a.name === name)) {
+    while (e.attributes.some((a) => a.name === name)) {
       n++;
       name = `${base}${n}`;
     }
-    this.cmd.addColumn(this.entity.id, {
+    const newAttr: Partial<DBAttribute> = {
       name,
       type: 'String',
       pk: false,
@@ -158,7 +171,47 @@ export class TableNodeComponent {
       nullable: true,
       references: null,
       visibility: '+',
-    });
-    setTimeout(() => this.startEditAttr({ name, type: 'String', pk: false, fk: false, nullable: true, references: null }), 50);
+    };
+    this.attrAdded.emit({ entityId: e.id, attr: newAttr });
+    setTimeout(
+      () =>
+        this.startEditAttr({
+          name,
+          type: 'String',
+          pk: false,
+          fk: false,
+          nullable: true,
+          references: null,
+        }),
+      50
+    );
+  }
+
+  onResizeStart(e: MouseEvent): void {
+    e.stopPropagation();
+    e.preventDefault();
+    const ent = this.entity();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = ent.width || 200;
+    const startHeight = ent.height || 120;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = Math.max(160, Math.round(startWidth + (moveEvent.clientX - startX)));
+      const newHeight = Math.max(80, Math.round(startHeight + (moveEvent.clientY - startY)));
+      ent.width = newWidth;
+      ent.height = newHeight;
+    };
+
+    const onMouseUp = (upEvent: MouseEvent) => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      const finalWidth = Math.max(160, Math.round(startWidth + (upEvent.clientX - startX)));
+      const finalHeight = Math.max(80, Math.round(startHeight + (upEvent.clientY - startY)));
+      this.entityResized.emit({ id: ent.id, width: finalWidth, height: finalHeight });
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
 }

@@ -1,15 +1,15 @@
 <aside
   class="shrink-0 bg-white dark:bg-[#0c101b] border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col transition-all duration-200 ease-in-out relative z-20"
-  [class.w-[270px]]="isOpen"
-  [class.w-0]="!isOpen"
-  [class.opacity-0]="!isOpen"
+  [class.w-[270px]]="isOpen()"
+  [class.w-0]="!isOpen()"
+  [class.opacity-0]="!isOpen()"
   [class.overflow-hidden]="true"
 >
   <!-- Header with title, count & quick tree actions -->
   <div class="h-10 flex items-center justify-between px-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 bg-zinc-50/50 dark:bg-zinc-950/40">
     <div class="flex items-center gap-2">
       <span class="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">Explorador</span>
-      <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">({{ entities.length }})</span>
+      <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">({{ entities().length }})</span>
     </div>
     <div class="flex items-center gap-0.5">
       <!-- Toggle Expand / Collapse All -->
@@ -17,7 +17,7 @@
         type="button"
         class="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
         (click)="toggleAllExpand.emit()"
-        [title]="expandedEntityIds.size > 0 ? 'Colapsar todo' : 'Expandir todo'"
+        [title]="expandedEntityIds().size > 0 ? 'Colapsar todo' : 'Expandir todo'"
       >
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/>
@@ -86,7 +86,7 @@
               <!-- Class Row Item -->
               <div
                 class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer group select-none"
-                [ngClass]="selectedEntityId === entity.id
+                [ngClass]="selectedEntityId() === entity.id
                   ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold'
                   : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/40'"
                 (click)="entitySelected.emit(entity.id)"
@@ -148,6 +148,7 @@
                         >
                           {{ formatVisibility(attr.visibility) }}
                         </span>
+
                         <span class="truncate font-mono" [class.font-semibold]="attr.pk" [class.text-zinc-800]="attr.pk" [class.dark:text-zinc-200]="attr.pk">
                           {{ attr.name }}
                         </span>
@@ -180,7 +181,7 @@
     </div>
 
     <!-- 2. Relations Accordion Section -->
-    @if (relations.length > 0) {
+    @if (relations().length > 0) {
       <div class="border-t border-zinc-100 dark:border-zinc-800/60 pt-2">
         <button
           type="button"
@@ -202,7 +203,7 @@
               <button
                 type="button"
                 class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-[11.5px] transition-colors cursor-pointer"
-                [ngClass]="selectedRelationId === rel.id
+                [ngClass]="selectedRelationId() === rel.id
                   ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'"
                 (click)="relationSelected.emit(rel.id)"
@@ -249,16 +250,16 @@
           >
             + XMI
           </button>
-          @if (isLoadingCatalog) {
+          @if (isLoadingCatalog()) {
             <span class="w-2.5 h-2.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>
           }
-          <span class="font-mono text-[10px] font-normal normal-case">{{ projectCatalogClasses.length }}</span>
+          <span class="font-mono text-[10px] font-normal normal-case">{{ projectCatalogClasses().length }}</span>
         </div>
       </button>
 
       @if (isProjectCatalogOpen()) {
         <div class="mt-1 space-y-1 px-1.5">
-          @for (pCls of projectCatalogClasses; track pCls.id) {
+          @for (pCls of projectCatalogClasses(); track pCls.id) {
             <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/60 text-left">
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
@@ -292,7 +293,7 @@
               }
             </div>
           }
-          @if (projectCatalogClasses.length === 0 && !isLoadingCatalog) {
+          @if (projectCatalogClasses().length === 0 && !isLoadingCatalog()) {
             <div class="mx-1 my-1 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/40 text-[10.5px] text-zinc-400 text-center italic">
               Las clases sincronizadas del proyecto aparecerán aquí para reutilizarse.
             </div>
@@ -375,7 +376,7 @@
               (click)="exportJson.emit(); showSidebarExportMenu.set(false)"
             >
               <span class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-medium leading-tight">Esquema JSON</div>
@@ -418,7 +419,7 @@
     <div class="flex items-center justify-between gap-1 p-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xs">
       <!-- Auth User Profile / Entrar Action Button -->
       <div class="relative flex-1 min-w-0">
-        @if (auth.isAuthenticated()) {
+        @if (currentUser(); as user) {
           <button
             type="button"
             class="w-full h-7 px-2 rounded-lg flex items-center justify-between gap-1.5 text-[11.5px] font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all cursor-pointer min-w-0"
@@ -427,9 +428,9 @@
           >
             <div class="flex items-center gap-1.5 min-w-0 truncate">
               <span class="w-4 h-4 rounded-md bg-zinc-900 dark:bg-zinc-700 text-white flex items-center justify-center text-[9px] font-bold shrink-0">
-                {{ auth.currentUser()?.full_name?.charAt(0)?.toUpperCase() || 'U' }}
+                {{ user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U' }}
               </span>
-              <span class="truncate text-[11.5px]">{{ auth.currentUser()?.full_name }}</span>
+              <span class="truncate text-[11.5px]">{{ user.full_name }}</span>
             </div>
             <svg class="w-2.5 h-2.5 text-zinc-400 rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -438,9 +439,12 @@
           @if (showSidebarUserMenu()) {
             <div class="absolute left-0 right-0 bottom-full mb-2 bg-white dark:bg-[#0c101b] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50 p-1.5 text-[12px] animate-fadeIn">
               <div class="px-2.5 py-1.5 border-b border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 truncate">
-                {{ auth.currentUser()?.email }}
+                {{ user.email }}
               </div>
-              <button class="w-full text-left px-2.5 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer transition-colors" (click)="auth.logout(); showSidebarUserMenu.set(false)">
+              <button class="w-full text-left px-2.5 py-2 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors" (click)="openProfile.emit(); showSidebarUserMenu.set(false)">
+                Ver Perfil
+              </button>
+              <button class="w-full text-left px-2.5 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer transition-colors" (click)="logout.emit(); showSidebarUserMenu.set(false)">
                 Cerrar Sesión
               </button>
             </div>
@@ -449,7 +453,7 @@
           <button
             type="button"
             class="w-full h-7 px-2.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/80 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 text-[11.5px] font-semibold transition-all cursor-pointer shadow-2xs"
-            (click)="auth.showAuthModal.set(true)"
+            (click)="openAuth.emit()"
             title="Iniciar Sesión"
           >
             <svg class="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>

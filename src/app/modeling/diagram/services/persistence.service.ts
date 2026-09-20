@@ -42,8 +42,9 @@ export class PersistenceService {
     if (!this.boardId) return;
     const data: PersistedBoard = {
       state: this.diagram.getState(),
-      history: this.cmd.exportHistory(),
+      history: this.cmd.exportHistoryEntries(),
     };
+
     try {
       localStorage.setItem(this.key(this.boardId), JSON.stringify(data));
     } catch (err) {

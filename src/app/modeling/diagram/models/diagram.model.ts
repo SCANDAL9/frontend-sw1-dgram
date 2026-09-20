@@ -12,11 +12,20 @@ export interface DBAttribute {
 
 export type ClassifierType = 'class' | 'abstract_class' | 'interface' | 'enumeration' | 'datatype';
 
+export interface UmlPackage {
+  id: string;
+  name: string;
+  projectId?: string;
+}
+
 export interface DBEntity {
   id: string;
   name: string;
   attributes: DBAttribute[];
   position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  packageId?: string;
   elementType?: ClassifierType;
   stereotype?: string | null; // e.g. 'entity', 'service', 'repository', 'controller', 'enumeration', 'interface', 'datatype'
   isAbstract?: boolean;
@@ -30,6 +39,8 @@ export interface DBRelation {
   sourceColumn: string;
   targetColumn: string;
   name?: string | null;
+  sourceRole?: string | null;
+  targetRole?: string | null;
   sourceMultiplicity?: string | null;
   targetMultiplicity?: string | null;
   associationClassId?: string | null;
@@ -38,6 +49,7 @@ export interface DBRelation {
 export interface DiagramState {
   entities: DBEntity[];
   relations: DBRelation[];
+  packages?: UmlPackage[];
   version: number;
   // UML aliases — populated by backend for forward compat
   classes?: DBEntity[];

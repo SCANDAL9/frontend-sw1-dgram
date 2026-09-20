@@ -1,8 +1,8 @@
-@if (position) {
+@if (position(); as pos) {
   <div
     class="fixed z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xl p-2 flex flex-col gap-1 min-w-[210px] animate-in fade-in zoom-in-95 duration-100"
-    [style.left.px]="position.x"
-    [style.top.px]="position.y"
+    [style.left.px]="pos.x"
+    [style.top.px]="pos.y"
     (click)="$event.stopPropagation()"
   >
     <div class="px-2 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">

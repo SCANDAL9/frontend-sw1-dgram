@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClassifierType } from '../../../models/diagram.model';
 
@@ -15,7 +15,7 @@ export interface QuickLinkerPosition {
   templateUrl: './quick-linker.component.html',
 })
 export class QuickLinkerComponent {
-  @Input() position: QuickLinkerPosition | null = null;
-  @Output() createLinked = new EventEmitter<{ relType: string; classifierType: ClassifierType }>();
-  @Output() closed = new EventEmitter<void>();
+  position = input<QuickLinkerPosition | null>(null);
+  createLinked = output<{ relType: string; classifierType: ClassifierType }>();
+  closed = output<void>();
 }

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { DBAttribute } from '../../../models/diagram.model';
 
 @Component({
@@ -7,6 +7,6 @@ import { DBAttribute } from '../../../models/diagram.model';
   templateUrl: './column-connector.component.html',
 })
 export class ColumnConnectorComponent {
-  @Input({ required: true }) column!: DBAttribute;
-  @Input({ required: true }) entityId!: string;
+  column = input.required<DBAttribute>();
+  entityId = input.required<string>();
 }

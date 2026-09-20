@@ -274,11 +274,27 @@
           </svg>
         </button>
 
+        <!-- Historial de Versiones (Ctrl+H) -->
+        <button
+          class="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+          [ngClass]="isHistoryOpen()
+            ? 'bg-white dark:bg-zinc-800 text-amber-600 dark:text-amber-400 shadow-xs'
+            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-white dark:hover:bg-zinc-800'"
+          (click)="toggleHistoryDrawer()"
+          title="Historial de Versiones y Restauración (Ctrl+H)">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </button>
+
+
+
         <!-- Delete Selected (Trash Icon) -->
-        <button class="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer" [ngClass]="(selection.hasSelection() || selectedRelationId)
+        <button class="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer" [ngClass]="(selection.hasSelection() || selectedRelationId())
             ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 hover:text-red-600'
             : 'text-zinc-300 dark:text-zinc-700 opacity-40 cursor-not-allowed'"
-          [disabled]="!selection.hasSelection() && !selectedRelationId" (click)="deleteSelected()"
+          [disabled]="!selection.hasSelection() && !selectedRelationId()" (click)="deleteSelected()"
           title="Eliminar elemento seleccionado (Supr / Backspace)">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6" />
@@ -311,7 +327,7 @@
           data-agent-target="toolbar:open-studio"
           data-agent-name="Asistente IA Vertex Gemini"
           class="h-7 px-3 rounded-lg flex items-center gap-1.5 text-[11.5px] font-medium transition-all cursor-pointer"
-          [ngClass]="showStudioDrawer() && drawerTab() === 'chat'
+          [ngClass]="isStudioOpen() && currentStudioTab() === 'chat'
             ? 'bg-indigo-600 text-white shadow-xs font-semibold'
             : 'text-indigo-600 dark:text-indigo-400 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-2xs'"
           (click)="openDrawer('chat')" title="Asistente IA UML">
@@ -325,12 +341,3 @@
     </div>
   </header>
 </div>
-
-<!-- Modal de Autenticación -->
-@if (showAuthModal()) {
-<app-auth-modal (closed)="showAuthModal.set(false)"></app-auth-modal>
-}
-
-<!-- Unified Studio Slide Drawer (Chat IA, Exportar & Spring Boot, Equipo) -->
-<app-studio-drawer [boardId]="boardId" [flowHost]="flowHost" [isOpen]="showStudioDrawer" [activeTab]="drawerTab"
-  (closed)="showStudioDrawer.set(false)"></app-studio-drawer>

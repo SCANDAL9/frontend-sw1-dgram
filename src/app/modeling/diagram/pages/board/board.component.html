@@ -1,0 +1,207 @@
+<div class="flex flex-col h-full bg-[#f8fafc] dark:bg-[#090d16] text-zinc-900 dark:text-zinc-100 select-none overflow-hidden">
+  <!-- Topbar Toolbar -->
+  <app-toolbar
+    #toolbarRef
+    class="w-full block shrink-0"
+    [flowHost]="canvasRef?.flowHost?.nativeElement ?? null"
+    [boardId]="boardId()"
+    [selectedRelationId]="selectedRelationId()"
+    [isHistoryOpen]="showHistoryDrawer()"
+    [isStudioOpen]="showStudioDrawer()"
+    [currentStudioTab]="studioTab()"
+    (openCommandPalette)="showCommandPalette.set(true)"
+    (triggerAutoLayout)="canvasRef?.autoLayout()"
+    (deleteSelectedElements)="selectedRelationId.set(null)"
+    (openHistory)="openHistoryDrawer()"
+    (openStudioDrawer)="openStudioDrawer($event)"
+  />
+
+  <div class="flex flex-1 overflow-hidden relative">
+    <!-- Left Explorer Sidebar -->
+    <app-explorer-sidebar
+      [isOpen]="isSidebarOpen()"
+      [boardId]="boardId()"
+      [entities]="diagram.entities()"
+      [relations]="diagram.relations()"
+      [selectedEntityId]="selectedEntityId()"
+      [selectedRelationId]="selectedRelationId()"
+      [expandedEntityIds]="expandedEntityIds()"
+      [projectCatalogClasses]="projectCatalogClasses()"
+      [isLoadingCatalog]="isLoadingCatalog()"
+      [currentUser]="auth.currentUser()"
+      (openAuth)="showAuthModal.set(true)"
+      (openProfile)="auth.showProfileModal.set(true)"
+      (logout)="auth.logout()"
+      (toggleSidebar)="toggleSidebar()"
+      (toggleExpandEntity)="toggleExpandEntity($event)"
+      (toggleAllExpand)="toggleAllEntitiesExpand()"
+      (entitySelected)="onEntitySelected($event)"
+      (entityJumpRequested)="canvasRef?.jumpToEntity($event)"
+      (relationSelected)="onRelationSelected($event)"
+      (entityContextMenu)="canvasRef?.onContextMenu($event.event, $event.entityId)"
+      (attachClass)="attachProjectClass($event)"
+      (importXmi)="onXmiFileSelected($event)"
+      (openCodegen)="showCodegenModal.set(true)"
+      (openMembers)="openMembersModal()"
+      (exportSql)="exportSQL()"
+      (exportJson)="exportJSON()"
+      (exportXmi)="exportXMI()"
+      (exportPng)="exportPNG()"
+    />
+
+    <!-- Main Canvas Area -->
+    <app-canvas
+      #canvasRef
+      class="flex-1 relative overflow-hidden"
+      [boardId]="boardId()"
+      [isSidebarOpen]="isSidebarOpen()"
+      (toggleSidebar)="toggleSidebar()"
+      (openCodegen)="showCodegenModal.set(true)"
+      (openMembers)="openMembersModal()"
+      (openCommandPalette)="showCommandPalette.set(true)"
+      (openChat)="openStudioDrawer('chat')"
+      (catalogChanged)="loadProjectCatalog()"
+      (entitySelected)="selectedEntityId.set($event)"
+      (relationSelected)="selectedRelationId.set($event)"
+      (detachClass)="detachClass($event)"
+      (deleteClassFromModel)="deleteClassFromModel($event)"
+    />
+
+    <!-- Right Property Inspector Sidebar -->
+    @if (selectedEntity(); as entity) {
+      <app-sidebar
+        [entity]="entity"
+        [packages]="diagram.packages()"
+        [availableDataTypes]="availableEntityDataTypes()"
+        (close)="selectedEntityId.set(null)"
+        (nameChanged)="handleEntityNameChanged($event)"
+        (classifierTypeChanged)="handleClassifierTypeChanged($event)"
+        (stereotypeChanged)="handleStereotypeChanged($event)"
+        (abstractToggled)="handleAbstractToggled($event)"
+        (entityDeleted)="handleEntityDeleted($event)"
+        (columnAdded)="handleColumnAdded($event)"
+        (columnDeleted)="handleColumnDeleted($event)"
+        (columnUpdated)="handleColumnUpdated($event)"
+        (packageAssigned)="handlePackageAssigned($event)"
+        (packageCreatedAndAssigned)="handlePackageCreatedAndAssigned($event)"
+      />
+    }
+  </div>
+
+  <!-- Command Palette Modal -->
+  @if (showCommandPalette()) {
+    <app-command-palette
+      [entities]="diagram.entities()"
+      [isDark]="theme.isDark()"
+      (close)="showCommandPalette.set(false)"
+      (jumpToEntity)="canvasRef?.jumpToEntity($event)"
+      (createClass)="handleCreateClassFromPalette()"
+      (toggleTheme)="theme.toggleTheme()"
+      (triggerCodegen)="showCodegenModal.set(true)"
+      (triggerExportSql)="exportSQL()"
+      (triggerExportPng)="exportPNG()"
+      (triggerMembers)="openMembersModal()"
+      (triggerAutoLayout)="canvasRef?.autoLayout()"
+      (triggerAiChat)="openStudioDrawer('chat')"
+    />
+  }
+
+  <!-- Codegen Modal -->
+  @if (showCodegenModal()) {
+    <app-codegen-modal
+      [boardId]="boardId()"
+      [files]="codegenFiles()"
+      [loading]="codegenLoading()"
+      [errorMsg]="codegenError()"
+      [downloadUrl]="codegenDownloadUrl()"
+      (generate)="handleGenerateCode($event)"
+      (closed)="showCodegenModal.set(false)"
+    />
+  }
+
+  <!-- Members Modal -->
+  @if (showMembersModal()) {
+    <app-members-modal
+      [boardId]="boardId()"
+      [members]="boardMembers()"
+      [loading]="loadingMembers()"
+      [inviting]="invitingMember()"
+      [errorMsg]="membersError()"
+      [currentUserId]="auth.currentUser()?.id || null"
+      (invite)="onInviteMember($event)"
+      (changeRole)="onChangeMemberRole($event)"
+      (removeMember)="onRemoveMember($event)"
+      (closed)="showMembersModal.set(false)"
+    />
+  }
+
+  <!-- XMI Import Preview Modal -->
+  @if (showXmiPreviewModal() && xmiPreviewData(); as preview) {
+    <app-xmi-import-preview-modal
+      [previewData]="preview"
+      [fileName]="xmiPendingFile()?.name || ''"
+      [isImporting]="isImportingXmi()"
+      (confirm)="confirmXmiImport()"
+      (cancel)="cancelXmiImport()"
+    />
+  }
+
+  <!-- Auth Modal -->
+  @if (showAuthModal()) {
+    <app-auth-modal
+      [loading]="authLoading()"
+      [errorMsg]="authError()"
+      [successMsg]="authSuccess()"
+      [initialResetToken]="auth.resetToken()"
+      (loginSubmitted)="handleLogin($event)"
+      (registerSubmitted)="handleRegister($event)"
+      (forgotPasswordSubmitted)="handleForgotPassword($event)"
+      (resetPasswordSubmitted)="handleResetPassword($event)"
+      (closed)="showAuthModal.set(false)"
+    />
+  }
+
+  <!-- Profile Modal -->
+  @if (auth.showProfileModal()) {
+    <app-profile-modal
+      [currentUser]="auth.currentUser()"
+      [loading]="profileLoading()"
+      [errorMsg]="profileError()"
+      [successMsg]="profileSuccess()"
+      (updateProfileSubmitted)="handleUpdateProfile($event)"
+      (changePasswordSubmitted)="handleChangePassword($event)"
+      (logout)="auth.logout()"
+      (closed)="auth.showProfileModal.set(false)"
+    />
+  }
+
+  <!-- Studio Drawer (Vertex Gemini AI & Collaborative Studio) -->
+  <app-studio-drawer
+    [boardId]="boardId()"
+    [flowHost]="canvasRef?.flowHost?.nativeElement ?? null"
+    [isOpen]="showStudioDrawer()"
+    [activeTab]="studioTab()"
+    (closed)="showStudioDrawer.set(false)"
+  />
+
+  <!-- History Drawer (Versions & Audit Log) -->
+  <app-history-drawer
+    [boardId]="boardId()"
+    [isOpen]="showHistoryDrawer()"
+    [items]="historyItems()"
+    [loading]="historyLoading()"
+    [selectedDetail]="historyDetail()"
+    [detailLoading]="historyDetailLoading()"
+    [restoring]="historyRestoring()"
+    [diagramVersion]="diagram.version()"
+    (closed)="showHistoryDrawer.set(false)"
+    (refresh)="loadHistory()"
+    (filterActorChange)="loadHistory($event)"
+    (itemExpanded)="loadHistoryDetail($event)"
+    (restoreRequested)="handleRestoreVersion($event)"
+  />
+
+  <!-- Toast Container & Agent Guide -->
+  <app-toast-container />
+  <app-agent-guide [boardId]="boardId()" />
+</div>

@@ -42,16 +42,37 @@ export class CommandService {
     return this.localHistory.map((e) => e.cmd);
   }
 
-  restoreHistory(cmds: Command[]): void {
-    // When restoring from persistence we cannot recover pre-snapshots,
-    // so we rebuild minimal entries without snapshots.
-    this.localHistory = cmds.map((cmd) => ({
-      cmd,
-      snapshot: { entities: [], relations: [], version: 0 },
+  exportHistoryEntries(): Array<{ cmd: Command; snapshot: StateSnapshot }> {
+    // Keep at most last 50 entries to keep localStorage size bounded and fast
+    const slice = this.localHistory.slice(-50);
+    return slice.map((e) => ({
+      cmd: e.cmd,
+      snapshot: e.snapshot,
     }));
-    this.localPointer = cmds.length - 1;
+  }
+
+  restoreHistory(entries: Array<{ cmd: Command; snapshot?: StateSnapshot } | Command>): void {
+    if (!entries || !Array.isArray(entries)) return;
+    this.localHistory = entries.map((item) => {
+      const isWrapped = item && typeof item === 'object' && 'cmd' in item;
+      const cmd = isWrapped ? (item as any).cmd : (item as Command);
+      let snapshot = isWrapped ? (item as any).snapshot : null;
+
+      // Fallback: if snapshot was empty or missing, synthesize from current diagram state
+      if (!snapshot || !snapshot.entities || snapshot.entities.length === 0) {
+        snapshot = this._currentSnapshot();
+      }
+
+      return {
+        cmd,
+        snapshot,
+      };
+    });
+    this.localPointer = this.localHistory.length - 1;
     this._refreshUndoState();
   }
+
+
 
   private _schedulePersist(): void {
     if (!this.onPersist) return;
@@ -223,12 +244,52 @@ export class CommandService {
     });
   }
 
+  resizeEntity(id: string, width: number, height: number): void {
+    this._createAndApply('RESIZE_ENTITY', {
+      entity_id: id,
+      width,
+      height,
+    });
+  }
+
+  assignClassPackage(classId: string, packageId: string): void {
+    this._createAndApply('ASSIGN_CLASS_PACKAGE', {
+      entity_id: classId,
+      package_id: packageId,
+    });
+  }
+
+  createPackage(name: string, id?: string): void {
+    this._createAndApply('CREATE_PACKAGE', {
+      package_id: id || `pkg-${Date.now()}-${this.counter++}`,
+      package_name: name,
+    });
+  }
+
+  updatePackage(id: string, name: string): void {
+    this._createAndApply('UPDATE_PACKAGE', {
+      package_id: id,
+      package_name: name,
+    });
+  }
+
+  deletePackage(id: string): void {
+    this._createAndApply('DELETE_PACKAGE', {
+      package_id: id,
+    });
+  }
+
   createRelation(
     sourceId: string,
     targetId: string,
     sourceColumn: string,
     targetColumn: string,
     type = '1:N',
+    name?: string | null,
+    sourceRole?: string | null,
+    targetRole?: string | null,
+    sourceMultiplicity?: string | null,
+    targetMultiplicity?: string | null,
   ): void {
     this._createAndApply('CREATE_RELATION', {
       relation_id: `rel-${Date.now()}-${this.counter++}`,
@@ -237,15 +298,37 @@ export class CommandService {
       source_column: sourceColumn,
       target_column: targetColumn,
       relation_type: type,
+      name,
+      source_role: sourceRole,
+      target_role: targetRole,
+      source_multiplicity: sourceMultiplicity,
+      target_multiplicity: targetMultiplicity,
     });
   }
 
-  updateRelation(id: string, changes: { type?: string; sourceColumn?: string; targetColumn?: string }): void {
+  updateRelation(
+    id: string,
+    changes: {
+      type?: string;
+      sourceColumn?: string;
+      targetColumn?: string;
+      name?: string | null;
+      sourceRole?: string | null;
+      targetRole?: string | null;
+      sourceMultiplicity?: string | null;
+      targetMultiplicity?: string | null;
+    }
+  ): void {
     this._createAndApply('UPDATE_RELATION', {
       relation_id: id,
       relation_type: changes.type,
       source_column: changes.sourceColumn,
       target_column: changes.targetColumn,
+      name: changes.name,
+      source_role: changes.sourceRole,
+      target_role: changes.targetRole,
+      source_multiplicity: changes.sourceMultiplicity,
+      target_multiplicity: changes.targetMultiplicity,
     });
   }
 

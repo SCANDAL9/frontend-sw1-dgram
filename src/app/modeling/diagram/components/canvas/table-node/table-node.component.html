@@ -1,15 +1,15 @@
 <div
   class="uml-class-node relative group/node select-none"
   data-agent-target="entity:node"
-  [attr.data-agent-entity-id]="entity.id"
-  [attr.data-agent-name]="entity.name"
+  [attr.data-agent-entity-id]="entity().id"
+  [attr.data-agent-name]="entity().name"
 >
   <!-- Class Connectors (Left / Right / Top / Bottom) -->
   <div
     fConnector
     fDragBlocker
     fConnectorType="source-target"
-    [fConnectorId]="entity.id + '@class-in'"
+    [fConnectorId]="entity().id + '@class-in'"
     class="uml-connector uml-connector-left uml-connector-class"
     title="Conectar clase (In)"
   ></div>
@@ -17,7 +17,7 @@
     fConnector
     fDragBlocker
     fConnectorType="source-target"
-    [fConnectorId]="entity.id + '@class-out'"
+    [fConnectorId]="entity().id + '@class-out'"
     class="uml-connector uml-connector-right uml-connector-class"
     title="Conectar clase (Out)"
   ></div>
@@ -25,7 +25,7 @@
     fConnector
     fDragBlocker
     fConnectorType="source-target"
-    [fConnectorId]="entity.id + '@class-top'"
+    [fConnectorId]="entity().id + '@class-top'"
     class="uml-connector uml-connector-top"
     title="Conectar clase (Top)"
   ></div>
@@ -33,7 +33,7 @@
     fConnector
     fDragBlocker
     fConnectorType="source-target"
-    [fConnectorId]="entity.id + '@class-bottom'"
+    [fConnectorId]="entity().id + '@class-bottom'"
     class="uml-connector uml-connector-bottom"
     title="Conectar clase (Bottom)"
   ></div>
@@ -58,16 +58,22 @@
       <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
         «dataType»
       </span>
-    } @else if (entity.stereotype) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold" [ngClass]="getStereotypeClass(entity.stereotype)">
-        «{{ entity.stereotype }}»
+    } @else if (entity().stereotype) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold" [ngClass]="getStereotypeClass(entity().stereotype)">
+        «{{ entity().stereotype }}»
+      </span>
+    }
+
+    @if (packageName()) {
+      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700" title="Paquete UML">
+        📦 {{ packageName() }}
       </span>
     }
 
     <!-- Class Name -->
     @if (editing()) {
       <input
-        id="uml-name-{{entity.id}}"
+        id="uml-name-{{entity().id}}"
         class="uml-name-input"
         [ngModel]="draft()"
         (ngModelChange)="draft.set($event)"
@@ -82,7 +88,7 @@
         class="uml-class-name"
         [class.uml-abstract]="isAbstract()"
       >
-        {{ entity.name }}
+        {{ entity().name }}
       </span>
     }
 
@@ -93,7 +99,7 @@
 
   <!-- Attributes compartment — Doble-click vacío = nuevo atributo -->
   <div class="uml-compartment" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
-    @for (col of entity.attributes; track col.name) {
+    @for (col of entity().attributes; track col.name) {
       <div
         class="uml-attr-row group/row"
         [class.editing]="editingAttr() === col.name"
@@ -105,7 +111,7 @@
           fConnector
           fDragBlocker
           fConnectorType="source-target"
-          [fConnectorId]="entity.id + ':' + col.name + '@in'"
+          [fConnectorId]="entity().id + ':' + col.name + '@in'"
           class="uml-connector uml-connector-left"
         ></div>
 
@@ -113,7 +119,7 @@
         @if (editingAttr() === col.name) {
           @if (isEnum()) {
             <input
-              id="attr-{{entity.id}}-{{col.name}}"
+              id="attr-{{entity().id}}-{{col.name}}"
               class="uml-attr-input flex-1 min-w-0 font-mono uppercase font-bold text-purple-700 dark:text-purple-300"
               [ngModel]="draftAttrName()"
               (ngModelChange)="draftAttrName.set($event)"
@@ -128,7 +134,7 @@
               {{ formatVisibility(col.visibility, col.pk) }}
             </span>
             <input
-              id="attr-{{entity.id}}-{{col.name}}"
+              id="attr-{{entity().id}}-{{col.name}}"
               class="uml-attr-input flex-1 min-w-0 font-mono"
               [ngModel]="draftAttrName()"
               (ngModelChange)="draftAttrName.set($event)"
@@ -198,7 +204,7 @@
           fConnector
           fDragBlocker
           fConnectorType="source-target"
-          [fConnectorId]="entity.id + ':' + col.name + '@out'"
+          [fConnectorId]="entity().id + ':' + col.name + '@out'"
           class="uml-connector uml-connector-right"
         ></div>
       </div>
@@ -208,5 +214,17 @@
         {{ isEnum() ? '+ Añadir valor' : '+ Añadir atributo' }}
       </div>
     }
+  </div>
+
+  <!-- Manual Resize Handle -->
+  <div
+    fDragBlocker
+    class="uml-resize-handle absolute bottom-0 right-0 w-3.5 h-3.5 cursor-se-resize flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 opacity-60 hover:opacity-100 transition-opacity z-20"
+    (mousedown)="onResizeStart($event)"
+    title="Arrastrar para redimensionar clase"
+  >
+    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 1L1 7M7 4L4 7M7 7H7.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
   </div>
 </div>

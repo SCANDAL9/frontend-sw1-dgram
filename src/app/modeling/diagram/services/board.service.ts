@@ -1,119 +1,76 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface Board {
-  id: string;
-  name: string;
-  description: string | null;
-  owner_id: string;
-  project_id?: string | null;
-  diagram_version?: number;
-  entities_count?: number;
-  relations_count?: number;
-  preview_entities?: string[];
-  created_at: string;
-}
+import { Board, BoardCreate, DiagramStateResponse, ProjectClass, ProjectClassAttribute } from '../models/board.model';
+import {
+  BoardAdapter,
+  BoardDto,
+  DiagramStateDto,
+  ProjectClassDto,
+} from '../adapters/board.adapter';
 
-export interface BoardCreate {
-  name: string;
-  description?: string | null;
-  owner_id?: string;
-  project_id?: string | null;
-}
-
-export interface DiagramStateResponse {
-  entities: any[];
-  relations: any[];
-  classes: any[];
-  associations: any[];
-  version: number;
-}
-
-export interface ProjectClassAttribute {
-  id: string;
-  name: string;
-  data_type: string;
-  visibility: string;
-  is_pkey: boolean;
-}
-
-export interface ProjectClass {
-  id: string;
-  name: string;
-  package_id: string;
-  element_type: string;
-  is_abstract: boolean;
-  attributes: ProjectClassAttribute[];
-  boards_count: number;
-  is_on_current_board?: boolean;
-}
+export type { Board, BoardCreate, DiagramStateResponse, ProjectClass, ProjectClassAttribute };
 
 @Injectable({ providedIn: 'root' })
 export class BoardService {
   private http = inject(HttpClient);
 
-  list() {
-    return this.http.get<Board[]>(`${environment.apiUrl}/boards`);
+  list(): Observable<Board[]> {
+    return this.http
+      .get<BoardDto[]>(`${environment.apiUrl}/boards`)
+      .pipe(map((dtos) => BoardAdapter.toBoardList(dtos)));
   }
 
-  create(data: BoardCreate) {
-    return this.http.post<Board>(`${environment.apiUrl}/boards`, data);
+  create(data: BoardCreate): Observable<Board> {
+    const payload = BoardAdapter.toBoardCreatePayload(data);
+    return this.http
+      .post<BoardDto>(`${environment.apiUrl}/boards`, payload)
+      .pipe(map((dto) => BoardAdapter.toBoardModel(dto)));
   }
 
-  get(id: string) {
-    return this.http.get<Board>(`${environment.apiUrl}/boards/${id}`);
+  get(id: string): Observable<Board> {
+    return this.http
+      .get<BoardDto>(`${environment.apiUrl}/boards/${id}`)
+      .pipe(map((dto) => BoardAdapter.toBoardModel(dto)));
   }
 
-  getState(id: string) {
-    return this.http.get<DiagramStateResponse>(`${environment.apiUrl}/boards/${id}/state`);
+  getState(id: string): Observable<DiagramStateResponse> {
+    return this.http
+      .get<DiagramStateDto>(`${environment.apiUrl}/boards/${id}/state`)
+      .pipe(map((dto) => BoardAdapter.toDiagramStateResponse(dto)));
   }
 
-  delete(id: string) {
+  delete(id: string): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/boards/${id}`);
   }
 
-  update(id: string, data: { name?: string; description?: string | null }) {
-    return this.http.patch<Board>(`${environment.apiUrl}/boards/${id}`, data);
+  update(id: string, data: { name?: string; description?: string | null }): Observable<Board> {
+    return this.http
+      .patch<BoardDto>(`${environment.apiUrl}/boards/${id}`, data)
+      .pipe(map((dto) => BoardAdapter.toBoardModel(dto)));
   }
 
-  getProjectClasses(boardId: string) {
-    return this.http.get<ProjectClass[]>(`${environment.apiUrl}/boards/${boardId}/project-classes`);
+  getProjectClasses(boardId: string): Observable<ProjectClass[]> {
+    return this.http
+      .get<ProjectClassDto[]>(`${environment.apiUrl}/boards/${boardId}/project-classes`)
+      .pipe(map((dtos) => BoardAdapter.toProjectClassList(dtos)));
   }
 
-  attachClass(boardId: string, classId: string, position: { x: number; y: number } = { x: 120, y: 120 }) {
+  attachClass(boardId: string, classId: string, position: { x: number; y: number } = { x: 120, y: 120 }): Observable<unknown> {
     return this.http.post(`${environment.apiUrl}/boards/${boardId}/classes/${classId}/attach`, position);
   }
 
-  detachClass(boardId: string, classId: string) {
+  detachClass(boardId: string, classId: string): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/boards/${boardId}/classes/${classId}/detach`);
   }
 
-  deleteClassFromProject(projectId: string, classId: string) {
+  deleteClassFromProject(projectId: string, classId: string): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/projects/${projectId}/classes/${classId}`);
   }
 
-  deleteClassFromModel(boardId: string, classId: string) {
+  deleteClassFromModel(boardId: string, classId: string): Observable<unknown> {
     return this.http.delete(`${environment.apiUrl}/boards/${boardId}/classes/${classId}/model`);
-  }
-
-  importXmi(boardId: string, file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<{ status: string; message: string; classes: string[]; associations_count: number }>(
-      `${environment.apiUrl}/boards/${boardId}/import/xmi`,
-      formData
-    );
-  }
-
-  generateCode(boardId: string, basePackage: string = 'com.dgram.generated') {
-    return this.http.post<{ job_id: string; status: string; files: Record<string, string> }>(
-      `${environment.apiUrl}/codegen/boards/${boardId}?base_package=${encodeURIComponent(basePackage)}`,
-      {}
-    );
-  }
-
-  downloadCodeZipUrl(boardId: string, basePackage: string = 'com.dgram.generated'): string {
-    return `${environment.apiUrl}/codegen/boards/${boardId}/download?base_package=${encodeURIComponent(basePackage)}`;
   }
 }

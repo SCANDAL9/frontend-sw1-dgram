@@ -1,7 +1,7 @@
-@if (selectedCount >= 2) {
+@if (selectedCount() >= 2) {
   <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 bg-zinc-900/95 dark:bg-zinc-900/98 backdrop-blur-md text-white px-3 py-1.5 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-1 animate-in slide-in-from-bottom-3 duration-150">
     <span class="text-xs font-semibold text-zinc-400 px-2 border-r border-white/10 shrink-0">
-      {{ selectedCount }} seleccionados
+      {{ selectedCount() }} seleccionados
     </span>
 
     <!-- Align Left -->
@@ -32,7 +32,7 @@
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M7 4v12M17 8v8"/></svg>
     </button>
 
-    @if (selectedCount >= 3) {
+    @if (selectedCount() >= 3) {
       <div class="w-px h-4 bg-white/15 mx-0.5 shrink-0"></div>
       <!-- Distribute H -->
       <button (click)="distribute.emit('h')" class="p-1.5 rounded-lg hover:bg-white/15 text-zinc-300 hover:text-white transition-colors cursor-pointer" title="Distribuir horizontalmente de forma uniforme">

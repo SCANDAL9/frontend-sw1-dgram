@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './alignment-toolbar.component.html',
 })
 export class AlignmentToolbarComponent {
-  @Input() selectedCount = 0;
-  @Output() align = new EventEmitter<'left' | 'centerH' | 'right' | 'top' | 'centerV' | 'bottom'>();
-  @Output() distribute = new EventEmitter<'h' | 'v'>();
+  selectedCount = input<number>(0);
+  align = output<'left' | 'centerH' | 'right' | 'top' | 'centerV' | 'bottom'>();
+  distribute = output<'h' | 'v'>();
 }

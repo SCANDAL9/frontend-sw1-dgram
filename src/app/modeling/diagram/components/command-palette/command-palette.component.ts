@@ -1,10 +1,7 @@
-import { Component, inject, signal, computed, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DiagramService } from '../../services/diagram.service';
-import { CommandService } from '../../services/command.service';
-import { ThemeService } from '../../../../core/services/theme.service';
-import { ToastService } from '../../../../core/services/toast.service';
+import { DBEntity } from '../../models/diagram.model';
 
 export interface CommandItem {
   id: string;
@@ -22,19 +19,19 @@ export interface CommandItem {
   templateUrl: './command-palette.component.html',
 })
 export class CommandPaletteComponent {
-  @Output() close = new EventEmitter<void>();
-  @Output() jumpToEntity = new EventEmitter<string>();
-  @Output() triggerCodegen = new EventEmitter<void>();
-  @Output() triggerExportSql = new EventEmitter<void>();
-  @Output() triggerExportPng = new EventEmitter<void>();
-  @Output() triggerMembers = new EventEmitter<void>();
-  @Output() triggerAutoLayout = new EventEmitter<void>();
-  @Output() triggerAiChat = new EventEmitter<void>();
+  entities = input<DBEntity[]>([]);
+  isDark = input<boolean>(false);
 
-  diagram = inject(DiagramService);
-  cmd = inject(CommandService);
-  theme = inject(ThemeService);
-  toast = inject(ToastService);
+  close = output<void>();
+  jumpToEntity = output<string>();
+  createClass = output<void>();
+  toggleTheme = output<void>();
+  triggerCodegen = output<void>();
+  triggerExportSql = output<void>();
+  triggerExportPng = output<void>();
+  triggerMembers = output<void>();
+  triggerAutoLayout = output<void>();
+  triggerAiChat = output<void>();
 
   query = signal('');
   selectedIndex = signal(0);
@@ -44,7 +41,7 @@ export class CommandPaletteComponent {
     const items: CommandItem[] = [];
 
     // 1. Clases
-    for (const e of this.diagram.entities()) {
+    for (const e of this.entities()) {
       items.push({
         id: `class-${e.id}`,
         title: e.name,
@@ -65,10 +62,7 @@ export class CommandPaletteComponent {
         subtitle: 'Añadir entidad al canvas',
         category: 'action',
         action: () => {
-          const id = `class-${Date.now()}`;
-          this.cmd.createEntity(id, 'NuevaClase', [], { x: 200, y: 200 });
-          this.toast.success('Nueva clase creada');
-          this.jumpToEntity.emit(id);
+          this.createClass.emit();
           this.close.emit();
         },
       },
@@ -79,18 +73,16 @@ export class CommandPaletteComponent {
         category: 'action',
         action: () => {
           this.triggerAutoLayout.emit();
-          this.toast.info('Diagrama auto-organizado');
           this.close.emit();
         },
       },
       {
         id: 'action-toggle-theme',
-        title: `Alternar a ${this.theme.isDark() ? 'Modo Claro' : 'Modo Oscuro'}`,
+        title: `Alternar a ${this.isDark() ? 'Modo Claro' : 'Modo Oscuro'}`,
         subtitle: 'Cambiar apariencia visual',
         category: 'action',
         action: () => {
-          this.theme.toggleTheme();
-          this.toast.info(`Tema cambiado a ${this.theme.theme()}`);
+          this.toggleTheme.emit();
           this.close.emit();
         },
       },

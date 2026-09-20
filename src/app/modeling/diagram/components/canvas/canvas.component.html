@@ -1,308 +1,303 @@
-<div class="flex flex-col h-full bg-[#f8fafc] dark:bg-[#090d16] text-zinc-900 dark:text-zinc-100 select-none overflow-hidden" (click)="closeContextMenu()">
-  <!-- Topbar Toolbar -->
-  <app-toolbar
-    class="w-full block shrink-0"
-    [flowHost]="flowHost?.nativeElement ?? null"
-    [boardId]="boardId()"
-    [selectedRelationId]="selectedRelationId()"
-    (openCommandPalette)="showCommandPalette.set(true)"
-    (triggerAutoLayout)="autoLayout()"
-    (deleteSelectedElements)="selectedRelationId.set(null)"
-  />
-
-  <div class="flex flex-1 overflow-hidden relative">
-    <!-- Left Explorer Sidebar (Standalone Presentational Component) -->
-    <app-explorer-sidebar
-      [isOpen]="isSidebarOpen()"
-      [boardId]="boardId()"
-      [entities]="diagram.entities()"
-      [relations]="diagram.relations()"
-      [selectedEntityId]="selectedEntityId()"
-      [selectedRelationId]="selectedRelationId()"
-      [expandedEntityIds]="expandedEntityIds()"
-      [projectCatalogClasses]="projectCatalogClasses()"
-      [isLoadingCatalog]="isLoadingCatalog()"
-      (toggleSidebar)="toggleSidebar()"
-      (toggleExpandEntity)="toggleExpandEntity($event)"
-      (toggleAllExpand)="toggleAllEntitiesExpand()"
-      (entitySelected)="selectEntity($event)"
-      (entityJumpRequested)="jumpToEntity($event)"
-      (relationSelected)="onSelectAssociation($event)"
-      (entityContextMenu)="onContextMenu($event.event, $event.entityId)"
-      (attachClass)="attachProjectClass($event)"
-      (importXmi)="onXmiFileSelected($event)"
-      (openCodegen)="showCodegenModal.set(true)"
-      (openMembers)="showMembersModal.set(true)"
-      (exportSql)="exportSQL()"
-      (exportJson)="exportJSON()"
-      (exportXmi)="exportXMI()"
-      (exportPng)="exportPNG()"
-    />
-
-    <!-- Canvas Area -->
-    <div
-      class="flex-1 relative overflow-hidden transition-colors"
-      [ngClass]="gridType() === 'dots' ? 'canvas-grid-dots' : (gridType() === 'lines' ? 'canvas-grid-lines' : 'canvas-grid-none')"
-      [class.cursor-grab]="shortcuts.isSpacePressed() && !isPanning()"
-      [class.cursor-grabbing]="isPanning()"
-      (mousedown)="onCanvasMouseDown($event)"
-      (dblclick)="onCanvasDoubleClick($event)"
-      (contextmenu)="onContextMenu($event)"
+<div
+  class="w-full h-full relative overflow-hidden transition-colors"
+  [ngClass]="gridType() === 'dots' ? 'canvas-grid-dots' : (gridType() === 'lines' ? 'canvas-grid-lines' : 'canvas-grid-none')"
+  [class.cursor-grab]="shortcuts.isSpacePressed() && !isPanning()"
+  [class.cursor-grabbing]="isPanning()"
+  (mousedown)="onCanvasMouseDown($event)"
+  (dblclick)="onCanvasDoubleClick($event)"
+  (contextmenu)="onContextMenu($event)"
+  (click)="closeContextMenu()"
+>
+  <!-- Floating Sidebar Toggle Button when closed -->
+  @if (!isSidebarOpen()) {
+    <button
+      class="absolute top-4 left-4 z-30 w-8 h-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+      (click)="toggleSidebar.emit()"
+      title="Abrir Explorador (Ctrl+B)"
     >
-      <!-- Floating Sidebar Toggle Button when closed -->
-      @if (!isSidebarOpen()) {
-        <button
-          class="absolute top-4 left-4 z-30 w-8 h-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer"
-          (click)="toggleSidebar()"
-          title="Abrir Explorador (Ctrl+B)"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
-        </button>
-      }
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+    </button>
+  }
 
-      <!-- Tooltip Banner when connecting -->
-      @if (selection.activeTool() === 'relation') {
-        <div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-zinc-900/90 dark:bg-zinc-800/90 text-white rounded-full shadow-2xl backdrop-blur-md text-[12px] font-medium border border-zinc-700/50 pointer-events-auto animate-bounce-short">
-          <span>
-            Conector UML ({{ selection.currentRelationKind() }}):
-            @if (selection.pendingSourceId(); as srcId) {
-              Origen: <b class="text-indigo-400 underline">{{ entityName(srcId) }}</b> — Ahora haz click en la Clase Destino
-            } @else {
-              Haz click en la Clase Origen y luego en la Clase Destino (o arrastra desde las manijas)
-            }
-          </span>
-          <button class="ml-1 w-5 h-5 rounded-full bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-[10px] cursor-pointer" (click)="selection.setTool('select')">
-            <svg class="w-3 h-3 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-      }
-
-      <f-flow
-        data-agent-target="canvas:empty"
-        data-agent-name="Lienzo UML dgram"
-        fDraggable
-        (fMoveNodes)="onNodeMoved($event)"
-        (fCreateConnection)="onConnectionCreated($event)"
-        (fReassignConnection)="onConnectionReassigned($event)"
-        (fSelectionChange)="onSelectionChange($event)"
-        (fDeleteSelected)="onDeleteSelected($event)"
-        (mousemove)="onFlowMouseMove($event)"
-      >
-        <!-- Marquee Drag Selection Area -->
-        <f-selection-area></f-selection-area>
-
-        <!-- Minimap if enabled -->
-        @if (showMinimap()) {
-          <f-minimap [fMinSize]="800"></f-minimap>
+  <!-- Tooltip Banner when connecting -->
+  @if (selection.activeTool() === 'relation') {
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-zinc-900/90 dark:bg-zinc-800/90 text-white rounded-full shadow-2xl backdrop-blur-md text-[12px] font-medium border border-zinc-700/50 pointer-events-auto animate-bounce-short">
+      <span>
+        Conector UML ({{ selection.currentRelationKind() }}):
+        @if (selection.pendingSourceId(); as srcId) {
+          Origen: <b class="text-indigo-400 underline">{{ entityName(srcId) }}</b> — Ahora haz click en la Clase Destino
+        } @else {
+          Haz click en la Clase Origen y luego en la Clase Destino (o arrastra desde las manijas)
         }
+      </span>
+      <button class="ml-1 w-5 h-5 rounded-full bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-[10px] cursor-pointer" (click)="selection.setTool('select')">
+        <svg class="w-3 h-3 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  }
 
-        <!-- Background Grid -->
-        <f-background>
-          @if (gridType() === 'dots') {
-            <f-circle-pattern [radius]="1.2" [color]="theme.isDark() ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'"></f-circle-pattern>
-          } @else if (gridType() === 'lines') {
-            <f-rect-pattern [vSize]="24" [hSize]="24" [vColor]="theme.isDark() ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)'" [hColor]="theme.isDark() ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)'"></f-rect-pattern>
-          }
-        </f-background>
+  <f-flow
+    data-agent-target="canvas:empty"
+    data-agent-name="Lienzo UML dgram"
+    fDraggable
+    (fMoveNodes)="onNodeMoved($event)"
+    (fCreateConnection)="onConnectionCreated($event)"
+    (fReassignConnection)="onConnectionReassigned($event)"
+    (fSelectionChange)="onSelectionChange($event)"
+    (fDeleteSelected)="onDeleteSelected($event)"
+    (mousemove)="onFlowMouseMove($event)"
+  >
+    <!-- Marquee Drag Selection Area -->
+    <f-selection-area></f-selection-area>
 
-        <f-canvas fZoom [fZoomMinimum]="0.2" [fZoomMaximum]="2.5" (fCanvasChange)="onCanvasChange($event)">
-          <f-snap-connection [fSnapThreshold]="8"></f-snap-connection>
+    <!-- Minimap if enabled -->
+    @if (showMinimap()) {
+      <f-minimap [fMinSize]="800"></f-minimap>
+    }
 
-          <!-- Connection Creation Preview -->
-          <f-connection-for-create [fType]="lineType()" fBehavior="floating" [fRadius]="8">
-            <f-connection-marker-arrow type="END" />
-          </f-connection-for-create>
+    <!-- Background Grid -->
+    <f-background>
+      @if (gridType() === 'dots') {
+        <f-circle-pattern [radius]="1.2" [color]="theme.isDark() ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'"></f-circle-pattern>
+      } @else if (gridType() === 'lines') {
+        <f-rect-pattern [vSize]="24" [hSize]="24" [vColor]="theme.isDark() ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)'" [hColor]="theme.isDark() ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)'"></f-rect-pattern>
+      }
+    </f-background>
 
-          <!-- Nodes with Focus Chain Highlighting & Collaborative Awareness -->
-          <ng-container ngProjectAs="[fNodes]">
-            @for (entity of diagram.entities(); track entity.id) {
+    <f-canvas fZoom [fZoomMinimum]="0.2" [fZoomMaximum]="2.5" (fCanvasChange)="onCanvasChange($event)">
+      <f-snap-connection [fSnapThreshold]="8"></f-snap-connection>
+
+      <!-- Connection Creation Preview -->
+      <f-connection-for-create [fType]="lineType()" fBehavior="floating" [fRadius]="8">
+        <f-connection-marker-arrow type="END" />
+      </f-connection-for-create>
+
+      <!-- Nodes with Focus Chain Highlighting & Collaborative Awareness -->
+      <ng-container ngProjectAs="[fNodes]">
+        @for (entity of diagram.entities(); track entity.id) {
+          <div
+            fNode
+            [fNodeId]="entity.id"
+            [fNodePosition]="entity.position"
+            [style.width.px]="entity.width || null"
+            [style.height.px]="entity.height || null"
+            class="entity-node relative"
+            [class.selected]="selectedEntityId() === entity.id"
+            [class.focused-chain]="highlightChain().active && highlightChain().entityIds.has(entity.id)"
+            [class.dimmed-chain]="highlightChain().active && !highlightChain().entityIds.has(entity.id)"
+            (mouseenter)="hoveredEntityId.set(entity.id)"
+            (mouseleave)="hoveredEntityId.set(null)"
+            (click)="selectEntity(entity.id)"
+            (contextmenu)="onContextMenu($event, entity.id)"
+          >
+            <!-- Peer Selection Outline & Name Badge -->
+            @if (getRemotePeerForEntity(entity.id); as peer) {
               <div
-                fNode
-                [fNodeId]="entity.id"
-                [fNodePosition]="entity.position"
-                class="entity-node relative"
-                [class.selected]="selectedEntityId() === entity.id"
-                [class.focused-chain]="highlightChain().active && highlightChain().entityIds.has(entity.id)"
-                [class.dimmed-chain]="highlightChain().active && !highlightChain().entityIds.has(entity.id)"
-                (mouseenter)="hoveredEntityId.set(entity.id)"
-                (mouseleave)="hoveredEntityId.set(null)"
-                (click)="selectEntity(entity.id)"
-                (contextmenu)="onContextMenu($event, entity.id)"
+                class="absolute -inset-[3px] rounded-xl border-2 pointer-events-none z-20 transition-all duration-150 animate-pulse"
+                [style.border-color]="peer.color"
               >
-                <!-- Peer Selection Outline & Name Badge -->
-                @if (getRemotePeerForEntity(entity.id); as peer) {
-                  <div
-                    class="absolute -inset-[3px] rounded-xl border-2 pointer-events-none z-20 transition-all duration-150 animate-pulse"
-                    [style.border-color]="peer.color"
-                  >
-                    <span
-                      class="absolute -top-5 left-2 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shadow-sm flex items-center gap-1"
-                      [style.background-color]="peer.color"
-                    >
-                      <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                      {{ peer.name }}
-                    </span>
-                  </div>
-                }
-
-                <!-- Peer Editing Overlay (Soft Warning) -->
-                @if (getRemoteEditingPeer(entity.id); as editPeer) {
-                  <div
-                    class="absolute inset-0 bg-amber-500/10 dark:bg-amber-500/20 backdrop-blur-[0.5px] rounded-xl border-2 border-dashed border-amber-500 pointer-events-none z-30 flex items-center justify-center"
-                  >
-                    <span class="bg-amber-600 text-white text-[11px] font-semibold px-2 py-1 rounded shadow-md flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
-                      {{ editPeer.name }} editando...
-                    </span>
-                  </div>
-                }
-
-                <!-- Quick Linker Trigger (EA-Style Contextual Modeling Handle) -->
-                @if (selectedEntityId() === entity.id) {
-                  <button
-                    type="button"
-                    (click)="openQuickLinker(entity.id, $event)"
-                    class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40 group/ql animate-in zoom-in-75 duration-150"
-                    title="Quick Linker: Crear clase conectada o subclase"
-                  >
-                    <svg class="w-3.5 h-3.5 transition-transform group-hover/ql:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                }
-
-                <app-table-node [entity]="entity" />
+                <span
+                  class="absolute -top-5 left-2 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white shadow-sm flex items-center gap-1"
+                  [style.background-color]="peer.color"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                  {{ peer.name }}
+                </span>
               </div>
             }
-          </ng-container>
 
-          <!-- Smart Alignment Guidelines SVG Overlay -->
-          @if (activeGuides().length > 0) {
-            <svg class="absolute inset-0 pointer-events-none w-full h-full z-40 overflow-visible">
-              @for (guide of activeGuides(); track $index) {
-                @if (guide.type === 'horizontal') {
-                  <line
-                    [attr.x1]="guide.start"
-                    [attr.y1]="guide.pos"
-                    [attr.x2]="guide.end"
-                    [attr.y2]="guide.pos"
-                    stroke="#ef4444"
-                    stroke-width="1.5"
-                    stroke-dasharray="4 3"
-                  />
-                } @else {
-                  <line
-                    [attr.x1]="guide.pos"
-                    [attr.y1]="guide.start"
-                    [attr.x2]="guide.pos"
-                    [attr.y2]="guide.end"
-                    stroke="#ef4444"
-                    stroke-width="1.5"
-                    stroke-dasharray="4 3"
-                  />
-                }
-              }
-            </svg>
-          }
-
-          <!-- Existing Connections -->
-          <ng-container ngProjectAs="[fConnections]">
-            @for (rel of validRelations(); track rel.id) {
-              <f-connection
-                [fConnectionId]="rel.id"
-                [fOutputId]="resolveSourceConnector(rel)"
-                [fInputId]="resolveTargetConnector(rel)"
-                [fType]="getConnectionType(rel)"
-                [fBehavior]="rel.sourceId === rel.targetId ? 'fixed' : 'floating'"
-                [fRadius]="12"
-                [class.selected]="selectedRelationId() === rel.id"
-                [class.focused-chain]="highlightChain().active && highlightChain().relationIds.has(rel.id)"
-                [class.dimmed-chain]="highlightChain().active && !highlightChain().relationIds.has(rel.id)"
-                [class.dashed-line]="isDashedRelation(rel.type)"
-                (mouseenter)="hoveredRelationId.set(rel.id)"
-                (mouseleave)="hoveredRelationId.set(null)"
+            <!-- Peer Editing Overlay (Soft Warning) -->
+            @if (getRemoteEditingPeer(entity.id); as editPeer) {
+              <div
+                class="absolute inset-0 bg-amber-500/10 dark:bg-amber-500/20 backdrop-blur-[0.5px] rounded-xl border-2 border-dashed border-amber-500 pointer-events-none z-30 flex items-center justify-center"
               >
-                <!-- UML Relationship Markers -->
-                @switch (getRelationCategory(rel.type)) {
-                  @case ('Generalization') {
-                    <f-connection-marker-arrow type="END" class="uml-generalization-marker" />
-                  }
-                  @case ('Realization') {
-                    <f-connection-marker-arrow type="END" class="uml-realization-marker" />
-                  }
-                  @case ('Composition') {
-                    <f-connection-marker-arrow type="START" class="uml-composition-marker" />
-                  }
-                  @case ('Aggregation') {
-                    <f-connection-marker-arrow type="START" class="uml-aggregation-marker" />
-                  }
-                  @case ('Dependency') {
-                    <f-connection-marker-arrow type="END" class="uml-dependency-marker" />
-                  }
-                  @default {
-                    <f-connection-marker-arrow type="END" />
-                  }
-                }
-
-                <!-- Center Relationship Label -->
-                <div fConnectionContent [position]="0.5" class="relation-center-label">
-                  <span
-                    class="uml-relation-pill"
-                    [class.selected]="selectedRelationId() === rel.id"
-                    (click)="onSelectAssociation(rel.id); $event.stopPropagation()"
-                    [title]="rel.type"
-                  >
-                    <span class="uml-rel-icon">{{ relationIcon(rel.type) }}</span>
-                    @if (rel.name) {
-                      <span class="uml-rel-name">{{ rel.name }}</span>
-                    } @else {
-                      <span class="uml-rel-type">{{ rel.type }}</span>
-                    }
-                  </span>
-                </div>
-
-                <!-- Cardinality text at ends -->
-                @if (cardinality(rel, 'source'); as srcCard) {
-                  <div fConnectionContent [position]="0.15" [offset]="18" class="cardinality-label source-card">
-                    <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">{{ srcCard }}</span>
-                  </div>
-                }
-                @if (cardinality(rel, 'target'); as tgtCard) {
-                  <div fConnectionContent [position]="0.85" [offset]="-18" class="cardinality-label target-card">
-                    <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">{{ tgtCard }}</span>
-                  </div>
-                }
-              </f-connection>
+                <span class="bg-amber-600 text-white text-[11px] font-semibold px-2 py-1 rounded shadow-md flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-dasharray="32" stroke-linecap="round"/></svg>
+                  {{ editPeer.name }} editando...
+                </span>
+              </div>
             }
-          </ng-container>
-        </f-canvas>
-      </f-flow>
 
-      <!-- Collaborative Remote Cursors -->
-      @for (cur of remoteCursors(); track cur.user_id) {
-        <div
-          class="absolute pointer-events-none z-50 flex items-center gap-1 transition-all duration-75"
-          [style.left.px]="cursorPosition(cur).left"
-          [style.top.px]="cursorPosition(cur).top"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [style.color]="cur.color">
-            <path d="M3 3l7 18 3-7 7-3L3 3z" [style.fill]="cur.color" />
-          </svg>
-          <span
-            class="text-[10px] px-1.5 py-0.5 rounded text-white font-medium shadow-sm"
-            [style.backgroundColor]="cur.color"
-          >
-            {{ cur.name }}
-          </span>
-        </div>
+            <!-- Quick Linker Trigger (EA-Style Contextual Modeling Handle) -->
+            @if (selectedEntityId() === entity.id) {
+              <button
+                type="button"
+                (click)="openQuickLinker(entity.id, $event)"
+                class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40 group/ql animate-in zoom-in-75 duration-150"
+                title="Quick Linker: Crear clase conectada o subclase"
+              >
+                <svg class="w-3.5 h-3.5 transition-transform group-hover/ql:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            }
+
+            <app-table-node
+              [entity]="entity"
+              [packageName]="getPackageName(entity.packageId)"
+              [isPendingEdit]="diagram.pendingEditId() === entity.id"
+              (editStarted)="handleNodeEditStarted($event)"
+              (editEnded)="handleNodeEditEnded($event)"
+              (entityRenamed)="handleNodeRenamed($event)"
+              (attrUpdated)="handleNodeAttrUpdated($event)"
+              (attrAdded)="handleNodeAttrAdded($event)"
+              (entityResized)="handleNodeResized($event)"
+            />
+          </div>
+        }
+      </ng-container>
+
+      <!-- Smart Alignment Guidelines SVG Overlay -->
+      @if (activeGuides().length > 0) {
+        <svg class="absolute inset-0 pointer-events-none w-full h-full z-40 overflow-visible">
+          @for (guide of activeGuides(); track $index) {
+            @if (guide.type === 'horizontal') {
+              <line
+                [attr.x1]="guide.start"
+                [attr.y1]="guide.pos"
+                [attr.x2]="guide.end"
+                [attr.y2]="guide.pos"
+                stroke="#ef4444"
+                stroke-width="1.5"
+                stroke-dasharray="4 3"
+              />
+            } @else {
+              <line
+                [attr.x1]="guide.pos"
+                [attr.y1]="guide.start"
+                [attr.x2]="guide.pos"
+                [attr.y2]="guide.end"
+                stroke="#ef4444"
+                stroke-width="1.5"
+                stroke-dasharray="4 3"
+              />
+            }
+          }
+        </svg>
       }
-    </div>
 
-    <!-- Entity Detail / Property Inspector Sidebar (Right) -->
-    @if (selectedEntityId(); as id) {
-      <app-sidebar [entityId]="id" (close)="closeSidebar()" />
-    }
-  </div>
+      <!-- Existing Connections -->
+      <ng-container ngProjectAs="[fConnections]">
+        @for (rel of validRelations(); track rel.id) {
+          <f-connection
+            [fConnectionId]="rel.id"
+            [fOutputId]="resolveSourceConnector(rel)"
+            [fInputId]="resolveTargetConnector(rel)"
+            [fType]="getConnectionType(rel)"
+            [fBehavior]="rel.sourceId === rel.targetId ? 'fixed' : 'floating'"
+            [fRadius]="12"
+            [class.selected]="selectedRelationId() === rel.id"
+            [class.focused-chain]="highlightChain().active && highlightChain().relationIds.has(rel.id)"
+            [class.dimmed-chain]="highlightChain().active && !highlightChain().relationIds.has(rel.id)"
+            [class.dashed-line]="rel.type | isDashedRelation"
+            (mouseenter)="hoveredRelationId.set(rel.id)"
+            (mouseleave)="hoveredRelationId.set(null)"
+          >
+            <!-- UML Relationship Markers -->
+            @switch (rel.type | relationCategory) {
+              @case ('Generalization') {
+                <f-connection-marker-arrow type="END" class="uml-generalization-marker" />
+              }
+              @case ('Realization') {
+                <f-connection-marker-arrow type="END" class="uml-realization-marker" />
+              }
+              @case ('Composition') {
+                <f-connection-marker-arrow type="START" class="uml-composition-marker" />
+              }
+              @case ('Aggregation') {
+                <f-connection-marker-arrow type="START" class="uml-aggregation-marker" />
+              }
+              @case ('Dependency') {
+                <f-connection-marker-arrow type="END" class="uml-dependency-marker" />
+              }
+              @default {
+                <f-connection-marker-arrow type="END" />
+              }
+            }
+
+            <!-- Center Relationship Label -->
+            <div fConnectionContent [position]="0.5" class="relation-center-label">
+              <span
+                class="uml-relation-pill"
+                [class.selected]="selectedRelationId() === rel.id"
+                (click)="onSelectAssociation(rel.id); $event.stopPropagation()"
+                [title]="rel.type"
+              >
+                <span class="uml-rel-icon">{{ rel.type | relationSymbol }}</span>
+                @if (rel.name) {
+                  <span class="uml-rel-name">{{ rel.name }}</span>
+                } @else {
+                  <span class="uml-rel-type">{{ rel.type }}</span>
+                }
+              </span>
+            </div>
+
+            <!-- Cardinality & Role text at ends -->
+            @if (rel | relationCardinality:'source'; as srcCard) {
+              <div fConnectionContent [position]="0.15" [offset]="18" class="cardinality-label source-card">
+                <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">
+                  @if (rel.sourceRole) {
+                    <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 mr-1">+{{ rel.sourceRole }}</span>
+                  }
+                  {{ srcCard }}
+                </span>
+              </div>
+            }
+            @if (rel | relationCardinality:'target'; as tgtCard) {
+              <div fConnectionContent [position]="0.85" [offset]="-18" class="cardinality-label target-card">
+                <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">
+                  @if (rel.targetRole) {
+                    <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 mr-1">+{{ rel.targetRole }}</span>
+                  }
+                  {{ tgtCard }}
+                </span>
+              </div>
+            }
+          </f-connection>
+        }
+
+        <!-- UML Association Class Dashed Connector -->
+        @for (rel of validRelations(); track rel.id + '-assoc-class') {
+          @if (rel.associationClassId) {
+            <f-connection
+              [fConnectionId]="rel.id + '-assoc-class'"
+              [fOutputId]="resolveSourceConnector(rel)"
+              [fInputId]="rel.associationClassId + '@class-top'"
+              fType="straight"
+              fBehavior="floating"
+              [class.dashed-line]="true"
+              class="uml-assoc-class-connector"
+            >
+              <div fConnectionContent [position]="0.5">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-sm">
+                  «association class»
+                </span>
+              </div>
+            </f-connection>
+          }
+        }
+      </ng-container>
+    </f-canvas>
+  </f-flow>
+
+  <!-- Collaborative Remote Cursors -->
+  @for (cur of remoteCursors(); track cur.user_id) {
+    <div
+      class="absolute pointer-events-none z-50 flex items-center gap-1 transition-all duration-75"
+      [style.left.px]="cursorPosition(cur).left"
+      [style.top.px]="cursorPosition(cur).top"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [style.color]="cur.color">
+        <path d="M3 3l7 18 3-7 7-3L3 3z" [style.fill]="cur.color" />
+      </svg>
+      <span
+        class="text-[10px] px-1.5 py-0.5 rounded text-white font-medium shadow-sm"
+        [style.backgroundColor]="cur.color"
+      >
+        {{ cur.name }}
+      </span>
+    </div>
+  }
 
   <!-- Context Menu Popup -->
   <app-canvas-context-menu
@@ -310,23 +305,13 @@
     [entityName]="contextMenu()?.entityId ? entityName(contextMenu()!.entityId!) : null"
     (inspectEntity)="selectEntity($event)"
     (duplicateEntity)="duplicateSelection()"
-    (detachEntity)="detachEntityFromBoard($event)"
-    (deleteEntityFromModel)="deleteEntityFromProjectModel($event)"
-    (openCommandPalette)="showCommandPalette.set(true)"
+    (detachEntity)="detachClass.emit($event); closeContextMenu()"
+    (deleteEntityFromModel)="deleteClassFromModel.emit($event); closeContextMenu()"
+    (openCommandPalette)="openCommandPalette.emit()"
     (autoLayout)="autoLayout()"
     (fitToScreen)="fitToScreen()"
     (closed)="closeContextMenu()"
   />
-
-  <!-- Command Palette Modal -->
-  @if (showCommandPalette()) {
-    <app-command-palette (closed)="showCommandPalette.set(false)" />
-  }
-
-  <!-- Codegen Modal -->
-  @if (showCodegenModal()) {
-    <app-codegen-modal [boardId]="boardId()" (closed)="showCodegenModal.set(false)"></app-codegen-modal>
-  }
 
   <!-- Quick Linker Popover Menu (Enterprise Architect Style) -->
   <app-quick-linker
@@ -384,15 +369,4 @@
       </div>
     </div>
   }
-
-  <!-- Standalone Team / Members Modal -->
-  @if (showMembersModal()) {
-    <app-members-modal [boardId]="boardId()" (closed)="showMembersModal.set(false)"></app-members-modal>
-  }
-
-  <!-- Toast Container -->
-  <app-toast-container />
-
-  <!-- Spatial AI Guide Bubble & Onboarding Mentor -->
-  <app-agent-guide [boardId]="boardId()" />
 </div>

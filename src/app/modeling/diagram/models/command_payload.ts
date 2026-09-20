@@ -40,4 +40,18 @@ export interface CommandPayload {
   source_attribute?: string;
   target_attribute?: string;
   association_id?: string;
+  // Resize
+  width?: number;
+  height?: number;
+  // Packages
+  package_id?: string;
+  package_name?: string;
+  // Roles & multiplicities
+  source_role?: string;
+  target_role?: string;
+  source_multiplicity?: string;
+  target_multiplicity?: string;
+  // Classifier metadata
+  is_abstract?: boolean;
+  element_type?: string;
 }

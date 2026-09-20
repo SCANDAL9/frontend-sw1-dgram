@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DBEntity, DBRelation } from '../../../models/diagram.model';
-import { ProjectClass } from '../../../services/board.service';
-import { AuthService } from '../../../../../workspace/authentication/services/auth.service';
-import { ThemeService } from '../../../../../core/services/theme.service';
+import { DBEntity, DBRelation } from '../../models/diagram.model';
+import { ProjectClass } from '../../models/board.model';
+import { User } from '../../../../workspace/authentication/models/auth.models';
+import { ThemeService } from '../../../../core/services/theme.service';
 
 @Component({
   selector: 'app-explorer-sidebar',
@@ -13,34 +13,37 @@ import { ThemeService } from '../../../../../core/services/theme.service';
   templateUrl: './explorer-sidebar.component.html',
 })
 export class ExplorerSidebarComponent {
-  auth = inject(AuthService);
   theme = inject(ThemeService);
 
-  @Input() isOpen = true;
-  @Input() boardId = 'default-board';
-  @Input() entities: DBEntity[] = [];
-  @Input() relations: DBRelation[] = [];
-  @Input() selectedEntityId: string | null = null;
-  @Input() selectedRelationId: string | null = null;
-  @Input() expandedEntityIds = new Set<string>();
-  @Input() projectCatalogClasses: ProjectClass[] = [];
-  @Input() isLoadingCatalog = false;
+  isOpen = input<boolean>(true);
+  boardId = input<string>('default-board');
+  currentUser = input<User | null>(null);
+  entities = input<DBEntity[]>([]);
+  relations = input<DBRelation[]>([]);
+  selectedEntityId = input<string | null>(null);
+  selectedRelationId = input<string | null>(null);
+  expandedEntityIds = input<Set<string>>(new Set<string>());
+  projectCatalogClasses = input<ProjectClass[]>([]);
+  isLoadingCatalog = input<boolean>(false);
 
-  @Output() toggleSidebar = new EventEmitter<void>();
-  @Output() toggleExpandEntity = new EventEmitter<string>();
-  @Output() toggleAllExpand = new EventEmitter<void>();
-  @Output() entitySelected = new EventEmitter<string>();
-  @Output() entityJumpRequested = new EventEmitter<string>();
-  @Output() relationSelected = new EventEmitter<string>();
-  @Output() entityContextMenu = new EventEmitter<{ event: MouseEvent; entityId?: string }>();
-  @Output() attachClass = new EventEmitter<ProjectClass>();
-  @Output() importXmi = new EventEmitter<File>();
-  @Output() openCodegen = new EventEmitter<void>();
-  @Output() openMembers = new EventEmitter<void>();
-  @Output() exportSql = new EventEmitter<void>();
-  @Output() exportJson = new EventEmitter<void>();
-  @Output() exportXmi = new EventEmitter<void>();
-  @Output() exportPng = new EventEmitter<void>();
+  toggleSidebar = output<void>();
+  toggleExpandEntity = output<string>();
+  toggleAllExpand = output<void>();
+  entitySelected = output<string>();
+  entityJumpRequested = output<string>();
+  relationSelected = output<string>();
+  entityContextMenu = output<{ event: MouseEvent; entityId?: string }>();
+  attachClass = output<ProjectClass>();
+  importXmi = output<File>();
+  openCodegen = output<void>();
+  openMembers = output<void>();
+  openAuth = output<void>();
+  openProfile = output<void>();
+  logout = output<void>();
+  exportSql = output<void>();
+  exportJson = output<void>();
+  exportXmi = output<void>();
+  exportPng = output<void>();
 
   readonly sidebarSearch = signal('');
   readonly isClassesSectionOpen = signal(true);
@@ -51,8 +54,9 @@ export class ExplorerSidebarComponent {
 
   readonly filteredEntities = computed(() => {
     const query = this.sidebarSearch().trim().toLowerCase();
-    if (!query) return this.entities;
-    return this.entities.filter(
+    const list = this.entities();
+    if (!query) return list;
+    return list.filter(
       (e) =>
         e.name.toLowerCase().includes(query) ||
         e.attributes.some((a) => a.name.toLowerCase().includes(query))
@@ -61,8 +65,9 @@ export class ExplorerSidebarComponent {
 
   readonly filteredRelations = computed(() => {
     const query = this.sidebarSearch().trim().toLowerCase();
-    if (!query) return this.relations;
-    return this.relations.filter((r) => {
+    const list = this.relations();
+    if (!query) return list;
+    return list.filter((r) => {
       const src = this.getEntityName(r.sourceId).toLowerCase();
       const tgt = this.getEntityName(r.targetId).toLowerCase();
       return src.includes(query) || tgt.includes(query) || r.type.toLowerCase().includes(query);
@@ -70,11 +75,11 @@ export class ExplorerSidebarComponent {
   });
 
   getEntityName(id: string): string {
-    return this.entities.find((e) => e.id === id)?.name ?? id;
+    return this.entities().find((e) => e.id === id)?.name ?? id;
   }
 
   isEntityExpanded(id: string): boolean {
-    return this.expandedEntityIds.has(id);
+    return this.expandedEntityIds().has(id);
   }
 
   formatVisibility(vis?: string): string {

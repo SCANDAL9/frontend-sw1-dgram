@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface CanvasContextMenuState {
@@ -14,15 +14,15 @@ export interface CanvasContextMenuState {
   templateUrl: './canvas-context-menu.component.html',
 })
 export class CanvasContextMenuComponent {
-  @Input() menu: CanvasContextMenuState | null = null;
-  @Input() entityName: string | null = null;
+  menu = input<CanvasContextMenuState | null>(null);
+  entityName = input<string | null>(null);
 
-  @Output() inspectEntity = new EventEmitter<string>();
-  @Output() duplicateEntity = new EventEmitter<void>();
-  @Output() detachEntity = new EventEmitter<string>();
-  @Output() deleteEntityFromModel = new EventEmitter<string>();
-  @Output() openCommandPalette = new EventEmitter<void>();
-  @Output() autoLayout = new EventEmitter<void>();
-  @Output() fitToScreen = new EventEmitter<void>();
-  @Output() closed = new EventEmitter<void>();
+  inspectEntity = output<string>();
+  duplicateEntity = output<void>();
+  detachEntity = output<string>();
+  deleteEntityFromModel = output<string>();
+  openCommandPalette = output<void>();
+  autoLayout = output<void>();
+  fitToScreen = output<void>();
+  closed = output<void>();
 }

@@ -1,9 +1,7 @@
-import { Component, inject, Input, Output, EventEmitter, signal, OnChanges } from '@angular/core';
+import { Component, input, output, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DiagramService } from '../../services/diagram.service';
-import { CommandService } from '../../services/command.service';
-import { DBEntity, DBAttribute } from '../../models/diagram.model';
+import { DBEntity, DBAttribute, UmlPackage } from '../../models/diagram.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -11,14 +9,23 @@ import { DBEntity, DBAttribute } from '../../models/diagram.model';
   imports: [CommonModule, FormsModule],
   templateUrl: './sidebar.component.html',
 })
-export class SidebarComponent implements OnChanges {
-  @Input({ required: true }) entityId = '';
-  @Output() close = new EventEmitter<void>();
+export class SidebarComponent {
+  entity = input<DBEntity | null>(null);
+  packages = input<UmlPackage[]>([]);
+  availableDataTypes = input<string[]>([]);
 
-  diagram = inject(DiagramService);
-  cmd = inject(CommandService);
+  close = output<void>();
+  entityDeleted = output<string>();
+  nameChanged = output<{ id: string; name: string }>();
+  classifierTypeChanged = output<{ id: string; val: string; isAbstract: boolean }>();
+  stereotypeChanged = output<{ id: string; stereotype: string | null }>();
+  abstractToggled = output<{ id: string; isAbstract: boolean }>();
+  columnAdded = output<{ id: string; col: Partial<DBAttribute> }>();
+  columnDeleted = output<{ id: string; colName: string }>();
+  columnUpdated = output<{ id: string; colName: string; changes: Partial<DBAttribute> }>();
+  packageAssigned = output<{ id: string; pkgId: string }>();
+  packageCreatedAndAssigned = output<{ id: string; name: string }>();
 
-  entity = signal<DBEntity | null>(null);
   editingName = signal(false);
   tempName = signal('');
   showAddColumn = signal(false);
@@ -53,12 +60,12 @@ export class SidebarComponent implements OnChanges {
     { label: '~', value: '~', hint: 'Package' },
   ];
 
-  get availableDataTypes(): string[] {
-    const custom = (this.diagram.entities() || [])
-      .map((e: DBEntity) => e.name)
-      .filter((n: string) => Boolean(n) && n !== this.entity()?.name);
+  readonly dataTypesList = computed<string[]>(() => {
+    const custom = (this.availableDataTypes() || []).filter(
+      (n: string) => Boolean(n) && n !== this.entity()?.name
+    );
     return Array.from(new Set([...this.baseDataTypes, ...custom]));
-  }
+  });
 
   isEnum(): boolean {
     const e = this.entity();
@@ -75,16 +82,13 @@ export class SidebarComponent implements OnChanges {
     return '+';
   }
 
-  ngOnChanges(): void {
-    this.refreshEntity();
-  }
-
-  private refreshEntity(): void {
-    const e = this.diagram.getEntity(this.entityId) || null;
-    this.entity.set(e);
-    if (e) {
-      this.tempName.set(e.name);
-    }
+  constructor() {
+    effect(() => {
+      const e = this.entity();
+      if (e) {
+        this.tempName.set(e.name);
+      }
+    });
   }
 
   startRename(): void {
@@ -93,41 +97,43 @@ export class SidebarComponent implements OnChanges {
   }
 
   saveName(): void {
+    const e = this.entity();
     const name = this.tempName().trim();
-    if (name && name !== this.entity()?.name) {
-      this.cmd.updateEntity(this.entityId, name);
-      this.refreshEntity();
+    if (e && name && name !== e.name) {
+      this.nameChanged.emit({ id: e.id, name });
     }
     this.editingName.set(false);
   }
 
   updateClassifierType(val: string): void {
-    const isAbs = val === 'abstract_class';
-    const currentName = this.entity()?.name || 'Class';
-    this.cmd.updateEntity(this.entityId, currentName, {
-      element_type: val,
-      elementType: val,
-      stereotype: val !== 'class' ? val : null,
-      is_abstract: isAbs,
-    } as any);
-    this.refreshEntity();
+    const e = this.entity();
+    if (e) {
+      const isAbs = val === 'abstract_class';
+      this.classifierTypeChanged.emit({ id: e.id, val, isAbstract: isAbs });
+    }
   }
 
   updateStereotype(val: string): void {
-    const st = val === 'None' ? null : val;
-    this.cmd.updateEntity(this.entityId, this.entity()?.name || 'Class', { stereotype: st });
-    this.refreshEntity();
+    const e = this.entity();
+    if (e) {
+      const st = val === 'None' ? null : val;
+      this.stereotypeChanged.emit({ id: e.id, stereotype: st });
+    }
   }
 
   toggleAbstract(): void {
-    const current = !!this.entity()?.isAbstract;
-    this.cmd.updateEntity(this.entityId, this.entity()?.name || 'Class', { is_abstract: !current });
-    this.refreshEntity();
+    const e = this.entity();
+    if (e) {
+      this.abstractToggled.emit({ id: e.id, isAbstract: !e.isAbstract });
+    }
   }
 
   deleteEntity(): void {
-    this.cmd.deleteEntity(this.entityId);
-    this.close.emit();
+    const e = this.entity();
+    if (e) {
+      this.entityDeleted.emit(e.id);
+      this.close.emit();
+    }
   }
 
   startAddColumn(): void {
@@ -146,36 +152,47 @@ export class SidebarComponent implements OnChanges {
   }
 
   confirmAddColumn(): void {
+    const e = this.entity();
     const col = this.newCol();
-    if (!col.name?.trim()) return;
+    if (!e || !col.name?.trim()) return;
 
-    this.cmd.addColumn(this.entityId, {
-      name: col.name.trim(),
-      type: col.type || 'String',
-      pk: !!col.pk,
-      fk: !!col.fk,
-      nullable: col.nullable ?? true,
-      references: col.references || null,
-      visibility: col.visibility || '+',
-      is_derived: !!col.isDerived,
-      default_value: col.defaultValue || null,
+    this.columnAdded.emit({
+      id: e.id,
+      col: {
+        name: col.name.trim(),
+        type: col.type || 'String',
+        pk: !!col.pk,
+        fk: !!col.fk,
+        nullable: col.nullable ?? true,
+        references: col.references || null,
+        visibility: col.visibility || '+',
+        isDerived: !!col.isDerived,
+        defaultValue: col.defaultValue || null,
+      },
     });
     this.showAddColumn.set(false);
-    this.refreshEntity();
   }
 
   deleteColumn(colName: string): void {
-    this.cmd.deleteColumn(this.entityId, colName);
-    this.refreshEntity();
+    const e = this.entity();
+    if (e) {
+      this.columnDeleted.emit({ id: e.id, colName });
+    }
   }
 
   updateAttr(col: DBAttribute, changes: Partial<DBAttribute>): void {
-    this.cmd.updateColumn(this.entityId, col.name, {
-      ...changes,
-      is_derived: changes.isDerived !== undefined ? changes.isDerived : col.isDerived,
-      default_value: changes.defaultValue !== undefined ? changes.defaultValue : col.defaultValue,
-    } as any);
-    this.refreshEntity();
+    const e = this.entity();
+    if (e) {
+      this.columnUpdated.emit({
+        id: e.id,
+        colName: col.name,
+        changes: {
+          ...changes,
+          isDerived: changes.isDerived !== undefined ? changes.isDerived : col.isDerived,
+          defaultValue: changes.defaultValue !== undefined ? changes.defaultValue : col.defaultValue,
+        },
+      });
+    }
   }
 
   togglePk(col: DBAttribute): void {
@@ -241,5 +258,18 @@ export class SidebarComponent implements OnChanges {
     const c = this.newCol();
     this.newCol.set({ ...c, isDerived: !c.isDerived });
   }
-}
 
+  updatePackage(pkgId: string): void {
+    const e = this.entity();
+    if (e) {
+      this.packageAssigned.emit({ id: e.id, pkgId });
+    }
+  }
+
+  createPackageAndAssign(name: string): void {
+    const e = this.entity();
+    const trimmed = name.trim();
+    if (!e || !trimmed) return;
+    this.packageCreatedAndAssigned.emit({ id: e.id, name: trimmed });
+  }
+}
