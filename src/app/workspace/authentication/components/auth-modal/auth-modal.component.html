@@ -1,25 +1,32 @@
 <div class="fixed inset-0 bg-[#0a0a0f]/75 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
-  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[420px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[440px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+    <!-- Header -->
     <div class="flex items-center justify-between px-5 py-4 border-b border-[#313244] bg-[#1e1e2e]">
       <div class="flex gap-2">
-        <button
-          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
-          [class.bg-[#313244]]="activeTab() === 'login'"
-          [class.text-[#cdd6f4]]="activeTab() === 'login'"
-          [class.text-[#a6adc8]]="activeTab() !== 'login'"
-          (click)="setTab('login')"
-        >
-          Iniciar Sesión
-        </button>
-        <button
-          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
-          [class.bg-[#313244]]="activeTab() === 'register'"
-          [class.text-[#cdd6f4]]="activeTab() === 'register'"
-          [class.text-[#a6adc8]]="activeTab() !== 'register'"
-          (click)="setTab('register')"
-        >
-          Registrarse
-        </button>
+        @if (activeTab() === 'login' || activeTab() === 'register') {
+          <button
+            class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+            [class.bg-[#313244]]="activeTab() === 'login'"
+            [class.text-[#cdd6f4]]="activeTab() === 'login'"
+            [class.text-[#a6adc8]]="activeTab() !== 'login'"
+            (click)="setTab('login')"
+          >
+            Iniciar Sesión
+          </button>
+          <button
+            class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+            [class.bg-[#313244]]="activeTab() === 'register'"
+            [class.text-[#cdd6f4]]="activeTab() === 'register'"
+            [class.text-[#a6adc8]]="activeTab() !== 'register'"
+            (click)="setTab('register')"
+          >
+            Registrarse
+          </button>
+        } @else if (activeTab() === 'forgot_password') {
+          <span class="text-sm font-semibold text-[#cdd6f4] px-1">Recuperar Contraseña</span>
+        } @else if (activeTab() === 'reset_password') {
+          <span class="text-sm font-semibold text-[#cdd6f4] px-1">Restablecer Contraseña</span>
+        }
       </div>
       <button
         class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
@@ -32,13 +39,21 @@
       </button>
     </div>
 
+    <!-- Body -->
     <div class="p-6 px-5">
-      @if (errorMsg()) {
+      @if (displayError()) {
         <div class="bg-[#f38ba8]/[0.15] border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
-          {{ errorMsg() }}
+          {{ displayError() }}
         </div>
       }
 
+      @if (successMsg()) {
+        <div class="bg-[#a6e3a1]/[0.15] border border-[#a6e3a1] text-[#a6e3a1] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
+          {{ successMsg() }}
+        </div>
+      }
+
+      <!-- Login Form -->
       @if (activeTab() === 'login') {
         <form (ngSubmit)="handleLogin()">
           <div class="mb-4">
@@ -52,8 +67,17 @@
               class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
             />
           </div>
-          <div class="mb-4">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña</label>
+          <div class="mb-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-[#cdd6f4] text-xs font-medium">Contraseña</label>
+              <button
+                type="button"
+                class="bg-transparent border-0 text-[#89b4fa] text-xs cursor-pointer hover:underline p-0"
+                (click)="setTab('forgot_password')"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
             <input
               type="password"
               [(ngModel)]="loginPassword"
@@ -65,15 +89,18 @@
           </div>
           <button
             type="submit"
-            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-4 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             [disabled]="loading()"
           >
             {{ loading() ? 'Ingresando...' : 'Iniciar Sesión' }}
           </button>
         </form>
-      } @else {
+      }
+
+      <!-- Register Form -->
+      @if (activeTab() === 'register') {
         <form (ngSubmit)="handleRegister()">
-          <div class="mb-4">
+          <div class="mb-3">
             <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nombre Completo</label>
             <input
               type="text"
@@ -84,7 +111,7 @@
               class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
             />
           </div>
-          <div class="mb-4">
+          <div class="mb-3">
             <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
             <input
               type="email"
@@ -95,15 +122,25 @@
               class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
             />
           </div>
-          <div class="mb-4">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña (mínimo 6 caracteres)</label>
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña</label>
             <input
               type="password"
               [(ngModel)]="regPassword"
               name="password"
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres (letras y números)"
               required
-              minlength="6"
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Confirmar Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="regConfirmPassword"
+              name="confirm_password"
+              placeholder="Repite tu contraseña"
+              required
               class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
             />
           </div>
@@ -114,6 +151,100 @@
           >
             {{ loading() ? 'Creando cuenta...' : 'Crear Cuenta' }}
           </button>
+        </form>
+      }
+
+      <!-- Forgot Password Form -->
+      @if (activeTab() === 'forgot_password') {
+        <form (ngSubmit)="handleForgotPassword()">
+          <p class="text-xs text-[#a6adc8] mb-4">
+            Ingresa tu correo electrónico y te enviaremos un enlace seguro para restablecer tu contraseña.
+          </p>
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+            <input
+              type="email"
+              [(ngModel)]="forgotEmail"
+              name="forgot_email"
+              placeholder="usuario@ejemplo.com"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Enviando...' : 'Enviar Enlace de Recuperación' }}
+          </button>
+          <div class="text-center mt-4">
+            <button
+              type="button"
+              class="bg-transparent border-0 text-xs text-[#89b4fa] cursor-pointer hover:underline"
+              (click)="setTab('login')"
+            >
+              ← Volver al inicio de sesión
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- Reset Password Form -->
+      @if (activeTab() === 'reset_password') {
+        <form (ngSubmit)="handleResetPassword()">
+          <p class="text-xs text-[#a6adc8] mb-4">
+            Ingresa tu nueva contraseña para actualizar el acceso a tu cuenta.
+          </p>
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Token de Restablecimiento</label>
+            <input
+              type="text"
+              [(ngModel)]="resetTokenInput"
+              name="reset_token"
+              placeholder="Pega el token aquí si no se autocompletó"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-xs outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nueva Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="resetNewPassword"
+              name="new_password"
+              placeholder="Mínimo 8 caracteres (letras y números)"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Confirmar Nueva Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="resetConfirmPassword"
+              name="confirm_new_password"
+              placeholder="Repite la nueva contraseña"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Guardando...' : 'Restablecer Contraseña' }}
+          </button>
+          <div class="text-center mt-4">
+            <button
+              type="button"
+              class="bg-transparent border-0 text-xs text-[#89b4fa] cursor-pointer hover:underline"
+              (click)="setTab('login')"
+            >
+              ← Volver al inicio de sesión
+            </button>
+          </div>
         </form>
       }
     </div>

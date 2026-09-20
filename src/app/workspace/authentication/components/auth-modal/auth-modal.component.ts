@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { Component, output, input, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
 
+export type AuthTab = 'login' | 'register' | 'forgot_password' | 'reset_password';
 
 @Component({
   selector: 'app-auth-modal',
@@ -10,14 +10,21 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, FormsModule],
   templateUrl: './auth-modal.component.html',
 })
-export class AuthModalComponent {
-  private authService = inject(AuthService);
+export class AuthModalComponent implements OnInit {
+  loading = input<boolean>(false);
+  errorMsg = input<string | null>(null);
+  successMsg = input<string | null>(null);
+  initialResetToken = input<string | null>(null);
 
-  @Output() closed = new EventEmitter<void>();
+  loginSubmitted = output<{ email: string; password: string }>();
+  registerSubmitted = output<{ email: string; fullName: string; password: string }>();
+  forgotPasswordSubmitted = output<string>();
+  resetPasswordSubmitted = output<{ token: string; newPassword: string }>();
+  closed = output<void>();
 
-  activeTab = signal<'login' | 'register'>('login');
-  loading = signal(false);
-  errorMsg = signal<string | null>(null);
+  activeTab = signal<AuthTab>('login');
+  localError = signal<string | null>(null);
+  displayError = computed(() => this.localError() || this.errorMsg());
 
   loginEmail = '';
   loginPassword = '';
@@ -25,47 +32,101 @@ export class AuthModalComponent {
   regFullName = '';
   regEmail = '';
   regPassword = '';
+  regConfirmPassword = '';
 
-  setTab(tab: 'login' | 'register') {
-    this.activeTab.set(tab);
-    this.errorMsg.set(null);
+  forgotEmail = '';
+
+  resetTokenInput = '';
+  resetNewPassword = '';
+  resetConfirmPassword = '';
+
+  ngOnInit(): void {
+    const token = this.initialResetToken();
+    if (token) {
+      this.resetTokenInput = token;
+      this.activeTab.set('reset_password');
+    }
   }
 
-  close() {
+  setTab(tab: AuthTab): void {
+    this.activeTab.set(tab);
+    this.localError.set(null);
+  }
+
+  close(): void {
     this.closed.emit();
   }
 
-  handleLogin() {
-    if (!this.loginEmail || !this.loginPassword) return;
-    this.loading.set(true);
-    this.errorMsg.set(null);
+  isPasswordValid(pw: string): boolean {
+    return pw.length >= 8 && /[a-zA-Z]/.test(pw) && /\d/.test(pw);
+  }
 
-    this.authService.login(this.loginEmail, this.loginPassword).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.close();
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.errorMsg.set(err.error?.detail || 'Error al iniciar sesión');
-      },
+  handleLogin(): void {
+    if (!this.loginEmail || !this.loginPassword) {
+      this.localError.set('Por favor completa todos los campos');
+      return;
+    }
+    this.localError.set(null);
+    this.loginSubmitted.emit({
+      email: this.loginEmail,
+      password: this.loginPassword,
     });
   }
 
-  handleRegister() {
-    if (!this.regEmail || !this.regFullName || !this.regPassword) return;
-    this.loading.set(true);
-    this.errorMsg.set(null);
+  handleRegister(): void {
+    if (!this.regEmail || !this.regFullName || !this.regPassword || !this.regConfirmPassword) {
+      this.localError.set('Por favor completa todos los campos');
+      return;
+    }
 
-    this.authService.register(this.regEmail, this.regFullName, this.regPassword).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.close();
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.errorMsg.set(err.error?.detail || 'Error al registrarse');
-      },
+    if (!this.isPasswordValid(this.regPassword)) {
+      this.localError.set('La contraseña debe tener al menos 8 caracteres, incluyendo letras y números');
+      return;
+    }
+
+    if (this.regPassword !== this.regConfirmPassword) {
+      this.localError.set('Las contraseñas no coinciden');
+      return;
+    }
+
+    this.localError.set(null);
+    this.registerSubmitted.emit({
+      email: this.regEmail,
+      fullName: this.regFullName,
+      password: this.regPassword,
+    });
+  }
+
+  handleForgotPassword(): void {
+    if (!this.forgotEmail) {
+      this.localError.set('Ingresa tu correo electrónico');
+      return;
+    }
+
+    this.localError.set(null);
+    this.forgotPasswordSubmitted.emit(this.forgotEmail);
+  }
+
+  handleResetPassword(): void {
+    if (!this.resetTokenInput || !this.resetNewPassword || !this.resetConfirmPassword) {
+      this.localError.set('Por favor completa todos los campos');
+      return;
+    }
+
+    if (!this.isPasswordValid(this.resetNewPassword)) {
+      this.localError.set('La nueva contraseña debe tener al menos 8 caracteres, incluyendo letras y números');
+      return;
+    }
+
+    if (this.resetNewPassword !== this.resetConfirmPassword) {
+      this.localError.set('Las contraseñas no coinciden');
+      return;
+    }
+
+    this.localError.set(null);
+    this.resetPasswordSubmitted.emit({
+      token: this.resetTokenInput,
+      newPassword: this.resetNewPassword,
     });
   }
 }

@@ -1,0 +1,186 @@
+<div class="fixed inset-0 bg-[#0a0a0f]/75 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
+  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[480px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-[#313244] bg-[#1e1e2e]">
+      <div class="flex gap-2">
+        <button
+          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+          [class.bg-[#313244]]="activeSection() === 'profile'"
+          [class.text-[#cdd6f4]]="activeSection() === 'profile'"
+          [class.text-[#a6adc8]]="activeSection() !== 'profile'"
+          (click)="setSection('profile')"
+        >
+          Mi Perfil
+        </button>
+        <button
+          class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
+          [class.bg-[#313244]]="activeSection() === 'password'"
+          [class.text-[#cdd6f4]]="activeSection() === 'password'"
+          [class.text-[#a6adc8]]="activeSection() !== 'password'"
+          (click)="setSection('password')"
+        >
+          Seguridad
+        </button>
+      </div>
+      <button
+        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        (click)="close()"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 px-5">
+      @if (displayError()) {
+        <div class="bg-[#f38ba8]/[0.15] border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
+          {{ displayError() }}
+        </div>
+      }
+
+      @if (successMsg()) {
+        <div class="bg-[#a6e3a1]/[0.15] border border-[#a6e3a1] text-[#a6e3a1] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
+          {{ successMsg() }}
+        </div>
+      }
+
+      <!-- Profile Section -->
+      @if (activeSection() === 'profile') {
+        <form (ngSubmit)="handleUpdateProfile()">
+          <!-- Avatar Preview and Selection -->
+          <div class="flex items-center gap-4 mb-5 p-3.5 bg-[#11111b] border border-[#313244] rounded-xl">
+            <div class="w-14 h-14 rounded-full border-2 border-[#89b4fa] overflow-hidden bg-[#313244] flex items-center justify-center shrink-0">
+              @if (avatarUrl) {
+                <img [src]="avatarUrl" alt="Avatar" class="w-full h-full object-cover" />
+              } @else {
+                <span class="text-xl font-bold text-[#89b4fa]">
+                  {{ fullName ? fullName.charAt(0).toUpperCase() : 'U' }}
+                </span>
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <span class="block text-xs text-[#a6adc8] mb-1.5 font-medium">Elige un avatar predeterminado:</span>
+              <div class="flex gap-2">
+                @for (preset of avatarPresets; track preset) {
+                  <button
+                    type="button"
+                    class="w-7 h-7 rounded-full border border-[#313244] overflow-hidden p-0 cursor-pointer transition-all hover:scale-110"
+                    [class.border-[#89b4fa]]="avatarUrl === preset"
+                    (click)="selectPreset(preset)"
+                  >
+                    <img [src]="preset" alt="preset" class="w-full h-full object-cover" />
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nombre Completo</label>
+            <input
+              type="text"
+              [(ngModel)]="fullName"
+              name="full_name"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">URL de Avatar personalizada</label>
+            <input
+              type="url"
+              [(ngModel)]="avatarUrl"
+              name="avatar_url"
+              placeholder="https://ejemplo.com/mi-avatar.png"
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-xs outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+
+          <div class="mb-5">
+            <label class="block text-[#a6adc8] text-xs font-medium mb-1.5">Correo Electrónico (No modificable)</label>
+            <input
+              type="text"
+              [value]="currentUser()?.email"
+              disabled
+              class="w-full bg-[#1e1e2e]/50 border border-[#313244]/60 rounded-lg px-3.5 py-2.5 text-[#6c7086] text-sm cursor-not-allowed box-border"
+            />
+          </div>
+
+          <div class="flex gap-3 mt-5">
+            <button
+              type="submit"
+              class="flex-1 bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-2.5 cursor-pointer transition-all hover:opacity-95 disabled:opacity-60"
+              [disabled]="loading()"
+            >
+              {{ loading() ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+            <button
+              type="button"
+              class="bg-transparent border border-[#f38ba8]/40 text-[#f38ba8] hover:bg-[#f38ba8]/10 text-xs font-medium px-4 py-2.5 rounded-lg cursor-pointer transition-all"
+              (click)="handleLogout()"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- Security Section (Change Password) -->
+      @if (activeSection() === 'password') {
+        <form (ngSubmit)="handleChangePassword()">
+          <p class="text-xs text-[#a6adc8] mb-4">
+            Actualiza tu contraseña periódicamente para proteger tu cuenta. Al cambiarla, se cerrarán las sesiones en otros dispositivos.
+          </p>
+
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña Actual</label>
+            <input
+              type="password"
+              [(ngModel)]="currentPassword"
+              name="current_password"
+              placeholder="••••••••"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nueva Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="newPassword"
+              name="new_password"
+              placeholder="Mínimo 8 caracteres (letras y números)"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+
+          <div class="mb-5">
+            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Confirmar Nueva Contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="confirmNewPassword"
+              name="confirm_new_password"
+              placeholder="Repite la nueva contraseña"
+              required
+              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer transition-all hover:opacity-95 disabled:opacity-60"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Actualizando...' : 'Cambiar Contraseña' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</div>
