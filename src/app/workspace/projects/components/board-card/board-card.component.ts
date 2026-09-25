@@ -11,70 +11,65 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
     @if (viewMode() === 'grid') {
       <!-- GRID VIEW MODE -->
       <div
-        class="group relative bg-white dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800/90 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-150 cursor-pointer flex flex-col select-none"
+        class="group relative bg-card text-card-foreground border border-border hover:border-primary/50 rounded-xl overflow-hidden shadow-xs hover:shadow-xl hover:shadow-primary/5 transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col select-none ring-1 ring-border/30 hover:ring-primary/30"
         [routerLink]="['/board', board().id]"
       >
         <!-- Blueprint Thumbnail -->
         <div
-          class="bg-zinc-100/70 dark:bg-[#080b11] border-b border-zinc-200/60 dark:border-zinc-800/80 flex items-center justify-center relative overflow-hidden group-hover:bg-zinc-100 dark:group-hover:bg-[#0a0e16] transition-colors"
-          style="height: 105px; padding: 10px;"
+          class="bg-muted/30 border-b border-border flex items-center justify-center relative overflow-hidden group-hover:bg-muted/50 transition-colors"
+          style="height: 112px; padding: 10px; background-image: radial-gradient(circle at 50% 0%, var(--primary)/0.08, transparent 70%), radial-gradient(circle, var(--border) 1px, transparent 1px); background-size: 100% 100%, 14px 14px;"
         >
-          <div
-            class="absolute inset-0 opacity-[0.25] dark:opacity-[0.18] pointer-events-none"
-            style="background-image: radial-gradient(circle, currentColor 1px, transparent 1px); background-size: 14px 14px; color: #94a3b8;"
-          ></div>
-
           @let preview = previewEntities();
           @if (preview.length > 0) {
             <div class="relative z-10 flex items-center justify-center -space-x-2 max-w-full overflow-hidden py-0.5">
               @for (name of preview.slice(0, 3); track name; let idx = $index) {
                 <div
-                  class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/90 rounded-lg shadow-sm w-[88px] shrink-0 overflow-hidden transform transition-transform group-hover:-translate-y-0.5"
+                  class="bg-card/95 border border-border/80 group-hover:border-primary/40 rounded-lg shadow-xs w-[90px] shrink-0 overflow-hidden transform transition-all duration-200 group-hover:-translate-y-0.5"
                   [style.z-index]="10 - idx"
                   [style.transform]="idx === 0 ? 'rotate(-2deg)' : (idx === 2 ? 'rotate(2deg)' : 'scale(1.02)')"
                 >
-                  <div class="px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-800/90 border-b border-zinc-100 dark:border-zinc-700/80 flex items-center gap-1">
-                    <div class="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500"></div>
-                    <span class="text-[8.5px] font-mono font-semibold text-zinc-800 dark:text-zinc-200 truncate" [title]="name">{{ name }}</span>
+                  <div class="px-1.5 py-0.5 bg-muted/60 border-b border-border flex items-center gap-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-primary/70"></div>
+                    <span class="text-[8.5px] font-mono font-semibold text-foreground truncate" [title]="name">{{ name }}</span>
                   </div>
-                  <div class="p-1.5 space-y-1 bg-white/50 dark:bg-zinc-900/40">
+                  <div class="p-1.5 space-y-1 bg-card/60">
                     <div class="flex items-center justify-between gap-1">
-                      <div class="h-1 w-8 bg-zinc-300 dark:bg-zinc-700 rounded-full"></div>
-                      <div class="h-1 w-3.5 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+                      <div class="h-1 w-8 bg-muted rounded-full"></div>
+                      <div class="h-1 w-3.5 bg-muted/60 rounded-full"></div>
                     </div>
                     <div class="flex items-center justify-between gap-1">
-                      <div class="h-1 w-6 bg-zinc-300 dark:bg-zinc-700 rounded-full"></div>
-                      <div class="h-1 w-4 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+                      <div class="h-1 w-6 bg-muted rounded-full"></div>
+                      <div class="h-1 w-4 bg-muted/60 rounded-full"></div>
                     </div>
                   </div>
                 </div>
               }
               @if (entityCount() > 3) {
-                <div class="relative z-20 shrink-0 ml-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full shadow-xs">
+                <div class="relative z-20 shrink-0 ml-2 bg-primary text-primary-foreground text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full shadow-xs">
                   +{{ entityCount() - 3 }}
                 </div>
               }
             </div>
           } @else {
-            <div class="relative z-10 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-600">
-              <div class="w-7 h-7 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <div class="relative z-10 flex flex-col items-center gap-1.5 text-muted-foreground">
+              <div class="w-8 h-8 rounded-lg border border-dashed border-border flex items-center justify-center bg-card/50">
+                <svg class="w-4 h-4 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
                 </svg>
               </div>
-              <span class="text-[10.5px] font-mono text-zinc-400 dark:text-zinc-500">Lienzo en blanco</span>
+              <span class="text-[10.5px] font-mono text-muted-foreground">Lienzo en blanco</span>
             </div>
           }
         </div>
 
         <!-- Info Body -->
-        <div class="flex-1 flex flex-col justify-between" style="padding: 14px;">
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="flex-1 flex flex-col justify-between p-3.5">
+          <div class="flex flex-col gap-2">
             <div class="flex items-start justify-between gap-2">
               @if (isEditing()) {
                 <input
                   type="text"
-                  class="flex-1 px-2 py-0.5 bg-white dark:bg-zinc-800 border border-zinc-400 dark:border-zinc-600 rounded-lg text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none"
+                  class="flex-1 px-2 py-0.5 bg-background border border-primary rounded-lg text-xs font-semibold text-foreground outline-none focus:ring-1 focus:ring-primary"
                   [ngModel]="editName()"
                   (ngModelChange)="editNameChange.emit($event)"
                   (click)="$event.stopPropagation()"
@@ -85,7 +80,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
                 />
               } @else {
                 <h3
-                  class="font-semibold text-[13.5px] text-zinc-900 dark:text-zinc-100 truncate group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors"
+                  class="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors tracking-tight"
                   [title]="board().name"
                 >
                   {{ board().name }}
@@ -96,7 +91,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" (click)="$event.stopPropagation()">
                 <button
                   type="button"
-                  class="w-6.5 h-6.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+                  class="w-6.5 h-6.5 rounded-md bg-secondary/80 hover:bg-secondary text-secondary-foreground flex items-center justify-center transition-colors cursor-pointer active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   (click)="startEdit.emit({ board: board(), event: $event })"
                   title="Renombrar tablero"
                 >
@@ -106,7 +101,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
                 </button>
                 <button
                   type="button"
-                  class="w-6.5 h-6.5 rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors cursor-pointer"
+                  class="w-6.5 h-6.5 rounded-md bg-secondary/80 hover:bg-destructive/15 text-secondary-foreground hover:text-destructive flex items-center justify-center transition-colors cursor-pointer active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   (click)="delete.emit({ board: board(), event: $event })"
                   title="Eliminar tablero"
                 >
@@ -119,13 +114,13 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
 
             <!-- Badges -->
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center gap-1">
-                <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-secondary/80 text-secondary-foreground border border-border/60 flex items-center gap-1.5">
+                <svg class="w-3 h-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
                 <span>{{ entityCount() }} {{ entityCount() === 1 ? 'clase' : 'clases' }}</span>
               </span>
               @if (relationsCount() > 0) {
-                <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="text-[10.5px] font-mono font-medium px-2 py-0.5 rounded-md bg-secondary/80 text-secondary-foreground border border-border/60 flex items-center gap-1.5">
+                  <svg class="w-3 h-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   <span>{{ relationsCount() }} {{ relationsCount() === 1 ? 'relación' : 'relaciones' }}</span>
                 </span>
               }
@@ -133,7 +128,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
           </div>
 
           <!-- Footer -->
-          <div class="border-t border-zinc-100 dark:border-zinc-800/70 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-500 font-mono" style="margin-top: 10px; padding-top: 8px;">
+          <div class="border-t border-border flex items-center justify-between text-[11px] text-muted-foreground font-mono mt-2.5 pt-2">
             <span>{{ formattedDate() }}</span>
             <span class="truncate" [title]="board().id">{{ board().id.slice(0, 8) }}</span>
           </div>
@@ -142,20 +137,19 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
     } @else {
       <!-- LIST VIEW MODE -->
       <div
-        class="grid grid-cols-12 gap-4 items-center hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer group select-none"
-        style="padding: 11px 20px;"
+        class="grid grid-cols-12 gap-4 items-center bg-card hover:bg-muted/40 border border-border/70 hover:border-primary/40 rounded-xl transition-all duration-150 cursor-pointer group select-none px-4 py-3 shadow-2xs hover:shadow-xs"
         [routerLink]="['/board', board().id]"
       >
         <!-- Col 1: Name & ID -->
         <div class="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">
+          <div class="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 border border-border text-muted-foreground">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           </div>
           <div class="min-w-0 flex-1">
             @if (isEditing()) {
               <input
                 type="text"
-                class="w-full px-2 py-0.5 bg-white dark:bg-zinc-800 border border-zinc-400 dark:border-zinc-600 rounded-lg text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none"
+                class="w-full px-2 py-0.5 bg-background border border-primary rounded-lg text-xs font-semibold text-foreground outline-none focus:ring-1 focus:ring-primary"
                 [ngModel]="editName()"
                 (ngModelChange)="editNameChange.emit($event)"
                 (click)="$event.stopPropagation()"
@@ -165,10 +159,10 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
                 autofocus
               />
             } @else {
-              <div class="font-semibold text-[13.5px] text-zinc-900 dark:text-zinc-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <div class="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
                 {{ board().name }}
               </div>
-              <div class="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 truncate">
+              <div class="text-[11px] font-mono text-muted-foreground truncate">
                 {{ board().id }}
               </div>
             }
@@ -177,18 +171,18 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
 
         <!-- Col 2: Entities / Relations -->
         <div class="col-span-3 sm:col-span-3 flex items-center gap-2">
-          <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60">
+          <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
             {{ entityCount() }} clases
           </span>
           @if (relationsCount() > 0) {
-            <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 hidden md:inline">
+            <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border hidden md:inline">
               {{ relationsCount() }} rel
             </span>
           }
         </div>
 
         <!-- Col 3: Date -->
-        <div class="col-span-3 sm:col-span-3 text-[12px] font-mono text-zinc-500 dark:text-zinc-400">
+        <div class="col-span-3 sm:col-span-3 text-xs font-mono text-muted-foreground">
           {{ formattedDate() }}
         </div>
 
@@ -196,7 +190,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
         <div class="hidden sm:flex sm:col-span-1 items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" (click)="$event.stopPropagation()">
           <button
             type="button"
-            class="w-7 h-7 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 flex items-center justify-center transition-colors cursor-pointer"
+            class="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent flex items-center justify-center transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             (click)="startEdit.emit({ board: board(), event: $event })"
             title="Renombrar tablero"
           >
@@ -206,7 +200,7 @@ import { Board } from '../../../../modeling/diagram/services/board.service';
           </button>
           <button
             type="button"
-            class="w-7 h-7 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center justify-center transition-colors cursor-pointer"
+            class="w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/15 flex items-center justify-center transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             (click)="delete.emit({ board: board(), event: $event })"
             title="Eliminar tablero"
           >

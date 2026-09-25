@@ -1,38 +1,46 @@
-<div class="fixed inset-0 bg-[#0a0a0f]/75 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
-  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[440px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-in fade-in duration-200" (click)="close()">
+  <div class="bg-card text-card-foreground border border-border/80 rounded-3xl w-full max-w-[440px] shadow-2xl overflow-hidden ring-1 ring-border/50 animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
     <!-- Header -->
-    <div class="flex items-center justify-between px-5 py-4 border-b border-[#313244] bg-[#1e1e2e]">
-      <div class="flex gap-2">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border bg-card/60 backdrop-blur-md">
+      <div class="flex items-center">
         @if (activeTab() === 'login' || activeTab() === 'register') {
-          <button
-            class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
-            [class.bg-[#313244]]="activeTab() === 'login'"
-            [class.text-[#cdd6f4]]="activeTab() === 'login'"
-            [class.text-[#a6adc8]]="activeTab() !== 'login'"
-            (click)="setTab('login')"
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            class="bg-transparent border-0 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200"
-            [class.bg-[#313244]]="activeTab() === 'register'"
-            [class.text-[#cdd6f4]]="activeTab() === 'register'"
-            [class.text-[#a6adc8]]="activeTab() !== 'register'"
-            (click)="setTab('register')"
-          >
-            Registrarse
-          </button>
+          <div class="flex items-center p-1 bg-secondary/60 backdrop-blur-md rounded-xl border border-border/60 gap-1">
+            <button
+              type="button"
+              class="border-0 text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              [class.bg-card]="activeTab() === 'login'"
+              [class.text-foreground]="activeTab() === 'login'"
+              [class.shadow-xs]="activeTab() === 'login'"
+              [class.text-muted-foreground]="activeTab() !== 'login'"
+              (click)="setTab('login')"
+            >
+              Iniciar Sesión
+            </button>
+            <button
+              type="button"
+              class="border-0 text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              [class.bg-card]="activeTab() === 'register'"
+              [class.text-foreground]="activeTab() === 'register'"
+              [class.shadow-xs]="activeTab() === 'register'"
+              [class.text-muted-foreground]="activeTab() !== 'register'"
+              (click)="setTab('register')"
+            >
+              Registrarse
+            </button>
+          </div>
         } @else if (activeTab() === 'forgot_password') {
-          <span class="text-sm font-semibold text-[#cdd6f4] px-1">Recuperar Contraseña</span>
+          <span class="text-xs font-semibold text-foreground px-1">Recuperar Contraseña</span>
         } @else if (activeTab() === 'reset_password') {
-          <span class="text-sm font-semibold text-[#cdd6f4] px-1">Restablecer Contraseña</span>
+          <span class="text-xs font-semibold text-foreground px-1">Restablecer Contraseña</span>
         }
       </div>
       <button
-        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        type="button"
+        class="size-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-all cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="close()"
+        title="Cerrar"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -40,39 +48,45 @@
     </div>
 
     <!-- Body -->
-    <div class="p-6 px-5">
+    <div class="p-6 sm:p-7">
       @if (displayError()) {
-        <div class="bg-[#f38ba8]/[0.15] border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
-          {{ displayError() }}
+        <div class="bg-destructive/10 border border-destructive/25 text-destructive px-3.5 py-2.5 rounded-xl text-xs mb-4 flex items-center gap-2.5 shadow-2xs">
+          <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ displayError() }}</span>
         </div>
       }
 
       @if (successMsg()) {
-        <div class="bg-[#a6e3a1]/[0.15] border border-[#a6e3a1] text-[#a6e3a1] px-3.5 py-2.5 rounded-lg text-[13px] mb-4">
-          {{ successMsg() }}
+        <div class="bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 px-3.5 py-2.5 rounded-xl text-xs mb-4 flex items-center gap-2.5 shadow-2xs">
+          <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span>{{ successMsg() }}</span>
         </div>
       }
 
       <!-- Login Form -->
       @if (activeTab() === 'login') {
-        <form (ngSubmit)="handleLogin()">
-          <div class="mb-4">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+        <form (ngSubmit)="handleLogin()" class="space-y-4">
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Correo Electrónico</label>
             <input
               type="email"
               [(ngModel)]="loginEmail"
               name="email"
               placeholder="usuario@ejemplo.com"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
-          <div class="mb-2">
+          <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-[#cdd6f4] text-xs font-medium">Contraseña</label>
+              <label class="block text-foreground text-xs font-medium">Contraseña</label>
               <button
                 type="button"
-                class="bg-transparent border-0 text-[#89b4fa] text-xs cursor-pointer hover:underline p-0"
+                class="bg-transparent border-0 text-primary text-xs cursor-pointer hover:underline p-0"
                 (click)="setTab('forgot_password')"
               >
                 ¿Olvidaste tu contraseña?
@@ -84,12 +98,12 @@
               name="password"
               placeholder="••••••••"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
           <button
             type="submit"
-            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-4 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold p-2.5 rounded-xl cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-xs mt-1"
             [disabled]="loading()"
           >
             {{ loading() ? 'Ingresando...' : 'Iniciar Sesión' }}
@@ -99,54 +113,54 @@
 
       <!-- Register Form -->
       @if (activeTab() === 'register') {
-        <form (ngSubmit)="handleRegister()">
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nombre Completo</label>
+        <form (ngSubmit)="handleRegister()" class="space-y-3.5">
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Nombre Completo</label>
             <input
               type="text"
               [(ngModel)]="regFullName"
               name="full_name"
               placeholder="Juan Pérez"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Correo Electrónico</label>
             <input
               type="email"
               [(ngModel)]="regEmail"
               name="email"
               placeholder="usuario@ejemplo.com"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Contraseña</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Contraseña</label>
             <input
               type="password"
               [(ngModel)]="regPassword"
               name="password"
               placeholder="Mínimo 8 caracteres (letras y números)"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Confirmar Contraseña</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Confirmar Contraseña</label>
             <input
               type="password"
               [(ngModel)]="regConfirmPassword"
               name="confirm_password"
               placeholder="Repite tu contraseña"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
           <button
             type="submit"
-            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold p-2.5 rounded-xl cursor-pointer mt-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-xs"
             [disabled]="loading()"
           >
             {{ loading() ? 'Creando cuenta...' : 'Crear Cuenta' }}
@@ -156,32 +170,32 @@
 
       <!-- Forgot Password Form -->
       @if (activeTab() === 'forgot_password') {
-        <form (ngSubmit)="handleForgotPassword()">
-          <p class="text-xs text-[#a6adc8] mb-4">
+        <form (ngSubmit)="handleForgotPassword()" class="space-y-4">
+          <p class="text-xs text-muted-foreground leading-relaxed">
             Ingresa tu correo electrónico y te enviaremos un enlace seguro para restablecer tu contraseña.
           </p>
-          <div class="mb-4">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Correo Electrónico</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Correo Electrónico</label>
             <input
               type="email"
               [(ngModel)]="forgotEmail"
               name="forgot_email"
               placeholder="usuario@ejemplo.com"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
           <button
             type="submit"
-            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold p-2.5 rounded-xl cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-xs"
             [disabled]="loading()"
           >
             {{ loading() ? 'Enviando...' : 'Enviar Enlace de Recuperación' }}
           </button>
-          <div class="text-center mt-4">
+          <div class="text-center mt-3">
             <button
               type="button"
-              class="bg-transparent border-0 text-xs text-[#89b4fa] cursor-pointer hover:underline"
+              class="bg-transparent border-0 text-xs text-primary font-medium cursor-pointer hover:underline"
               (click)="setTab('login')"
             >
               ← Volver al inicio de sesión
@@ -192,54 +206,54 @@
 
       <!-- Reset Password Form -->
       @if (activeTab() === 'reset_password') {
-        <form (ngSubmit)="handleResetPassword()">
-          <p class="text-xs text-[#a6adc8] mb-4">
+        <form (ngSubmit)="handleResetPassword()" class="space-y-3.5">
+          <p class="text-xs text-muted-foreground leading-relaxed">
             Ingresa tu nueva contraseña para actualizar el acceso a tu cuenta.
           </p>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Token de Restablecimiento</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Token de Restablecimiento</label>
             <input
               type="text"
               [(ngModel)]="resetTokenInput"
               name="reset_token"
               placeholder="Pega el token aquí si no se autocompletó"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-xs outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs font-mono"
             />
           </div>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Nueva Contraseña</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Nueva Contraseña</label>
             <input
               type="password"
               [(ngModel)]="resetNewPassword"
               name="new_password"
               placeholder="Mínimo 8 caracteres (letras y números)"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
-          <div class="mb-3">
-            <label class="block text-[#cdd6f4] text-xs font-medium mb-1.5">Confirmar Nueva Contraseña</label>
+          <div>
+            <label class="block text-foreground text-xs font-medium mb-1.5">Confirmar Nueva Contraseña</label>
             <input
               type="password"
               [(ngModel)]="resetConfirmPassword"
               name="confirm_new_password"
               placeholder="Repite la nueva contraseña"
               required
-              class="w-full bg-[#11111b] border border-[#313244] rounded-lg px-3.5 py-2.5 text-[#cdd6f4] text-sm outline-none transition-colors duration-200 box-border focus:border-[#89b4fa]"
+              class="w-full bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring shadow-2xs"
             />
           </div>
           <button
             type="submit"
-            class="w-full bg-gradient-to-br from-[#89b4fa] to-[#b4befe] border-0 rounded-lg text-[#11111b] text-sm font-bold p-3 cursor-pointer mt-2 transition-all duration-100 hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold p-2.5 rounded-xl cursor-pointer mt-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-xs"
             [disabled]="loading()"
           >
             {{ loading() ? 'Guardando...' : 'Restablecer Contraseña' }}
           </button>
-          <div class="text-center mt-4">
+          <div class="text-center mt-3">
             <button
               type="button"
-              class="bg-transparent border-0 text-xs text-[#89b4fa] cursor-pointer hover:underline"
+              class="bg-transparent border-0 text-xs text-primary font-medium cursor-pointer hover:underline"
               (click)="setTab('login')"
             >
               ← Volver al inicio de sesión

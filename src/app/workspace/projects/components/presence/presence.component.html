@@ -1,32 +1,60 @@
 <div class="relative">
-  <div class="flex items-center gap-2.5 px-3 h-7 bg-[#fafafa] border-b border-transparent text-[11px] shrink-0">
-    <span class="inline-flex items-center gap-1.5 text-zinc-500">
-      <span class="w-1.5 h-1.5 rounded-full" [class.bg-emerald-500]="ws.online()" [class.bg-zinc-300]="!ws.online()"></span>
+  <div class="flex items-center gap-2.5 px-3 h-7 bg-card/70 backdrop-blur-md border-b border-border text-[11px] shrink-0 select-none">
+    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground text-[10.5px] font-medium">
+      <span class="w-1.5 h-1.5 rounded-full opacity-70" [class.bg-emerald-500]="ws.online()" [class.bg-muted-foreground]="!ws.online()"></span>
       @if (ws.online()) { {{ ws.peerCount() + 1 }} online } @else { Offline }
     </span>
-    <div class="flex items-center gap-1">
-      <div class="w-6 h-6 rounded-full flex items-center justify-center text-white font-semibold tracking-wide text-[10px] border border-white shadow-sm" style="background: #1E293B" title="You">U</div>
+    <div class="flex items-center -space-x-1">
+      <div class="w-5.5 h-5.5 rounded-full flex items-center justify-center bg-primary text-primary-foreground font-semibold tracking-wide text-[10px] ring-2 ring-background shadow-2xs" title="You">U</div>
       @for (user of peers(); track user.user_id) {
-        <div class="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-[10px] border border-white shadow-sm" [style.background]="user.color" [title]="user.name">{{ user.name.charAt(0) }}</div>
+        <div class="w-5.5 h-5.5 rounded-full flex items-center justify-center text-white font-bold text-[10px] ring-2 ring-background shadow-2xs" [style.background]="user.color" [title]="user.name">{{ user.name.charAt(0) }}</div>
       }
     </div>
     <div class="flex-1"></div>
-    <button class="hidden items-center gap-1 px-2.5 py-1 rounded-full text-[11px] text-zinc-600 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 cursor-pointer" (click)="toggleChat()">
-      Chat @if (ws.messages().length) { ({{ ws.messages().length }}) }
+    <button
+      type="button"
+      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-foreground bg-secondary/80 hover:bg-secondary border border-border cursor-pointer transition-colors active:scale-[0.98]"
+      (click)="toggleChat()"
+    >
+      <span>Chat</span>
+      @if (ws.messages().length) {
+        <span class="px-1.5 py-0.2 bg-primary/20 text-primary text-[10px] rounded-full font-mono font-bold">{{ ws.messages().length }}</span>
+      }
     </button>
   </div>
   @if (showChat()) {
-    <div class="absolute left-0 right-0 top-full z-40 mx-3 mt-1 flex flex-col bg-white border border-[#a0aec0] rounded-sm shadow-lg overflow-hidden">
-      <div class="px-3 py-1.5 text-[10px] font-semibold text-[#555] uppercase tracking-widest border-b border-[#e8eaf0] bg-[#f8f9fb]">Board chat</div>
-      <div class="h-44 overflow-y-auto px-3 py-2 space-y-1 bg-white">
-        @for (msg of ws.messages(); track $index) {
-          <div class="text-[11px]"><span class="font-semibold" [style.color]="msg.color">{{ msg.name }}:</span><span class="text-[#1a1a1a] ml-1 break-words">{{ msg.text }}</span></div>
-        }
-        @empty { <div class="text-[11px] text-[#888] italic py-2 text-center">No messages yet</div> }
+    <div class="absolute left-0 right-0 top-full z-40 mx-3 mt-1.5 flex flex-col bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur-md ring-1 ring-border/50 animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-3.5 py-2 text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/40 flex items-center justify-between">
+        <span>Board Chat</span>
+        <span class="text-[10px] font-mono text-muted-foreground lowercase">{{ ws.messages().length }} msgs</span>
       </div>
-      <div class="flex items-center gap-2 border-t border-[#d0d6e2] p-2 bg-[#f8f9fb]">
-        <input type="text" class="flex-1 px-2 py-1 bg-white border border-[#a0aec0] rounded-sm text-[11px] text-[#1a1a1a] placeholder:text-[#888] outline-none focus:border-[#2b579a]" placeholder="Type a message..." [ngModel]="draft()" (ngModelChange)="draft.set($event)" (keyup.enter)="send()" />
-        <button class="px-3 py-1 rounded-sm text-[11px] font-semibold bg-[#2b579a] text-white border border-[#1e3f6f] hover:bg-[#1e3f6f] cursor-pointer" (click)="send()">Send</button>
+      <div class="h-48 overflow-y-auto px-3.5 py-2.5 space-y-2 bg-popover/60">
+        @for (msg of ws.messages(); track $index) {
+          <div class="text-[11.5px] leading-relaxed">
+            <span class="font-semibold" [style.color]="msg.color">{{ msg.name }}:</span>
+            <span class="text-foreground ml-1.5 break-words">{{ msg.text }}</span>
+          </div>
+        }
+        @empty {
+          <div class="text-[11px] text-muted-foreground italic py-6 text-center">No messages yet. Start collaborating!</div>
+        }
+      </div>
+      <div class="flex items-center gap-2 border-t border-border p-2.5 bg-muted/20">
+        <input
+          type="text"
+          class="flex-1 px-3 py-1.5 bg-background border border-input rounded-lg text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+          placeholder="Type a message..."
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keyup.enter)="send()"
+        />
+        <button
+          type="button"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-xs active:scale-[0.98] transition-all"
+          (click)="send()"
+        >
+          Send
+        </button>
       </div>
     </div>
   }

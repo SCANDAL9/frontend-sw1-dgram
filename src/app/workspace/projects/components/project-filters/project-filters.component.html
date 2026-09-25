@@ -1,17 +1,15 @@
 <!-- Navigation Tabs: Tableros vs Proyectos -->
-<div class="flex items-center justify-between gap-4 mb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-3">
-  <div class="flex items-center gap-2">
+<div class="flex items-center justify-between gap-4 mb-8 border-b border-border/70 pb-4 select-none">
+  <div class="flex items-center p-1 bg-secondary/50 backdrop-blur-md rounded-2xl border border-border/70 gap-1.5 shadow-2xs">
     <button
       type="button"
-      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
-      [class.bg-zinc-900]="activeTab() === 'boards'"
-      [class.text-white]="activeTab() === 'boards'"
-      [class.dark:bg-zinc-100]="activeTab() === 'boards'"
-      [class.dark:text-zinc-900]="activeTab() === 'boards'"
-      [class.text-zinc-600]="activeTab() !== 'boards'"
-      [class.dark:text-zinc-400]="activeTab() !== 'boards'"
-      [class.hover:bg-zinc-100]="activeTab() !== 'boards'"
-      [class.dark:hover:bg-zinc-800]="activeTab() !== 'boards'"
+      class="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      [class.bg-card]="activeTab() === 'boards'"
+      [class.text-foreground]="activeTab() === 'boards'"
+      [class.shadow-xs]="activeTab() === 'boards'"
+      [class.ring-1]="activeTab() === 'boards'"
+      [class.ring-border]="activeTab() === 'boards'"
+      [class.text-muted-foreground]="activeTab() !== 'boards'"
       (click)="activeTabChange.emit('boards')"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -19,37 +17,53 @@
         <path d="M3 9h18M9 21V9" />
       </svg>
       <span>Tableros</span>
-      <span class="text-xs px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 font-mono text-zinc-700 dark:text-zinc-300">{{ boardCount() }}</span>
+      <span
+        class="text-[10.5px] font-mono px-2 py-0.5 rounded-full transition-colors"
+        [class.bg-primary]="activeTab() === 'boards'"
+        [class.text-primary-foreground]="activeTab() === 'boards'"
+        [class.font-bold]="activeTab() === 'boards'"
+        [class.bg-muted]="activeTab() !== 'boards'"
+        [class.text-muted-foreground]="activeTab() !== 'boards'"
+      >
+        {{ boardCount() }}
+      </span>
     </button>
 
     <button
       type="button"
-      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
-      [class.bg-zinc-900]="activeTab() === 'projects'"
-      [class.text-white]="activeTab() === 'projects'"
-      [class.dark:bg-zinc-100]="activeTab() === 'projects'"
-      [class.dark:text-zinc-900]="activeTab() === 'projects'"
-      [class.text-zinc-600]="activeTab() !== 'projects'"
-      [class.dark:text-zinc-400]="activeTab() !== 'projects'"
-      [class.hover:bg-zinc-100]="activeTab() !== 'projects'"
-      [class.dark:hover:bg-zinc-800]="activeTab() !== 'projects'"
+      class="flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      [class.bg-card]="activeTab() === 'projects'"
+      [class.text-foreground]="activeTab() === 'projects'"
+      [class.shadow-xs]="activeTab() === 'projects'"
+      [class.ring-1]="activeTab() === 'projects'"
+      [class.ring-border]="activeTab() === 'projects'"
+      [class.text-muted-foreground]="activeTab() !== 'projects'"
       (click)="activeTabChange.emit('projects')"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
       </svg>
       <span>Proyectos</span>
-      <span class="text-xs px-1.5 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 font-mono text-zinc-700 dark:text-zinc-300">{{ projectCount() }}</span>
+      <span
+        class="text-[10.5px] font-mono px-2 py-0.5 rounded-full transition-colors"
+        [class.bg-primary]="activeTab() === 'projects'"
+        [class.text-primary-foreground]="activeTab() === 'projects'"
+        [class.font-bold]="activeTab() === 'projects'"
+        [class.bg-muted]="activeTab() !== 'projects'"
+        [class.text-muted-foreground]="activeTab() !== 'projects'"
+      >
+        {{ projectCount() }}
+      </span>
     </button>
   </div>
 
   @if (activeTab() === 'projects') {
     <button
       type="button"
-      class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all cursor-pointer shadow-sm shadow-primary/20 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       (click)="openCreateProject.emit()"
     >
-      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
       </svg>
       <span>Nuevo Proyecto</span>
@@ -59,30 +73,27 @@
 
 <!-- Header row of active section: Title + View Mode Switcher -->
 @if (activeTab() === 'boards') {
-  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-border/70 mb-8 select-none">
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Tableros de Diseño</h1>
-        <span class="text-[11.5px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Tableros de Diseño</h1>
+        <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/70 shadow-2xs">
           {{ boardCount() }}
         </span>
       </div>
-      <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400">Diagramas de clases UML 2.5 y generación de código en tiempo real.</p>
+      <p class="text-xs sm:text-sm text-muted-foreground font-normal">Diagramas de clases UML 2.5 y generación de código en tiempo real.</p>
     </div>
 
     <!-- Controls: View Mode Switcher -->
     <div class="flex items-center gap-3 self-start sm:self-auto">
-      <div class="flex items-center p-1 bg-zinc-200/70 dark:bg-zinc-800/90 rounded-xl border border-zinc-200 dark:border-zinc-700/80 gap-1">
+      <div class="flex items-center p-1 bg-secondary/50 rounded-xl border border-border/70 gap-1 shadow-2xs">
         <button
           type="button"
-          class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
-          [class.bg-white]="viewMode() === 'grid'"
-          [class.dark:bg-zinc-900]="viewMode() === 'grid'"
-          [class.text-zinc-900]="viewMode() === 'grid'"
-          [class.dark:text-zinc-100]="viewMode() === 'grid'"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          [class.bg-card]="viewMode() === 'grid'"
+          [class.text-foreground]="viewMode() === 'grid'"
           [class.shadow-xs]="viewMode() === 'grid'"
-          [class.text-zinc-500]="viewMode() !== 'grid'"
-          [class.dark:text-zinc-400]="viewMode() !== 'grid'"
+          [class.text-muted-foreground]="viewMode() !== 'grid'"
           (click)="viewModeChange.emit('grid')"
           title="Vista en cuadrícula"
         >
@@ -94,14 +105,11 @@
 
         <button
           type="button"
-          class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[12.5px] font-medium transition-all cursor-pointer"
-          [class.bg-white]="viewMode() === 'list'"
-          [class.dark:bg-zinc-900]="viewMode() === 'list'"
-          [class.text-zinc-900]="viewMode() === 'list'"
-          [class.dark:text-zinc-100]="viewMode() === 'list'"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          [class.bg-card]="viewMode() === 'list'"
+          [class.text-foreground]="viewMode() === 'list'"
           [class.shadow-xs]="viewMode() === 'list'"
-          [class.text-zinc-500]="viewMode() !== 'list'"
-          [class.dark:text-zinc-400]="viewMode() !== 'list'"
+          [class.text-muted-foreground]="viewMode() !== 'list'"
           (click)="viewModeChange.emit('list')"
           title="Vista en lista"
         >
@@ -116,20 +124,20 @@
 }
 
 @if (activeTab() === 'projects') {
-  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-zinc-200/80 dark:border-zinc-800/80 mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-border/70 mb-8 select-none">
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Proyectos</h1>
-        <span class="text-[11.5px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Proyectos</h1>
+        <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border/70 shadow-2xs">
           {{ projectCount() }}
         </span>
       </div>
-      <p class="text-[13.5px] text-zinc-500 dark:text-zinc-400">Organiza tus diagramas UML en proyectos colaborativos con control de acceso por roles.</p>
+      <p class="text-xs sm:text-sm text-muted-foreground font-normal">Organiza tus diagramas UML en proyectos colaborativos con control de acceso por roles.</p>
     </div>
 
     <button
       type="button"
-      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all cursor-pointer shadow-xs active:scale-95 self-start sm:self-auto"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all cursor-pointer shadow-sm shadow-primary/20 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none self-start sm:self-auto"
       (click)="openCreateProject.emit()"
     >
       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
