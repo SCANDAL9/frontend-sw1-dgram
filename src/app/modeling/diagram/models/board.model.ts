@@ -40,6 +40,8 @@ export interface ProjectClass {
   package_id: string;
   element_type: string;
   is_abstract: boolean;
+  is_visible?: boolean;
+  isVisible?: boolean;
   attributes: ProjectClassAttribute[];
   boards_count: number;
   is_on_current_board?: boolean;

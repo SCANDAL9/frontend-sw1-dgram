@@ -3,11 +3,11 @@ import { Pipe, PipeTransform } from '@angular/core';
 export function getRelationCategory(type: string | undefined): string {
   if (!type) return 'Association';
   const t = type.toLowerCase().trim();
-  if (t === 'generalization' || t === 'inheritance') return 'Generalization';
-  if (t === 'aggregation') return 'Aggregation';
-  if (t === 'composition') return 'Composition';
-  if (t === 'dependency') return 'Dependency';
-  if (t === 'realization') return 'Realization';
+  if (t.startsWith('generalization') || t.startsWith('inheritance')) return 'Generalization';
+  if (t.startsWith('aggregation')) return 'Aggregation';
+  if (t.startsWith('composition')) return 'Composition';
+  if (t.startsWith('dependency')) return 'Dependency';
+  if (t.startsWith('realization')) return 'Realization';
   return 'Association';
 }
 

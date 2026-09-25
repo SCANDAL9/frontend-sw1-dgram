@@ -29,6 +29,8 @@ export interface DBEntity {
   elementType?: ClassifierType;
   stereotype?: string | null; // e.g. 'entity', 'service', 'repository', 'controller', 'enumeration', 'interface', 'datatype'
   isAbstract?: boolean;
+  isVisible?: boolean;
+  is_visible?: boolean;
 }
 
 export interface DBRelation {

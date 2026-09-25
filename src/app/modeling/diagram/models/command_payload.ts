@@ -52,6 +52,12 @@ export interface CommandPayload {
   source_multiplicity?: string;
   target_multiplicity?: string;
   // Classifier metadata
+  name?: string;
   is_abstract?: boolean;
+  isAbstract?: boolean;
+  is_visible?: boolean;
+  isVisible?: boolean;
   element_type?: string;
+  elementType?: string;
+  stereotype?: string;
 }

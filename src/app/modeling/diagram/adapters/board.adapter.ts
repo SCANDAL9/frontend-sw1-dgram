@@ -50,6 +50,8 @@ export interface ProjectClassDto {
   elementType?: string;
   is_abstract?: boolean;
   isAbstract?: boolean;
+  is_visible?: boolean;
+  isVisible?: boolean;
   attributes?: ProjectClassAttributeDto[];
   boards_count?: number;
   boardsCount?: number;
@@ -117,6 +119,8 @@ export class BoardAdapter {
       package_id: dto.package_id || dto.packageId || '',
       element_type: dto.element_type || dto.elementType || 'class',
       is_abstract: !!(dto.is_abstract ?? dto.isAbstract),
+      is_visible: dto.is_visible != null ? !!dto.is_visible : (dto.isVisible != null ? !!dto.isVisible : true),
+      isVisible: dto.is_visible != null ? !!dto.is_visible : (dto.isVisible != null ? !!dto.isVisible : true),
       attributes: Array.isArray(dto.attributes)
         ? dto.attributes.map((a) => this.toProjectClassAttribute(a))
         : [],

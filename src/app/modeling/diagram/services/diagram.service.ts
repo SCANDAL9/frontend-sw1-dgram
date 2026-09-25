@@ -53,11 +53,11 @@ export class DiagramService {
     switch (t) {
       case 'CREATE_ENTITY':
         this.entities.update(es => {
-          const id = p.entity_id!;
+          const id = p.entity_id || p.class_id || `ent-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
           const idx = es.findIndex(e => e.id === id);
           const next: DBEntity = {
             id,
-            name: p.entity_name!,
+            name: p.entity_name || p.class_name || p.name || 'Entity',
             attributes: (p.columns || []) as DBAttribute[],
             position: p.position || { x: 100, y: 100 },
             width: p.width !== undefined ? Number(p.width) : undefined,
@@ -66,6 +66,8 @@ export class DiagramService {
             elementType: p.element_type || p.elementType,
             stereotype: p.stereotype,
             isAbstract: !!(p.is_abstract || p.isAbstract),
+            isVisible: p.is_visible != null ? !!p.is_visible : (p.isVisible != null ? !!p.isVisible : true),
+            is_visible: p.is_visible != null ? !!p.is_visible : (p.isVisible != null ? !!p.isVisible : true),
           };
           if (idx >= 0) {
             const copy = [...es];
@@ -83,22 +85,37 @@ export class DiagramService {
         ));
         break;
 
-      case 'UPDATE_ENTITY':
-        this.entities.update(es => es.map(e =>
-          e.id === p.entity_id
-            ? {
-                ...e,
-                name: p.entity_name || e.name,
-                stereotype: p.stereotype !== undefined ? p.stereotype : e.stereotype,
-                elementType: (p.element_type || p.elementType) !== undefined ? (p.element_type || p.elementType) : e.elementType,
-                isAbstract: p.is_abstract !== undefined ? p.is_abstract : (p.isAbstract !== undefined ? p.isAbstract : e.isAbstract),
-                packageId: p.package_id !== undefined ? p.package_id : e.packageId,
-                width: p.width !== undefined ? Number(p.width) : e.width,
-                height: p.height !== undefined ? Number(p.height) : e.height,
-              }
-            : e
-        ));
+      case 'UPDATE_ENTITY': {
+        const existing = this.entities().find(e => e.id === p.entity_id);
+        const oldName = existing?.name;
+        const newName = p.entity_name || (p as any).name;
+        const isType = existing?.elementType === 'enumeration' || existing?.elementType === 'datatype' || existing?.stereotype?.toLowerCase() === 'enumeration' || existing?.stereotype?.toLowerCase() === 'datatype';
+
+        this.entities.update(es => es.map(e => {
+          if (e.id === p.entity_id) {
+            return {
+              ...e,
+              name: newName || e.name,
+              stereotype: p.stereotype !== undefined ? p.stereotype : e.stereotype,
+              elementType: (p.element_type || p.elementType) !== undefined ? (p.element_type || p.elementType) : e.elementType,
+              isAbstract: p.is_abstract !== undefined ? p.is_abstract : (p.isAbstract !== undefined ? p.isAbstract : e.isAbstract),
+              isVisible: p.is_visible != null ? !!p.is_visible : (p.isVisible != null ? !!p.isVisible : (e.isVisible ?? e.is_visible ?? true)),
+              is_visible: p.is_visible != null ? !!p.is_visible : (p.isVisible != null ? !!p.isVisible : (e.is_visible ?? e.isVisible ?? true)),
+              packageId: p.package_id !== undefined ? p.package_id : e.packageId,
+              width: p.width !== undefined ? Number(p.width) : e.width,
+              height: p.height !== undefined ? Number(p.height) : e.height,
+            };
+          }
+          if (isType && oldName && newName && oldName !== newName && e.attributes?.some(a => a.type === oldName)) {
+            return {
+              ...e,
+              attributes: e.attributes.map(a => a.type === oldName ? { ...a, type: newName } : a),
+            };
+          }
+          return e;
+        }));
         break;
+      }
 
       case 'MOVE_ENTITY':
         this.entities.update(es => es.map(e =>
@@ -291,19 +308,33 @@ export class DiagramService {
         width: e.width !== undefined ? Number(e.width) : undefined,
         height: e.height !== undefined ? Number(e.height) : undefined,
         packageId: e.packageId || (e as any).package_id,
+        isVisible: (e as any).is_visible != null ? !!(e as any).is_visible : ((e as any).isVisible != null ? !!(e as any).isVisible : true),
+        is_visible: (e as any).is_visible != null ? !!(e as any).is_visible : ((e as any).isVisible != null ? !!(e as any).isVisible : true),
       };
     });
-    rels = rels.map(r => ({
-      ...r,
-      sourceId: r.sourceId || (r as any).source_id || (r as any).sourceClassId || (r as any).source_class_id,
-      targetId: r.targetId || (r as any).target_id || (r as any).targetClassId || (r as any).target_class_id,
-      name: r.name ?? null,
-      sourceRole: r.sourceRole || (r as any).source_role || null,
-      targetRole: r.targetRole || (r as any).target_role || null,
-      sourceMultiplicity: r.sourceMultiplicity || (r as any).source_multiplicity || null,
-      targetMultiplicity: r.targetMultiplicity || (r as any).target_multiplicity || null,
-      associationClassId: r.associationClassId || (r as any).association_class_id || null,
-    }));
+    const assocMap = new Map(((state.associations || []) as any[]).map((a) => [a.id, a]));
+    const isCardinalityOnly = (t: string | undefined | null) =>
+      !t || ['1:n', '1:1', 'n:m', 'one_to_many', 'one_to_one', 'many_to_many'].includes(t.toLowerCase());
+
+    rels = rels.map(r => {
+      const assoc = assocMap.get(r.id);
+      let canonicalType = r.type;
+      if (assoc?.type && isCardinalityOnly(canonicalType)) {
+        canonicalType = assoc.type;
+      }
+      return {
+        ...r,
+        type: canonicalType,
+        sourceId: r.sourceId || (r as any).source_id || (r as any).sourceClassId || (r as any).source_class_id,
+        targetId: r.targetId || (r as any).target_id || (r as any).targetClassId || (r as any).target_class_id,
+        name: r.name ?? assoc?.name ?? null,
+        sourceRole: r.sourceRole || (r as any).source_role || assoc?.source_role || null,
+        targetRole: r.targetRole || (r as any).target_role || assoc?.target_role || null,
+        sourceMultiplicity: r.sourceMultiplicity || (r as any).source_multiplicity || assoc?.source_multiplicity || null,
+        targetMultiplicity: r.targetMultiplicity || (r as any).target_multiplicity || assoc?.target_multiplicity || null,
+        associationClassId: r.associationClassId || (r as any).association_class_id || assoc?.association_class_id || null,
+      };
+    });
     // keep all relations — filtering is visual only via validRelations()
     this.entities.set(ents);
     this.relations.set(rels);

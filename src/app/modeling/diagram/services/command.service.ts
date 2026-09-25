@@ -5,6 +5,7 @@ import { ColumnData } from '../models/command_payload';
 import { Command } from '../models/command';
 import { CommandType } from '../models/command_type';
 import { invert, StateSnapshot } from '../../../workspace/history/services/command-inverter.service';
+import { isManyToMany } from '../pipes/relation-cardinality.pipe';
 
 /** Entry in the local command history with its pre-execution state snapshot. */
 interface HistoryEntry {
@@ -150,7 +151,10 @@ export class CommandService {
     // We need to step back by the original entry BEFORE the inverse is added.
     const pointerBeforeInverse = this.localPointer - 1;
 
-    this._createAndApply(result.type, result.payload as Record<string, any>);
+    const list = Array.isArray(result) ? result : [result];
+    for (const r of list) {
+      this._createAndApply(r.type, r.payload as Record<string, any>);
+    }
 
     // Rewind pointer so undoing again goes to the right place
     this.localPointer = Math.max(-1, pointerBeforeInverse);
@@ -182,7 +186,7 @@ export class CommandService {
     name: string,
     columns: ColumnData[] = [],
     position = { x: 100, y: 100 },
-    options?: { element_type?: string; elementType?: string; stereotype?: string | null; is_abstract?: boolean },
+    options?: { element_type?: string; elementType?: string; stereotype?: string | null; is_abstract?: boolean; is_visible?: boolean; isVisible?: boolean },
   ): void {
     this._createAndApply('CREATE_ENTITY', {
       entity_id: id,
@@ -193,11 +197,18 @@ export class CommandService {
       elementType: options?.elementType || options?.element_type,
       stereotype: options?.stereotype,
       is_abstract: options?.is_abstract,
+      is_visible: options?.is_visible !== undefined ? options.is_visible : (options?.isVisible !== undefined ? options.isVisible : true),
+      isVisible: options?.isVisible !== undefined ? options.isVisible : (options?.is_visible !== undefined ? options.is_visible : true),
     });
     this.ws.sendSelection([id]);
   }
 
   deleteEntity(id: string): void {
+    for (const r of this.diagram.relations()) {
+      if (r.associationClassId === id) {
+        this.unlinkAssociationClass(r.id);
+      }
+    }
     this._createAndApply('DELETE_ENTITY', { entity_id: id });
     this.ws.sendSelection([]);
   }
@@ -205,7 +216,7 @@ export class CommandService {
   updateEntity(
     id: string,
     name: string,
-    options?: { element_type?: string; elementType?: string; stereotype?: string | null; is_abstract?: boolean },
+    options?: { element_type?: string; elementType?: string; stereotype?: string | null; is_abstract?: boolean; is_visible?: boolean; isVisible?: boolean; [key: string]: any },
   ): void {
     this._createAndApply('UPDATE_ENTITY', {
       entity_id: id,
@@ -214,7 +225,19 @@ export class CommandService {
       elementType: options?.elementType || options?.element_type,
       stereotype: options?.stereotype,
       is_abstract: options?.is_abstract,
+      is_visible: options?.is_visible,
+      isVisible: options?.isVisible,
       ...(options || {}),
+    });
+  }
+
+  setEntityVisibility(id: string, isVisible: boolean): void {
+    const entity = this.diagram.getEntity(id);
+    this._createAndApply('UPDATE_ENTITY', {
+      entity_id: id,
+      entity_name: entity?.name || '',
+      is_visible: isVisible,
+      isVisible: isVisible,
     });
   }
 
@@ -290,9 +313,10 @@ export class CommandService {
     targetRole?: string | null,
     sourceMultiplicity?: string | null,
     targetMultiplicity?: string | null,
-  ): void {
+  ): string {
+    const relId = `rel-${Date.now()}-${this.counter++}`;
     this._createAndApply('CREATE_RELATION', {
-      relation_id: `rel-${Date.now()}-${this.counter++}`,
+      relation_id: relId,
       source_entity_id: sourceId,
       target_entity_id: targetId,
       source_column: sourceColumn,
@@ -304,6 +328,7 @@ export class CommandService {
       source_multiplicity: sourceMultiplicity,
       target_multiplicity: targetMultiplicity,
     });
+    return relId;
   }
 
   updateRelation(
@@ -333,6 +358,14 @@ export class CommandService {
   }
 
   deleteRelation(id: string): void {
+    const rel = this.diagram.relations().find((r) => r.id === id);
+    if (rel?.associationClassId) {
+      const assoc = this.diagram.getEntity(rel.associationClassId);
+      this.unlinkAssociationClass(id);
+      if (assoc) {
+        this.deleteEntity(assoc.id);
+      }
+    }
     this._createAndApply('DELETE_RELATION', { relation_id: id });
   }
 
@@ -347,5 +380,83 @@ export class CommandService {
     this._createAndApply('UNLINK_ASSOCIATION_CLASS', {
       relation_id: relationId,
     });
+  }
+
+  /**
+   * Applies multiplicity changes and synchronizes intermediate Association Class lifecycle:
+   * 1. If transitioning to N:M, automatically spawns intermediate class with 0 attributes.
+   * 2. If transitioning away from N:M and intermediate class has attributes, confirms with user.
+   * 3. If confirmed or 0 attributes, automatically cleans up the intermediate class.
+   * 4. Updates relation multiplicity fields and relation type.
+   * Returns false if user cancelled confirmation (multiplicity change aborted).
+   */
+  applyMultiplicityChange(relId: string, newSrc: string, newTgt: string): boolean {
+    const rel = this.diagram.relations().find((r) => r.id === relId);
+    if (!rel) return false;
+
+    const cleanSrc = (newSrc || '').trim() || '1';
+    const cleanTgt = (newTgt || '').trim() || '1';
+    const becomesManyToMany = isManyToMany(cleanSrc, cleanTgt);
+
+    if (becomesManyToMany && !rel.associationClassId) {
+      const srcEntity = this.diagram.getEntity(rel.sourceId);
+      const tgtEntity = this.diagram.getEntity(rel.targetId);
+      const isSelf = rel.sourceId === rel.targetId;
+      const baseName = isSelf
+        ? `${srcEntity?.name || 'Clase'}Rel`
+        : `${srcEntity?.name || 'Origen'}${tgtEntity?.name || 'Destino'}`;
+      let name = baseName;
+      let n = 1;
+      const existingNames = new Set(this.diagram.entities().map((e) => e.name));
+      while (existingNames.has(name)) {
+        name = `${baseName}${n++}`;
+      }
+
+      const classId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `assoc_${Date.now()}`;
+      const srcPos = srcEntity?.position || { x: 100, y: 100 };
+      const tgtPos = tgtEntity?.position || { x: 300, y: 300 };
+      let midX = Math.round((srcPos.x + tgtPos.x) / 2);
+      let midY = Math.round((srcPos.y + tgtPos.y) / 2);
+      let posY = midY - 140 > 40 ? midY - 140 : midY + 140;
+
+      if (isSelf) {
+        midX = srcPos.x + (srcEntity?.width || 220) + 60;
+        posY = srcPos.y - 40;
+      }
+
+      // Association class created with 0 attributes (conceptually inherits FKs/PKs from both endpoints)
+      this.createEntity(classId, name, [], { x: midX, y: posY }, {
+        element_type: 'class',
+        elementType: 'class',
+      });
+      this.linkAssociationClass(relId, classId);
+    } else if (!becomesManyToMany && rel.associationClassId) {
+      const assoc = this.diagram.getEntity(rel.associationClassId);
+      if (assoc && assoc.attributes && assoc.attributes.length > 0) {
+        const confirmed = typeof window !== 'undefined'
+          ? window.confirm(
+              `La relación ya no es Muchos a Muchos (N:M). ¿Deseas eliminar la clase intermedia "${assoc.name}" que contiene ${assoc.attributes.length} atributo(s)?`
+            )
+          : true;
+        if (!confirmed) {
+          return false;
+        }
+      }
+      this.unlinkAssociationClass(relId);
+      if (assoc) {
+        this.deleteEntity(assoc.id);
+      }
+    }
+
+    const kind = rel.type.split(':')[0] || 'Association';
+    const updatedType = `${kind}:${cleanSrc}:${cleanTgt}`;
+
+    this.updateRelation(relId, {
+      type: updatedType,
+      sourceMultiplicity: cleanSrc,
+      targetMultiplicity: cleanTgt,
+    });
+
+    return true;
   }
 }
