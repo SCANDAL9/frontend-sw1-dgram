@@ -1,16 +1,18 @@
-<div class="fixed inset-0 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
-  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-[90vw] max-w-[950px] h-[80vh] flex flex-col shadow-[0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+<div class="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200 select-none" (click)="close()">
+  <div class="bg-card text-card-foreground border border-border rounded-3xl w-[92vw] max-w-[1020px] h-[82vh] flex flex-col shadow-2xl ring-1 ring-border/50 overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-[#313244] bg-[#1e1e2e]">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border bg-card/60 backdrop-blur-xl shrink-0">
       <div class="flex items-center gap-3">
-        <span class="bg-[#a6e3a1]/[0.15] text-[#a6e3a1] border border-[#a6e3a1] text-[11px] font-bold px-2 py-1 rounded-md">Spring Boot</span>
-        <h3 class="m-0 text-base text-[#cdd6f4] font-semibold">Generador de Código Backend</h3>
+        <span class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-bold px-2.5 py-0.5 rounded-full font-mono shadow-2xs">Spring Boot 3.x</span>
+        <h3 class="m-0 text-base font-bold text-foreground tracking-tight">Generador de Código Backend</h3>
       </div>
       <button
-        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        type="button"
+        class="size-7.5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="close()"
+        title="Cerrar modal"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -18,142 +20,193 @@
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center gap-3 px-6 py-3 bg-[#11111b] border-b border-[#313244]">
-      <div class="flex items-center gap-2 flex-1">
-        <label class="text-[#a6adc8] text-xs font-medium">Paquete Base:</label>
+    <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 px-6 py-3.5 bg-muted/20 border-b border-border shrink-0">
+      <div class="flex items-center gap-2.5 flex-1 min-w-[280px]">
+        <span class="text-xs font-semibold text-foreground/80 shrink-0">Paquete Base:</span>
         <input
           type="text"
           [ngModel]="basePackage()"
           (ngModelChange)="basePackage.set($event)"
           placeholder="com.ejemplo.proyecto"
-          class="bg-[#181825] border border-[#313244] rounded-md px-3 py-1.5 text-[#cdd6f4] text-[13px] font-mono flex-1 outline-none focus:border-[#89b4fa]"
+          class="bg-background/80 border border-input rounded-xl px-3.5 py-2 text-foreground text-xs font-mono flex-1 outline-none transition-all focus:border-ring focus:ring-2 focus:ring-ring/30 placeholder:text-muted-foreground shadow-2xs"
         />
       </div>
-      <button
-        class="bg-[#313244] text-[#cdd6f4] border-0 px-3.5 py-[7px] rounded-md text-[13px] font-semibold cursor-pointer transition-colors duration-200 hover:bg-[#45475a] disabled:opacity-50 disabled:cursor-not-allowed"
-        (click)="generateCode()"
-        [disabled]="loading()"
-      >
-        {{ loading() ? 'Generando...' : 'Regenerar' }}
-      </button>
-      <a
-        class="bg-[#89b4fa] text-[#11111b] no-underline px-3.5 py-[7px] rounded-md text-[13px] font-bold inline-flex items-center gap-1.5 transition-opacity duration-200 hover:opacity-90"
-        [href]="downloadUrl()"
-        target="_blank"
-        download
-        [class.opacity-50]="loading() || fileList().length === 0"
-        [class.pointer-events-none]="loading() || fileList().length === 0"
-      >
-        Descargar .ZIP
-      </a>
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button
+          type="button"
+          class="bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs flex items-center gap-1.5"
+          (click)="generateCode()"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            <div class="size-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+            <span>Generando...</span>
+          } @else {
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span>{{ fileList().length > 0 ? 'Regenerar' : 'Generar' }}</span>
+          }
+        </button>
+        <a
+          class="bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          [href]="downloadUrl()"
+          target="_blank"
+          download
+          [class.opacity-50]="loading() || fileList().length === 0"
+          [class.pointer-events-none]="loading() || fileList().length === 0"
+        >
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Descargar .ZIP</span>
+        </a>
+      </div>
     </div>
 
     <!-- Content Body -->
-    <div class="flex-1 flex overflow-hidden relative">
+    <div class="flex-1 flex flex-col overflow-hidden relative min-h-0">
       @if (errorMsg()) {
-        <div class="absolute top-4 left-6 right-6 bg-[#f38ba8]/20 border border-[#f38ba8] text-[#f38ba8] px-3.5 py-2.5 rounded-lg text-[13px] z-10">
-          {{ errorMsg() }}
+        <div class="mx-6 mt-4 p-3.5 bg-destructive/10 border border-destructive/25 text-destructive rounded-2xl text-xs flex items-start gap-3 shrink-0 shadow-2xs z-10 animate-in fade-in duration-200">
+          <svg class="size-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div class="flex-1 min-w-0 space-y-1">
+            <div class="font-semibold">Error al compilar código del diagrama</div>
+            <p class="m-0 text-muted-foreground font-mono text-[11px] leading-relaxed break-all">{{ errorMsg() }}</p>
+          </div>
         </div>
       }
 
       @if (loading()) {
-        <div class="flex-1 flex flex-col items-center justify-center text-[#a6adc8] gap-4">
-          <div class="w-8 h-8 border-[3px] border-[#313244] border-t-[#89b4fa] rounded-full animate-spin"></div>
-          <p class="m-0">Traduciendo entidades y relaciones a código Spring Boot JPA...</p>
+        <div class="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3.5 p-8">
+          <div class="relative flex items-center justify-center">
+            <div class="size-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin"></div>
+            <div class="absolute size-5 rounded-full bg-primary/10 animate-ping"></div>
+          </div>
+          <p class="text-xs text-foreground/80 font-medium m-0">Traduciendo entidades y relaciones a código Spring Boot JPA...</p>
         </div>
       } @else if (fileList().length === 0) {
-        <div class="flex-1 flex flex-col items-center justify-center text-[#a6adc8] gap-4">
-          <p class="m-0">No se han generado archivos aún.</p>
+        <div class="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3.5 p-8 text-center">
+          <div class="size-12 rounded-2xl bg-muted/40 flex items-center justify-center text-muted-foreground border border-border/80 shadow-2xs">
+            <svg class="size-6 text-muted-foreground/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm font-semibold text-foreground m-0">No se han generado archivos aún</p>
+            <p class="text-xs text-muted-foreground m-0">Haz clic en Generar Proyecto para compilar tus entidades UML en código Java Spring Boot.</p>
+          </div>
           <button
-            class="bg-[#89b4fa] text-[#11111b] border-0 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity"
+            type="button"
+            class="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer shadow-xs active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none mt-2"
             (click)="generateCode()"
           >
             Generar Proyecto
           </button>
         </div>
       } @else {
-        <div class="flex-1 flex overflow-hidden w-full">
+        <div class="flex-1 flex overflow-hidden w-full min-h-0">
           <!-- File Tree Explorer -->
-          <div class="w-[300px] bg-[#181825] border-r border-[#313244] flex flex-col shrink-0">
-            <div class="px-4 py-2.5 text-[11px] uppercase tracking-[0.5px] text-[#6c7086] border-b border-[#313244] font-semibold flex items-center justify-between">
-              <span>Archivos ({{ filteredFileList().length }} / {{ fileList().length }})</span>
+          <div class="w-[290px] bg-muted/20 border-r border-border flex flex-col shrink-0">
+            <div class="px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold flex items-center justify-between">
+              <span>Archivos</span>
+              <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">
+                {{ filteredFileList().length }} / {{ fileList().length }}
+              </span>
             </div>
             <!-- Layer filter chips -->
-            <div class="flex flex-wrap gap-1 p-2 border-b border-[#313244] bg-[#11111b]/50 text-[10px]">
+            <div class="flex flex-wrap gap-1 p-2 border-b border-border bg-muted/30 text-[10px]">
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'ALL'"
-                [class.text-[#11111b]]="layerFilter() === 'ALL'"
-                [class.font-bold]="layerFilter() === 'ALL'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'ALL'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'ALL'"
+                [class.text-primary-foreground]="layerFilter() === 'ALL'"
+                [class.font-semibold]="layerFilter() === 'ALL'"
+                [class.shadow-2xs]="layerFilter() === 'ALL'"
+                [class.text-muted-foreground]="layerFilter() !== 'ALL'"
                 (click)="layerFilter.set('ALL')"
               >Todos</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'ENTITY'"
-                [class.text-[#11111b]]="layerFilter() === 'ENTITY'"
-                [class.font-bold]="layerFilter() === 'ENTITY'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'ENTITY'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'ENTITY'"
+                [class.text-primary-foreground]="layerFilter() === 'ENTITY'"
+                [class.font-semibold]="layerFilter() === 'ENTITY'"
+                [class.shadow-2xs]="layerFilter() === 'ENTITY'"
+                [class.text-muted-foreground]="layerFilter() !== 'ENTITY'"
                 (click)="layerFilter.set('ENTITY')"
               >JPA</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'SERVICE'"
-                [class.text-[#11111b]]="layerFilter() === 'SERVICE'"
-                [class.font-bold]="layerFilter() === 'SERVICE'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'SERVICE'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'SERVICE'"
+                [class.text-primary-foreground]="layerFilter() === 'SERVICE'"
+                [class.font-semibold]="layerFilter() === 'SERVICE'"
+                [class.shadow-2xs]="layerFilter() === 'SERVICE'"
+                [class.text-muted-foreground]="layerFilter() !== 'SERVICE'"
                 (click)="layerFilter.set('SERVICE')"
               >Service</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'CONTROLLER'"
-                [class.text-[#11111b]]="layerFilter() === 'CONTROLLER'"
-                [class.font-bold]="layerFilter() === 'CONTROLLER'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'CONTROLLER'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'CONTROLLER'"
+                [class.text-primary-foreground]="layerFilter() === 'CONTROLLER'"
+                [class.font-semibold]="layerFilter() === 'CONTROLLER'"
+                [class.shadow-2xs]="layerFilter() === 'CONTROLLER'"
+                [class.text-muted-foreground]="layerFilter() !== 'CONTROLLER'"
                 (click)="layerFilter.set('CONTROLLER')"
               >REST</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'REPOSITORY'"
-                [class.text-[#11111b]]="layerFilter() === 'REPOSITORY'"
-                [class.font-bold]="layerFilter() === 'REPOSITORY'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'REPOSITORY'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'REPOSITORY'"
+                [class.text-primary-foreground]="layerFilter() === 'REPOSITORY'"
+                [class.font-semibold]="layerFilter() === 'REPOSITORY'"
+                [class.shadow-2xs]="layerFilter() === 'REPOSITORY'"
+                [class.text-muted-foreground]="layerFilter() !== 'REPOSITORY'"
                 (click)="layerFilter.set('REPOSITORY')"
               >Repo</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'DTO_MAPPER'"
-                [class.text-[#11111b]]="layerFilter() === 'DTO_MAPPER'"
-                [class.font-bold]="layerFilter() === 'DTO_MAPPER'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'DTO_MAPPER'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'DTO_MAPPER'"
+                [class.text-primary-foreground]="layerFilter() === 'DTO_MAPPER'"
+                [class.font-semibold]="layerFilter() === 'DTO_MAPPER'"
+                [class.shadow-2xs]="layerFilter() === 'DTO_MAPPER'"
+                [class.text-muted-foreground]="layerFilter() !== 'DTO_MAPPER'"
                 (click)="layerFilter.set('DTO_MAPPER')"
               >DTO/Map</button>
               <button
                 type="button"
-                class="px-1.5 py-0.5 rounded cursor-pointer transition-colors"
-                [class.bg-[#89b4fa]]="layerFilter() === 'OTHER'"
-                [class.text-[#11111b]]="layerFilter() === 'OTHER'"
-                [class.font-bold]="layerFilter() === 'OTHER'"
-                [class.text-[#a6adc8]]="layerFilter() !== 'OTHER'"
+                class="px-2.5 py-1 rounded-lg cursor-pointer transition-all hover:text-foreground active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                [class.bg-primary]="layerFilter() === 'OTHER'"
+                [class.text-primary-foreground]="layerFilter() === 'OTHER'"
+                [class.font-semibold]="layerFilter() === 'OTHER'"
+                [class.shadow-2xs]="layerFilter() === 'OTHER'"
+                [class.text-muted-foreground]="layerFilter() !== 'OTHER'"
                 (click)="layerFilter.set('OTHER')"
-              >Config/Test</button>
+              >Config</button>
             </div>
-            <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
+            <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1 min-h-0">
               @for (file of filteredFileList(); track file) {
                 <button
-                  class="bg-transparent border-0 text-left flex items-center gap-2 px-2.5 py-2 rounded-md text-[#a6adc8] text-xs cursor-pointer font-mono transition-all duration-150 hover:bg-[#1e1e2e] hover:text-[#cdd6f4]"
-                  [class.!bg-[#313244]]="selectedFile() === file"
-                  [class.!text-[#89b4fa]]="selectedFile() === file"
+                  type="button"
+                  class="group w-full border-0 text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs cursor-pointer font-mono transition-all duration-150 hover:bg-accent hover:text-accent-foreground active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  [class.bg-accent]="selectedFile() === file"
+                  [class.text-accent-foreground]="selectedFile() === file"
                   [class.font-semibold]="selectedFile() === file"
+                  [class.shadow-2xs]="selectedFile() === file"
+                  [class.text-muted-foreground]="selectedFile() !== file"
                   (click)="selectedFile.set(file)"
                 >
-                  <span class="shrink-0 text-[10px] font-bold px-1 py-0.5 bg-[#313244] text-[#89b4fa] rounded">{{ file | fileIcon }}</span>
+                  <span class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border group-hover:border-border/80 transition-colors">
+                    {{ file | fileIcon }}
+                  </span>
                   <span class="truncate">{{ file | fileBasename }}</span>
                 </button>
               }
@@ -161,17 +214,32 @@
           </div>
 
           <!-- Code Preview Area -->
-          <div class="flex-1 flex flex-col bg-[#11111b] overflow-hidden">
-            <div class="flex items-center justify-between px-4 py-2 bg-[#181825] border-b border-[#313244]">
-              <span class="text-[#89b4fa] font-mono text-xs truncate">{{ selectedFile() }}</span>
+          <div class="flex-1 flex flex-col bg-background/50 overflow-hidden min-h-0">
+            <div class="flex items-center justify-between px-5 py-2.5 bg-card/60 backdrop-blur-md border-b border-border shrink-0">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="size-2 rounded-full bg-emerald-500 shrink-0 shadow-2xs"></span>
+                <span class="text-primary font-mono text-xs font-semibold truncate">{{ selectedFile() }}</span>
+              </div>
               <button
-                class="bg-[#313244] border-0 text-[#cdd6f4] px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer hover:bg-[#45475a] transition-colors"
+                type="button"
+                class="bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-border px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none flex items-center gap-1.5 shadow-2xs"
                 (click)="copyCode()"
               >
-                {{ copied() ? 'Copiado' : 'Copiar' }}
+                @if (copied()) {
+                  <svg class="size-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span class="text-emerald-500 font-semibold">Copiado</span>
+                } @else {
+                  <svg class="size-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  <span>Copiar código</span>
+                }
               </button>
             </div>
-            <pre class="flex-1 m-0 p-4 overflow-auto font-mono text-[13px] leading-[1.5] text-[#cdd6f4]"><code>{{ currentCode() }}</code></pre>
+            <pre class="flex-1 m-0 p-5 overflow-auto font-mono text-xs leading-relaxed text-foreground select-text bg-muted/10 selection:bg-primary/20"><code class="font-mono">{{ currentCode() }}</code></pre>
           </div>
         </div>
       }

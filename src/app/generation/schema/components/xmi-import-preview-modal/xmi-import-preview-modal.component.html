@@ -1,25 +1,28 @@
-<div class="fixed inset-0 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200 select-none" (click)="close()">
   <div
-    class="bg-[#181825] border border-[#313244] rounded-2xl w-[90vw] max-w-[850px] max-h-[85vh] flex flex-col shadow-[0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95 duration-200"
+    class="bg-card text-card-foreground border border-border/80 rounded-3xl w-[92vw] max-w-[880px] h-[82vh] max-h-[82vh] flex flex-col shadow-2xl ring-1 ring-border/50 overflow-hidden animate-in zoom-in-95 duration-200"
     (click)="$event.stopPropagation()"
   >
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-[#313244] bg-[#1e1e2e]">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border bg-card/60 backdrop-blur-md shrink-0">
       <div class="flex items-center gap-3">
-        <span class="bg-[#89b4fa]/[0.15] text-[#89b4fa] border border-[#89b4fa]/30 text-[11px] font-bold px-2 py-1 rounded-md">
-          UML 2.1 / XMI
-        </span>
+        <div class="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 text-[11px] font-semibold px-2.5 py-1 rounded-lg font-mono">
+          <span class="size-1.5 rounded-full bg-primary animate-pulse"></span>
+          <span>UML 2.1 / XMI</span>
+        </div>
         <div>
-          <h3 class="m-0 text-base text-[#cdd6f4] font-semibold">Previsualización de Importación XMI</h3>
-          <p class="m-0 text-xs text-[#a6adc8] font-mono mt-0.5">{{ fileName() || previewData().file_name }}</p>
+          <h3 class="m-0 text-base text-foreground font-semibold tracking-tight">Previsualización de Importación XMI</h3>
+          <p class="m-0 text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-[420px]">{{ fileName() || previewData().file_name }}</p>
         </div>
       </div>
       <button
-        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md p-1.5 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10 disabled:opacity-50"
+        type="button"
+        class="size-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-all cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
         (click)="close()"
         [disabled]="isImporting()"
+        title="Cerrar modal"
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -27,42 +30,42 @@
     </div>
 
     <!-- Summary Metrics -->
-    <div class="grid grid-cols-3 gap-3 px-6 py-3 bg-[#11111b] border-b border-[#313244]">
-      <div class="bg-[#181825] border border-[#313244] rounded-lg p-3 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-[#a6e3a1]/15 text-[#a6e3a1] flex items-center justify-center font-bold text-base border border-[#a6e3a1]/30">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 px-6 py-4 bg-muted/20 border-b border-border shrink-0">
+      <div class="bg-card border border-border/80 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-2xs hover:border-emerald-500/30 transition-all">
+        <div class="size-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-base border border-emerald-500/20 shrink-0 shadow-2xs">
           {{ previewData().to_create_classes_count }}
         </div>
-        <div>
-          <div class="text-xs text-[#a6adc8]">Nuevas Clases</div>
-          <div class="text-xs font-semibold text-[#a6e3a1]">A incorporar al diagrama</div>
+        <div class="min-w-0">
+          <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Nuevas Clases</div>
+          <div class="text-xs font-semibold text-emerald-500 truncate">A incorporar al diagrama</div>
         </div>
       </div>
 
-      <div class="bg-[#181825] border border-[#313244] rounded-lg p-3 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-[#fab387]/15 text-[#fab387] flex items-center justify-center font-bold text-base border border-[#fab387]/30">
+      <div class="bg-card border border-border/80 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-2xs hover:border-amber-500/30 transition-all">
+        <div class="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-base border border-amber-500/20 shrink-0 shadow-2xs">
           {{ previewData().to_update_classes_count }}
         </div>
-        <div>
-          <div class="text-xs text-[#a6adc8]">Clases Existentes</div>
-          <div class="text-xs font-semibold text-[#fab387]">Se fusionarán/actualizarán</div>
+        <div class="min-w-0">
+          <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Clases Existentes</div>
+          <div class="text-xs font-semibold text-amber-500 truncate">Se fusionarán/actualizarán</div>
         </div>
       </div>
 
-      <div class="bg-[#181825] border border-[#313244] rounded-lg p-3 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-[#89b4fa]/15 text-[#89b4fa] flex items-center justify-center font-bold text-base border border-[#89b4fa]/30">
+      <div class="bg-card border border-border/80 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-2xs hover:border-primary/30 transition-all">
+        <div class="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-base border border-primary/20 shrink-0 shadow-2xs">
           {{ previewData().associations.length }}
         </div>
-        <div>
-          <div class="text-xs text-[#a6adc8]">Asociaciones</div>
-          <div class="text-xs font-semibold text-[#89b4fa]">Relaciones detectadas</div>
+        <div class="min-w-0">
+          <div class="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Asociaciones</div>
+          <div class="text-xs font-semibold text-primary truncate">Relaciones detectadas</div>
         </div>
       </div>
     </div>
 
     <!-- Warnings Box (if any) -->
     @if (previewData().warnings && previewData().warnings.length > 0) {
-      <div class="mx-6 mt-4 p-3 bg-[#fab387]/10 border border-[#fab387]/40 rounded-lg text-xs text-[#fab387] flex items-start gap-2.5">
-        <svg class="w-4 h-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="mx-6 mt-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-500 flex items-start gap-3 shrink-0 shadow-2xs">
+        <svg class="size-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -79,50 +82,54 @@
     }
 
     <!-- Tabs Header -->
-    <div class="flex items-center gap-2 px-6 pt-3 border-b border-[#313244]">
-      <button
-        class="px-4 py-2 text-xs font-medium border-b-2 transition-colors duration-150 cursor-pointer"
-        [class.border-[#89b4fa]]="activeTab() === 'classes'"
-        [class.text-[#89b4fa]]="activeTab() === 'classes'"
-        [class.border-transparent]="activeTab() !== 'classes'"
-        [class.text-[#a6adc8]]="activeTab() !== 'classes'"
-        (click)="setActiveTab('classes')"
-      >
-        Clases ({{ previewData().classes.length }})
-      </button>
-      <button
-        class="px-4 py-2 text-xs font-medium border-b-2 transition-colors duration-150 cursor-pointer"
-        [class.border-[#89b4fa]]="activeTab() === 'associations'"
-        [class.text-[#89b4fa]]="activeTab() === 'associations'"
-        [class.border-transparent]="activeTab() !== 'associations'"
-        [class.text-[#a6adc8]]="activeTab() !== 'associations'"
-        (click)="setActiveTab('associations')"
-      >
-        Relaciones ({{ previewData().associations.length }})
-      </button>
+    <div class="px-6 pt-3.5 pb-1 shrink-0 flex items-center justify-between">
+      <div class="inline-flex items-center p-1 bg-secondary/60 backdrop-blur-md rounded-xl border border-border/60 gap-1">
+        <button
+          type="button"
+          class="px-4 py-1.5 text-xs font-semibold rounded-lg transition-all hover:text-foreground cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          [class.bg-card]="activeTab() === 'classes'"
+          [class.text-foreground]="activeTab() === 'classes'"
+          [class.shadow-xs]="activeTab() === 'classes'"
+          [class.text-muted-foreground]="activeTab() !== 'classes'"
+          (click)="setActiveTab('classes')"
+        >
+          Clases ({{ previewData().classes.length }})
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 text-xs font-semibold rounded-lg transition-all hover:text-foreground cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          [class.bg-card]="activeTab() === 'associations'"
+          [class.text-foreground]="activeTab() === 'associations'"
+          [class.shadow-xs]="activeTab() === 'associations'"
+          [class.text-muted-foreground]="activeTab() !== 'associations'"
+          (click)="setActiveTab('associations')"
+        >
+          Relaciones ({{ previewData().associations.length }})
+        </button>
+      </div>
     </div>
 
     <!-- Tab Content -->
-    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2 min-h-[220px]">
+    <div class="flex-1 overflow-y-auto px-6 py-3 space-y-2 min-h-[200px]">
       @if (activeTab() === 'classes') {
         @if (previewData().classes.length === 0) {
-          <div class="text-center py-8 text-xs text-[#6c7086]">No se encontraron clases en el paquete analizado.</div>
+          <div class="text-center py-12 text-xs text-muted-foreground">No se encontraron clases en el paquete analizado.</div>
         } @else {
-          <div class="divide-y divide-[#313244]/50 border border-[#313244] rounded-lg overflow-hidden">
+          <div class="divide-y divide-border/60 border border-border/80 rounded-2xl overflow-hidden bg-card/60 backdrop-blur-xs shadow-2xs">
             @for (cls of previewData().classes; track cls.name) {
-              <div class="px-4 py-2.5 flex items-center justify-between bg-[#1e1e2e]/50 hover:bg-[#1e1e2e] transition-colors">
+              <div class="px-4 py-3 flex items-center justify-between hover:bg-accent/40 transition-colors">
                 <div class="flex items-center gap-3">
                   <span
-                    class="text-[10px] font-bold px-2 py-0.5 rounded uppercase"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider"
                     [ngClass]="cls.action === 'create'
-                      ? 'bg-[#a6e3a1]/20 text-[#a6e3a1] border border-[#a6e3a1]/30'
-                      : 'bg-[#fab387]/20 text-[#fab387] border border-[#fab387]/30'"
+                      ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'"
                   >
                     {{ cls.action === 'create' ? 'NUEVA' : 'ACTUALIZAR' }}
                   </span>
-                  <span class="text-sm font-semibold text-[#cdd6f4] font-mono">{{ cls.name }}</span>
+                  <span class="text-xs font-semibold text-foreground font-mono">{{ cls.name }}</span>
                 </div>
-                <div class="text-xs text-[#a6adc8]">
+                <div class="text-[11px] font-mono font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md border border-border/60">
                   {{ cls.attributes_count }} atributo{{ cls.attributes_count === 1 ? '' : 's' }}
                 </div>
               </div>
@@ -131,28 +138,28 @@
         }
       } @else {
         @if (previewData().associations.length === 0) {
-          <div class="text-center py-8 text-xs text-[#6c7086]">No se encontraron asociaciones o relaciones en el archivo XMI.</div>
+          <div class="text-center py-12 text-xs text-muted-foreground">No se encontraron asociaciones o relaciones en el archivo XMI.</div>
         } @else {
-          <div class="divide-y divide-[#313244]/50 border border-[#313244] rounded-lg overflow-hidden">
+          <div class="divide-y divide-border/60 border border-border/80 rounded-2xl overflow-hidden bg-card/60 backdrop-blur-xs shadow-2xs">
             @for (asc of previewData().associations; track asc.source_class + asc.target_class + (asc.name || '')) {
-              <div class="px-4 py-2.5 flex items-center justify-between bg-[#1e1e2e]/50 hover:bg-[#1e1e2e] transition-colors text-xs">
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-semibold text-[#cdd6f4]">{{ asc.source_class }}</span>
+              <div class="px-4 py-3 flex items-center justify-between hover:bg-accent/40 transition-colors text-xs">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <span class="font-mono font-semibold text-foreground bg-muted/60 border border-border/60 px-2 py-0.5 rounded-lg">{{ asc.source_class }}</span>
                   @if (asc.source_role || asc.source_multiplicity) {
-                    <span class="text-[11px] text-[#a6adc8] bg-[#313244] px-1.5 py-0.5 rounded font-mono">
+                    <span class="text-[10px] text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded font-mono">
                       {{ asc.source_role ? asc.source_role + ' ' : '' }}{{ asc.source_multiplicity ? '[' + asc.source_multiplicity + ']' : '' }}
                     </span>
                   }
-                  <span class="text-[#89b4fa] font-bold">──[{{ asc.association_type }}]──▶</span>
-                  <span class="font-mono font-semibold text-[#cdd6f4]">{{ asc.target_class }}</span>
+                  <span class="text-primary font-mono font-bold text-xs flex items-center gap-1">──[{{ asc.association_type }}]──▶</span>
+                  <span class="font-mono font-semibold text-foreground bg-muted/60 border border-border/60 px-2 py-0.5 rounded-lg">{{ asc.target_class }}</span>
                   @if (asc.target_role || asc.target_multiplicity) {
-                    <span class="text-[11px] text-[#a6adc8] bg-[#313244] px-1.5 py-0.5 rounded font-mono">
+                    <span class="text-[10px] text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded font-mono">
                       {{ asc.target_role ? asc.target_role + ' ' : '' }}{{ asc.target_multiplicity ? '[' + asc.target_multiplicity + ']' : '' }}
                     </span>
                   }
                 </div>
                 @if (asc.name) {
-                  <span class="text-[11px] text-[#6c7086] italic font-mono">{{ asc.name }}</span>
+                  <span class="text-[11px] text-muted-foreground italic font-mono">{{ asc.name }}</span>
                 }
               </div>
             }
@@ -162,24 +169,26 @@
     </div>
 
     <!-- Footer Actions -->
-    <div class="flex items-center justify-end gap-3 px-6 py-3 border-t border-[#313244] bg-[#1e1e2e]">
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-card/60 backdrop-blur-md shrink-0">
       <button
-        class="px-4 py-2 text-xs font-semibold text-[#a6adc8] hover:text-[#cdd6f4] hover:bg-[#313244]/40 rounded-lg transition-colors cursor-pointer border border-[#313244]"
+        type="button"
+        class="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-all cursor-pointer border border-border active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-2xs"
         (click)="close()"
         [disabled]="isImporting()"
       >
         Cancelar
       </button>
       <button
-        class="px-5 py-2 text-xs font-bold bg-[#89b4fa] text-[#11111b] hover:bg-[#b4befe] rounded-lg transition-all shadow-md cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        type="button"
+        class="px-5 py-2 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="onConfirm()"
         [disabled]="isImporting() || previewData().classes.length === 0"
       >
         @if (isImporting()) {
-          <div class="w-3.5 h-3.5 border-2 border-[#11111b] border-t-transparent rounded-full animate-spin"></div>
+          <div class="size-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
           <span>Importando...</span>
         } @else {
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
