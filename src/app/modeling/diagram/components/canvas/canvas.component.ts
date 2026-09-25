@@ -1,4 +1,4 @@
-import { Component, inject, AfterViewInit, ViewChild, ElementRef, signal, HostListener, effect, computed, input, output } from '@angular/core';
+import { Component, inject, AfterViewInit, ViewChild, ElementRef, signal, HostListener, effect, computed, input, output, afterRender } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import {
@@ -13,6 +13,7 @@ import {
   FDeleteSelectedEvent,
   FCanvasChangeEvent,
 } from '@foblex/flow';
+import { IPoint } from '@foblex/2d';
 import { DiagramService } from '../../services/diagram.service';
 import { CommandService } from '../../services/command.service';
 import { SelectionService } from '../../services/selection.service';
@@ -20,7 +21,7 @@ import { WebsocketService, RemoteCursor, Peer } from '../../services/websocket.s
 import { ThemeService } from '../../../../core/services/theme.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { TableNodeComponent } from './table-node/table-node.component';
-import { DBRelation, ClassifierType, DBAttribute } from '../../models/diagram.model';
+import { DBRelation, ClassifierType, DBAttribute, DBEntity } from '../../models/diagram.model';
 import { SmartGuidesService, GuideLine, NodeRect } from '../../services/smart-guides.service';
 import { LayoutService } from '../../services/layout.service';
 import { ProactivityService } from '../../../ai/services/proactivity.service';
@@ -28,8 +29,10 @@ import { CanvasShortcutsService } from '../../services/canvas-shortcuts.service'
 import { QuickLinkerComponent, QuickLinkerPosition } from './quick-linker/quick-linker.component';
 import { CanvasContextMenuComponent, CanvasContextMenuState } from './context-menu/canvas-context-menu.component';
 import { AlignmentToolbarComponent } from './alignment-toolbar/alignment-toolbar.component';
-import { RelationCardinalityPipe } from '../../pipes/relation-cardinality.pipe';
-import { RelationSymbolPipe, IsDashedRelationPipe, RelationCategoryPipe } from '../../pipes/relation-symbol.pipe';
+import { RelationCardinalityPipe, MultiplicityMeaningPipe } from '../../pipes/relation-cardinality.pipe';
+import { IsDashedRelationPipe, RelationCategoryPipe, getRelationCategory } from '../../pipes/relation-symbol.pipe';
+import { EdgeRouterService, NodeRect as RouterNodeRect, RoutedEdge, ConnectorSide } from '../../services/edge-router.service';
+
 
 @Component({
   selector: 'app-canvas',
@@ -43,7 +46,7 @@ import { RelationSymbolPipe, IsDashedRelationPipe, RelationCategoryPipe } from '
     CanvasContextMenuComponent,
     AlignmentToolbarComponent,
     RelationCardinalityPipe,
-    RelationSymbolPipe,
+    MultiplicityMeaningPipe,
     IsDashedRelationPipe,
     RelationCategoryPipe,
   ],
@@ -66,6 +69,7 @@ export class CanvasComponent implements AfterViewInit {
   layoutSvc = inject(LayoutService);
   proactivity = inject(ProactivityService);
   shortcuts = inject(CanvasShortcutsService);
+  private edgeRouter = inject(EdgeRouterService);
 
   private moveDebounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -97,13 +101,29 @@ export class CanvasComponent implements AfterViewInit {
   canvasScale = signal(1);
   lineType = signal<'segment' | 'bezier' | 'straight' | 'adaptive-curve'>('segment');
   gridType = signal<'dots' | 'lines' | 'none'>('dots');
-  showMinimap = signal(false);
+  showMinimap = signal(true);
   contextMenu = signal<CanvasContextMenuState | null>(null);
+
+  rightClickBox = signal<{ x: number; y: number; w: number; h: number } | null>(null);
+  private rightClickStart: { x: number; y: number } | null = null;
+  private isRightDragging = false;
+  private pendingContextMenu: CanvasContextMenuState | null = null;
 
   isPanning = signal(false);
   private panStart = { x: 0, y: 0 };
   private panOrigin = { x: 0, y: 0 };
   private lastCursorSend = 0;
+
+  /**
+   * Ground-truth midpoints read directly from the rendered SVG paths.
+   * Populated by afterRender using the W3C SVGPathElement API.
+   * Falls back to center-to-center when the path is not yet in the DOM.
+   */
+  private readonly assocMidpointMap = signal<Map<string, { x: number; y: number }>>(new Map());
+
+  constructor() {
+    afterRender(() => this.refreshAssocMidpoints());
+  }
 
   readonly remoteCursors = computed(() => Object.values(this.ws.cursors()));
   readonly selectedRelation = computed(() => {
@@ -111,10 +131,349 @@ export class CanvasComponent implements AfterViewInit {
     return id ? this.diagram.relations().find((r) => r.id === id) ?? null : null;
   });
 
+  activeMultiplicityRelId = signal<string | null>(null);
+  readonly activeMultiplicityRel = computed(() => {
+    const id = this.activeMultiplicityRelId();
+    return id ? this.diagram.relations().find((r) => r.id === id) ?? null : null;
+  });
+
+  readonly visibleEntities = computed(() => {
+    return this.diagram.entities().filter((e) => e.is_visible !== false && e.isVisible !== false);
+  });
+
   readonly validRelations = computed(() => {
-    const entityMap = new Map(this.diagram.entities().map((e) => [e.id, e]));
+    const entityMap = new Map(this.visibleEntities().map((e) => [e.id, e]));
     return this.diagram.relations().filter((r) => entityMap.has(r.sourceId) && entityMap.has(r.targetId));
   });
+
+  /** Map each visible entity to a RouterNodeRect for the edge routing algorithm */
+  readonly entityRects = computed<RouterNodeRect[]>(() => {
+    return this.visibleEntities().map((e) => ({
+      id: e.id,
+      x: e.position.x,
+      y: e.position.y,
+      width: e.width ?? 240,
+      height: e.height ?? 160,
+    }));
+  });
+
+  /**
+   * Pre-computed routing for every visible relation.
+   * Keys are relation IDs; values contain waypoints and resolved source/target sides.
+   * Re-computes when entities move or relations change.
+   */
+  readonly edgeRouteMap = computed<Map<string, RoutedEdge>>(() => {
+    const rects = this.entityRects();
+    const relations = this.validRelations();
+    const map = new Map<string, RoutedEdge>();
+
+    // Group relations by (sourceId, targetId) pair to detect parallels
+    const pairCount = new Map<string, number>();
+    const pairIndex = new Map<string, number>();
+
+    for (const rel of relations) {
+      const pairKey = [rel.sourceId, rel.targetId].sort().join('::');
+      pairIndex.set(rel.id, pairCount.get(pairKey) ?? 0);
+      pairCount.set(pairKey, (pairCount.get(pairKey) ?? 0) + 1);
+    }
+
+    for (const rel of relations) {
+      const parallelIdx = pairIndex.get(rel.id) ?? 0;
+      const routed = this.edgeRouter.route(rel.sourceId, rel.targetId, rects, parallelIdx);
+      map.set(rel.id, routed);
+    }
+
+    return map;
+  });
+
+  /**
+   * Computes distributed connector slots along node faces so multiple edges
+   * attaching to the same face don't clump at the same pixel.
+   */
+  readonly edgeSlotMap = computed<Map<string, { sourceConnector: string; targetConnector: string }>>(() => {
+    const relations = this.validRelations();
+    const routeMap = this.edgeRouteMap();
+    const entities = this.diagram.entities();
+    const entityPos = new Map(entities.map((e) => [e.id, e.position]));
+
+    // Group relations attaching to (nodeId, side)
+    const sideGroups = new Map<string, Array<{ relId: string; oppositePos: { x: number; y: number }; isSource: boolean }>>();
+
+    for (const rel of relations) {
+      if (rel.sourceId === rel.targetId) continue;
+      const routed = routeMap.get(rel.id);
+      if (!routed) continue;
+
+      const srcKey = `${rel.sourceId}:${routed.sourceSide}`;
+      const dstKey = `${rel.targetId}:${routed.targetSide}`;
+
+      const srcOpposite = entityPos.get(rel.targetId) ?? { x: 0, y: 0 };
+      const dstOpposite = entityPos.get(rel.sourceId) ?? { x: 0, y: 0 };
+
+      if (!sideGroups.has(srcKey)) sideGroups.set(srcKey, []);
+      sideGroups.get(srcKey)!.push({ relId: rel.id, oppositePos: srcOpposite, isSource: true });
+
+      if (!sideGroups.has(dstKey)) sideGroups.set(dstKey, []);
+      sideGroups.get(dstKey)!.push({ relId: rel.id, oppositePos: dstOpposite, isSource: false });
+    }
+
+    const resultMap = new Map<string, { sourceConnector: string; targetConnector: string }>();
+    for (const rel of relations) {
+      resultMap.set(rel.id, { sourceConnector: '', targetConnector: '' });
+    }
+
+    for (const [key, group] of sideGroups.entries()) {
+      const [nodeId, side] = key.split(':') as [string, ConnectorSide];
+      const isVerticalFace = side === 'left' || side === 'right';
+
+      // Sort by opposite coordinate (Y for vertical face, X for horizontal face) to prevent crossings
+      group.sort((a, b) => isVerticalFace
+        ? a.oppositePos.y - b.oppositePos.y
+        : a.oppositePos.x - b.oppositePos.x
+      );
+
+      const n = group.length;
+      let slots: number[] = [];
+      if (isVerticalFace) {
+        if (n === 1) slots = [2];
+        else if (n === 2) slots = [1, 3];
+        else if (n === 3) slots = [1, 2, 3];
+        else if (n === 4) slots = [0, 1, 3, 4];
+        else slots = group.map((_, i) => Math.min(i, 4));
+      } else {
+        if (n === 1) slots = [1];
+        else if (n === 2) slots = [0, 2];
+        else slots = group.map((_, i) => Math.min(i, 2));
+      }
+
+      for (let i = 0; i < n; i++) {
+        const item = group[i];
+        const slotIdx = slots[i] ?? 2;
+        const connectorId = `${nodeId}@class-${side}-${slotIdx}`;
+        const entry = resultMap.get(item.relId)!;
+        if (item.isSource) {
+          entry.sourceConnector = connectorId;
+        } else {
+          entry.targetConnector = connectorId;
+        }
+      }
+    }
+
+    return resultMap;
+  });
+
+  /**
+   * Returns the midpoint for a relation.
+   *
+   * For association-class relations the ground truth comes from the rendered SVG
+   * path (read by afterRender via refreshAssocMidpoints). This guarantees the
+   * junction dot sits exactly on the drawn line regardless of Foblex's internal
+   * routing algorithm. A center-to-center value is used as the initial fallback
+   * until the first afterRender cycle populates the map.
+   *
+   * For ordinary relations the polyline midpoint is sufficient (used by label
+   * placement, etc.).
+   */
+  getRelationMidpoint(rel: DBRelation): { x: number; y: number } {
+    // Fast path: return the DOM-read midpoint when available
+    if (rel.associationClassId) {
+      const cached = this.assocMidpointMap().get(rel.id);
+      if (cached) return cached;
+
+      // Fallback until afterRender populates the map
+      return this.centerToCenterMidpoint(rel);
+    }
+
+    // ── Ordinary relation: reconstruct the Manhattan polyline ─────────────────
+    const src = this.diagram.getEntity(rel.sourceId);
+    const tgt = this.diagram.getEntity(rel.targetId);
+    if (!src || !tgt) return { x: 0, y: 0 };
+
+    const getBox = (e: DBEntity) => ({
+      x: e.position.x,
+      y: e.position.y,
+      w: e.width ?? 240,
+      h: e.height ?? 160,
+    });
+
+    const srcBox = getBox(src);
+    const tgtBox = getBox(tgt);
+    const routed = this.edgeRouteMap().get(rel.id);
+    const srcSide = routed?.sourceSide ?? 'right';
+    const tgtSide = routed?.targetSide ?? 'left';
+
+    const getAnchor = (box: { x: number; y: number; w: number; h: number }, side: ConnectorSide) => {
+      const cx = box.x + box.w / 2;
+      const cy = box.y + box.h / 2;
+      switch (side) {
+        case 'top':    return { x: cx,          y: box.y };
+        case 'bottom': return { x: cx,          y: box.y + box.h };
+        case 'left':   return { x: box.x,       y: cy };
+        case 'right':  return { x: box.x + box.w, y: cy };
+        default:       return { x: cx,          y: cy };
+      }
+    };
+
+    const srcAnchor = getAnchor(srcBox, srcSide);
+    const tgtAnchor = getAnchor(tgtBox, tgtSide);
+
+    let polyline: { x: number; y: number }[];
+    if (routed?.waypoints && routed.waypoints.length > 0) {
+      polyline = [srcAnchor, ...routed.waypoints, tgtAnchor];
+    } else if (srcSide === 'right' && tgtSide === 'left') {
+      const gapX = tgtAnchor.x - 16;
+      polyline = [srcAnchor, { x: gapX, y: srcAnchor.y }, { x: gapX, y: tgtAnchor.y }, tgtAnchor];
+    } else if (srcSide === 'left' && tgtSide === 'right') {
+      const gapX = tgtAnchor.x + 16;
+      polyline = [srcAnchor, { x: gapX, y: srcAnchor.y }, { x: gapX, y: tgtAnchor.y }, tgtAnchor];
+    } else if (srcSide === 'bottom' && tgtSide === 'top') {
+      const gapY = tgtAnchor.y - 16;
+      polyline = [srcAnchor, { x: srcAnchor.x, y: gapY }, { x: tgtAnchor.x, y: gapY }, tgtAnchor];
+    } else if (srcSide === 'top' && tgtSide === 'bottom') {
+      const gapY = tgtAnchor.y + 16;
+      polyline = [srcAnchor, { x: srcAnchor.x, y: gapY }, { x: tgtAnchor.x, y: gapY }, tgtAnchor];
+    } else {
+      polyline = [srcAnchor, tgtAnchor];
+    }
+
+    return this.calcPolylineMidpoint(polyline);
+  }
+
+  /**
+   * Reads the actual rendered SVG path for every relation that has an
+   * association class and stores the geometric midpoint (at 50% path length)
+   * into assocMidpointMap.
+   *
+   * Called by afterRender so it always runs after Foblex has finished painting.
+   * Uses the W3C SVGPathElement API — independent of Foblex internals.
+   */
+  private refreshAssocMidpoints(): void {
+    const relations = this.validRelations().filter((r) => r.associationClassId);
+    if (relations.length === 0) return;
+
+    const current = this.assocMidpointMap();
+    const next = new Map(current);
+    let changed = false;
+
+    for (const rel of relations) {
+      // [fConnectionId] is an Angular @Input — it is NOT rendered as an HTML
+      // attribute. We use [attr.data-rel-id] on the f-connection element in the
+      // template instead, which IS a real DOM attribute we can query reliably.
+      const host = document.querySelector<Element>(`[data-rel-id="${rel.id}"]`);
+      const pathEl = host?.querySelector<SVGPathElement>('path');
+
+      if (!pathEl) {
+        // Path not yet in the DOM — keep existing value or fall back below
+        continue;
+      }
+
+      const totalLen = pathEl.getTotalLength();
+      if (totalLen === 0) continue;
+
+      // getPointAtLength returns a point in the SVG's local coordinate space,
+      // which in Foblex matches canvas coordinates (same space as entity.position).
+      const pt = pathEl.getPointAtLength(totalLen / 2);
+      const nx = Math.round(pt.x);
+      const ny = Math.round(pt.y);
+
+      const prev = current.get(rel.id);
+      if (!prev || prev.x !== nx || prev.y !== ny) {
+        next.set(rel.id, { x: nx, y: ny });
+        changed = true;
+      }
+    }
+
+    // Remove stale entries for relations that no longer have an assoc class
+    for (const key of current.keys()) {
+      if (!relations.find((r) => r.id === key)) {
+        next.delete(key);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this.assocMidpointMap.set(next);
+    }
+  }
+
+  /**
+   * Center-to-center midpoint — used as the initial fallback before the first
+   * afterRender cycle reads the real SVG path coordinates.
+   */
+  private centerToCenterMidpoint(rel: DBRelation): { x: number; y: number } {
+    const src = this.diagram.getEntity(rel.sourceId);
+    const tgt = this.diagram.getEntity(rel.targetId);
+    if (!src || !tgt) return { x: 0, y: 0 };
+    return {
+      x: Math.round((src.position.x + (src.width ?? 240) / 2 + tgt.position.x + (tgt.width ?? 240) / 2) / 2),
+      y: Math.round((src.position.y + (src.height ?? 160) / 2 + tgt.position.y + (tgt.height ?? 160) / 2) / 2),
+    };
+  }
+
+  /**
+   * Determines the optimal facing connector on the association class
+   * to connect with the relationship midpoint.
+   */
+  getAssocClassInputConnector(rel: DBRelation): string {
+    if (!rel.associationClassId) return '';
+    const assoc = this.diagram.getEntity(rel.associationClassId);
+    if (!assoc) return `${rel.associationClassId}@class-bottom-1`;
+
+    const mid = this.getRelationMidpoint(rel);
+    const w = assoc.width ?? 240;
+    const attrCount = Math.max(1, assoc.attributes?.length ?? 0);
+    const hasPkg = !!assoc.packageId;
+    const h = assoc.height ?? (hasPkg ? 54 : 44) + attrCount * 26 + 12;
+
+    const assocCenterX = assoc.position.x + w / 2;
+    const assocCenterY = assoc.position.y + h / 2;
+    const dx = assocCenterX - mid.x;
+    const dy = assocCenterY - mid.y;
+
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      return dy < 0
+        ? `${rel.associationClassId}@class-bottom-1`
+        : `${rel.associationClassId}@class-top-1`;
+    } else {
+      return dx < 0
+        ? `${rel.associationClassId}@class-right-2`
+        : `${rel.associationClassId}@class-left-2`;
+    }
+  }
+
+  private calcPolylineMidpoint(pts: { x: number; y: number }[]): { x: number; y: number } {
+    if (pts.length === 0) return { x: 0, y: 0 };
+    if (pts.length === 1) return pts[0];
+    if (pts.length === 2) {
+      return {
+        x: Math.round((pts[0].x + pts[1].x) / 2),
+        y: Math.round((pts[0].y + pts[1].y) / 2),
+      };
+    }
+
+    let totalLen = 0;
+    const segLens: number[] = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+      segLens.push(len);
+      totalLen += len;
+    }
+
+    const halfLen = totalLen / 2;
+    let acc = 0;
+    for (let i = 0; i < segLens.length; i++) {
+      if (acc + segLens[i] >= halfLen) {
+        const remaining = halfLen - acc;
+        const t = segLens[i] > 0 ? remaining / segLens[i] : 0;
+        return {
+          x: Math.round(pts[i].x + t * (pts[i + 1].x - pts[i].x)),
+          y: Math.round(pts[i].y + t * (pts[i + 1].y - pts[i].y)),
+        };
+      }
+      acc += segLens[i];
+    }
+    return pts[Math.floor(pts.length / 2)];
+  }
 
   readonly highlightChain = computed(() => {
     const hoverE = this.hoveredEntityId();
@@ -203,16 +562,53 @@ export class CanvasComponent implements AfterViewInit {
       const dx = e.clientX - this.panStart.x;
       const dy = e.clientY - this.panStart.y;
       const nextPan = { x: this.panOrigin.x + dx, y: this.panOrigin.y + dy };
-      if (typeof (this.canvas as any)?._setPosition === 'function') {
-        (this.canvas as any)._setPosition(nextPan);
-      }
+      (this.canvas as any)._setPosition?.(nextPan);
+      this.canvas.redraw();
+      (this.canvas as any).emitCanvasChangeEvent?.();
       this.canvasPan.set(nextPan);
+    }
+
+    if (this.rightClickStart) {
+      const dx = e.clientX - this.rightClickStart.x;
+      const dy = e.clientY - this.rightClickStart.y;
+      if (!this.isRightDragging && Math.hypot(dx, dy) > 4) {
+        this.isRightDragging = true;
+        this.pendingContextMenu = null;
+        this.contextMenu.set(null);
+      }
+      if (this.isRightDragging) {
+        const x = Math.min(this.rightClickStart.x, e.clientX);
+        const y = Math.min(this.rightClickStart.y, e.clientY);
+        const w = Math.abs(dx);
+        const h = Math.abs(dy);
+        this.rightClickBox.set({ x, y, w, h });
+        this.updateMarqueeSelection(x, y, w, h);
+      }
     }
   }
 
   @HostListener('window:mouseup')
   onWindowMouseUp(): void {
     this.isPanning.set(false);
+
+    if (this.isRightDragging) {
+      this.isRightDragging = false;
+      this.pendingContextMenu = null;
+      this.rightClickBox.set(null);
+      this.rightClickStart = null;
+      const ids = this.selectedEntityIds();
+      if (ids.length > 0) {
+        this.flow?.select(ids, []);
+      }
+    } else if (this.pendingContextMenu) {
+      this.contextMenu.set(this.pendingContextMenu);
+      this.pendingContextMenu = null;
+      this.rightClickStart = null;
+      this.rightClickBox.set(null);
+    } else {
+      this.rightClickStart = null;
+      this.rightClickBox.set(null);
+    }
   }
 
   // ── Sidebar & Explorer Actions ───────────────────────────────────────────
@@ -230,16 +626,50 @@ export class CanvasComponent implements AfterViewInit {
         this.selectedRelationId.set(null);
         this.selection.set([id]);
         this.ws.sendSelection([id], null);
-      } else if (srcId !== id) {
+      } else {
         const relType = this.selection.currentRelationKind() || 'Association';
-        this.cmd.createRelation(srcId, id, '', '', relType);
+        const semanticError = this.validateRelationSemantics(srcId, id, relType);
+        if (semanticError) {
+          this.toast.error(semanticError);
+          this.selection.setTool('select');
+          this.selection.pendingSourceId.set(null);
+          return;
+        }
+
+        if (relType.startsWith('Generalization') || relType.startsWith('Realization')) {
+          if (this.wouldCreateGeneralizationCycle(srcId, id)) {
+            this.toast.error('Herencia circular no permitida: crearía un ciclo en la jerarquía.');
+            this.selection.setTool('select');
+            this.selection.pendingSourceId.set(null);
+            return;
+          }
+        }
+
+        const isAssoc = getRelationCategory(relType) === 'Association';
+        const defaultSrc = isAssoc ? '1' : null;
+        const defaultTgt = isAssoc ? '1' : null;
+
+        const relId = this.cmd.createRelation(
+          srcId,
+          id,
+          '',
+          '',
+          relType,
+          null,
+          null,
+          null,
+          defaultSrc,
+          defaultTgt
+        );
         this.selection.setTool('select');
         this.selectedEntityId.set(null);
         this.selectedEntityIds.set([]);
         this.ws.sendSelection([], null);
-        this.toast.info(`Relación ${relType} creada`);
-      } else {
-        this.selection.setTool('select');
+        this.toast.info(`Relación ${relType}${srcId === id ? ' recursiva' : ''} creada`);
+
+        if (isAssoc) {
+          this.openMultiplicityConfig(relId);
+        }
       }
       return;
     }
@@ -275,7 +705,7 @@ export class CanvasComponent implements AfterViewInit {
     for (const id of [...this.selection.ids()]) {
       const src = this.diagram.getEntity(id);
       if (!src) continue;
-      const newId = this.nextUniqueEntityId(src.name);
+      const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : this.nextUniqueEntityId(src.name);
       const nx = src.position.x + 32 + (this.diagram.entityCount() % 3) * 8;
       const ny = src.position.y + 32 + Math.floor(this.diagram.entityCount() / 3) * 8;
       this.cmd.createEntity(
@@ -317,36 +747,83 @@ export class CanvasComponent implements AfterViewInit {
     this.relationSelected.emit(id);
   }
 
+  readonly umlRelationOrder = [
+    '1:N',
+    '1:1',
+    'N:M',
+    'Generalization',
+    'Composition',
+    'Aggregation',
+    'Dependency',
+    'Realization',
+  ];
+
   cycleRelationType(): void {
     const rel = this.selectedRelation();
     if (!rel) return;
-    const order = ['1:1', '1:N', 'N:M', '1:0..1', 'Generalization'];
-    const idx = order.indexOf(rel.type);
-    const next = order[(idx + 1) % order.length];
+    const cat = getRelationCategory(rel.type);
+    let idx = this.umlRelationOrder.indexOf(rel.type);
+    if (idx === -1) {
+      idx = this.umlRelationOrder.indexOf(cat);
+    }
+    const next = this.umlRelationOrder[(idx + 1) % this.umlRelationOrder.length];
     this.cmd.updateRelation(rel.id, { type: next });
+    this.toast.info(`Relación: ${next}`);
+  }
+
+  openMultiplicityConfig(relId: string): void {
+    const rel = this.diagram.relations().find((r) => r.id === relId);
+    if (rel) {
+      const cat = getRelationCategory(rel.type);
+      if (cat !== 'Association') return;
+    }
+    this.activeMultiplicityRelId.set(relId);
+    this.selectedRelationId.set(relId);
+    this.selectedEntityId.set(null);
+    this.relationSelected.emit(relId);
+  }
+
+  closeMultiplicityConfig(): void {
+    this.activeMultiplicityRelId.set(null);
+  }
+
+  setMultiplicities(relId: string, src: string, tgt: string): void {
+    const ok = this.cmd.applyMultiplicityChange(relId, src, tgt);
+    if (ok) {
+      this.toast.info(`Multiplicidad: ${src} ➔ ${tgt}`);
+    }
+  }
+
+  updateRelSourceMultiplicity(relId: string, src: string): void {
+    const rel = this.diagram.relations().find((r) => r.id === relId);
+    const tgt = rel?.targetMultiplicity || '1';
+    this.cmd.applyMultiplicityChange(relId, src, tgt);
+  }
+
+  updateRelTargetMultiplicity(relId: string, tgt: string): void {
+    const rel = this.diagram.relations().find((r) => r.id === relId);
+    const src = rel?.sourceMultiplicity || '1';
+    this.cmd.applyMultiplicityChange(relId, src, tgt);
   }
 
   onCardinalityClick(relId: string): void {
-    const rel = this.diagram.relations().find((r) => r.id === relId);
-    if (!rel) return;
-    this.selectedRelationId.set(relId);
-    this.selectedEntityId.set(null);
-    this.selection.clear();
-    const order = ['1:1', '1:N', 'N:M', '1:0..1', 'Generalization'];
-    const idx = order.indexOf(rel.type);
-    const next = order[(idx + 1) % order.length];
-    this.cmd.updateRelation(relId, { type: next });
+    this.openMultiplicityConfig(relId);
   }
 
   // ── Context Menu Operations ───────────────────────────────────────────────
 
+  @HostListener('contextmenu', ['$event'])
   onContextMenu(e: MouseEvent, entityId?: string): void {
     e.preventDefault();
-    this.contextMenu.set({
+    e.stopPropagation();
+    if (this.isRightDragging) {
+      return;
+    }
+    this.pendingContextMenu = {
       x: e.clientX,
       y: e.clientY,
       entityId,
-    });
+    };
   }
 
   closeContextMenu(): void {
@@ -386,7 +863,7 @@ export class CanvasComponent implements AfterViewInit {
       ? { x: src.position.x, y: src.position.y + 240 }
       : { x: src.position.x + 290, y: src.position.y };
 
-    const newId = `entity-${Date.now()}`;
+    const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `entity-${Date.now()}`;
     this.cmd.createEntity(
       newId,
       name,
@@ -461,15 +938,83 @@ export class CanvasComponent implements AfterViewInit {
     }, 80);
   }
 
-  // ── Canvas Interaction, Pan & Zoom ────────────────────────────────────────
-
   onCanvasMouseDown(e: MouseEvent): void {
-    if (this.shortcuts.isSpacePressed() || this.selection.activeTool() === 'hand' || e.button === 1) {
+    if (e.button === 2) {
+      this.rightClickStart = { x: e.clientX, y: e.clientY };
+      this.isRightDragging = false;
+    } else if (this.shortcuts.isSpacePressed() || this.selection.activeTool() === 'hand' || e.button === 1) {
       e.preventDefault();
       this.isPanning.set(true);
       this.panStart = { x: e.clientX, y: e.clientY };
       this.panOrigin = { ...this.canvasPan() };
     }
+  }
+
+  @HostListener('wheel', ['$event'])
+  onCanvasWheel(e: WheelEvent): void {
+    const target = e.target as HTMLElement;
+    if (target.closest('.modal, .drawer, .dropdown, textarea, input, app-export-scope-modal')) {
+      return;
+    }
+
+    if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      // Shift + Wheel -> Desplazamiento Horizontal (suave y calibrado)
+      e.preventDefault();
+      e.stopPropagation();
+      const rawDelta = e.deltaY || e.deltaX;
+      const factor = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 40 : 0.5;
+      const delta = Math.sign(rawDelta) * Math.min(Math.abs(rawDelta * factor), 50);
+      this.panBy(-delta, 0);
+    } else if (e.ctrlKey || e.metaKey) {
+      // Ctrl + Wheel (con o sin Shift) -> Desplazamiento Vertical (suave y calibrado)
+      e.preventDefault();
+      e.stopPropagation();
+      const rawDelta = e.deltaY;
+      const factor = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 40 : 0.5;
+      const delta = Math.sign(rawDelta) * Math.min(Math.abs(rawDelta * factor), 50);
+      this.panBy(0, -delta);
+    }
+    // Rueda sola (sin modificadores) -> Permite a fZoom realizar el zoom nativo sobre el lienzo
+  }
+
+  panBy(dx: number, dy: number): void {
+    const current = this.canvasPan();
+    const nextPan = { x: current.x + dx, y: current.y + dy };
+    if (this.canvas) {
+      (this.canvas as any)._setPosition?.(nextPan);
+      this.canvas.redraw();
+      (this.canvas as any).emitCanvasChangeEvent?.();
+    }
+    this.canvasPan.set(nextPan);
+  }
+
+  private updateMarqueeSelection(boxX: number, boxY: number, boxW: number, boxH: number): void {
+    const el = this.flowHost?.nativeElement;
+    if (!el) return;
+
+    const nodeElements = el.querySelectorAll<HTMLElement>('[data-entity-id]');
+    const selected: string[] = [];
+
+    for (let i = 0; i < nodeElements.length; i++) {
+      const nodeEl = nodeElements[i];
+      const r = nodeEl.getBoundingClientRect();
+      const intersects =
+        r.left < boxX + boxW &&
+        r.right > boxX &&
+        r.top < boxY + boxH &&
+        r.bottom > boxY;
+
+      if (intersects) {
+        const id = nodeEl.getAttribute('data-entity-id');
+        if (id) selected.push(id);
+      }
+    }
+
+    this.selectedEntityIds.set(selected);
+    this.selectedEntityId.set(selected.length === 1 ? selected[0] : null);
+    this.selection.set(selected);
+    this.flow?.select(selected, []);
+    this.ws.sendSelection(selected, null);
   }
 
   onCanvasDoubleClick(e: MouseEvent): void {
@@ -541,14 +1086,40 @@ export class CanvasComponent implements AfterViewInit {
 
     if (source.entityId && target.entityId) {
       const relType = this.selection.currentRelationKind() || 'Association';
+      const semanticError = this.validateRelationSemantics(source.entityId, target.entityId, relType);
+      if (semanticError) {
+        this.toast.error(semanticError);
+        return;
+      }
+
       if (relType.startsWith('Generalization') || relType.startsWith('Realization')) {
         if (this.wouldCreateGeneralizationCycle(source.entityId, target.entityId)) {
           this.toast.error('Herencia circular no permitida: crearía un ciclo en la jerarquía.');
           return;
         }
       }
-      this.cmd.createRelation(source.entityId, target.entityId, source.columnName, target.columnName, relType);
+
+      const isAssoc = getRelationCategory(relType) === 'Association';
+      const defaultSrc = isAssoc ? '1' : null;
+      const defaultTgt = isAssoc ? '1' : null;
+
+      const relId = this.cmd.createRelation(
+        source.entityId,
+        target.entityId,
+        source.columnName,
+        target.columnName,
+        relType,
+        null,
+        null,
+        null,
+        defaultSrc,
+        defaultTgt
+      );
       this.toast.info(`Relación ${relType} creada`);
+
+      if (isAssoc) {
+        this.openMultiplicityConfig(relId);
+      }
     }
   }
 
@@ -673,6 +1244,84 @@ export class CanvasComponent implements AfterViewInit {
     };
   }
 
+  private getClassifierType(entity: DBEntity | undefined): string {
+    if (!entity) return 'class';
+    const st = entity.stereotype?.toLowerCase();
+    if (entity.elementType) return entity.elementType.toLowerCase();
+    if (st === 'enumeration' || st === 'interface' || st === 'datatype') return st;
+    if (entity.isAbstract) return 'abstract_class';
+    return 'class';
+  }
+
+  private validateRelationSemantics(srcId: string, tgtId: string, relType: string): string | null {
+    const src = this.diagram.entities().find((e) => e.id === srcId);
+    const tgt = this.diagram.entities().find((e) => e.id === tgtId);
+    if (!src || !tgt) return null;
+
+    const srcType = this.getClassifierType(src);
+    const tgtType = this.getClassifierType(tgt);
+    const kind = (relType || 'Association').toLowerCase();
+    const cat = getRelationCategory(relType);
+
+    // 0. Bloqueo de auto-herencia y auto-realización reflexiva
+    if (srcId === tgtId && (kind.startsWith('generalization') || kind.startsWith('inheritance') || kind.startsWith('realization') || kind.startsWith('implementation'))) {
+      return 'Un clasificador no puede tener relaciones de herencia o realización hacia sí mismo.';
+    }
+
+    // 1. Generalización (Herencia)
+    if (kind.startsWith('generalization') || kind.startsWith('inheritance')) {
+      if (srcType === 'enumeration' || tgtType === 'enumeration') {
+        return 'Los Enumeradores (enum) no pueden participar en relaciones de herencia.';
+      }
+      if (srcType === 'datatype' || tgtType === 'datatype') {
+        return 'Los DataTypes (Value Objects) no soportan herencia.';
+      }
+      if ((srcType === 'class' || srcType === 'abstract_class') && tgtType === 'interface') {
+        return 'Una clase no puede heredar de una interfaz. Utiliza una relación de Realización (implements).';
+      }
+      if (srcType === 'interface' && (tgtType === 'class' || tgtType === 'abstract_class')) {
+        return 'Una interfaz no puede heredar de una clase.';
+      }
+
+      // Restricción de Herencia Simple entre Clases (Spring Boot / SQL)
+      if (srcType === 'class' || srcType === 'abstract_class') {
+        const existingParent = this.diagram.relations().find(
+          (r) =>
+            r.sourceId === srcId &&
+            (r.type.toLowerCase().startsWith('generalization') || r.type.toLowerCase().startsWith('inheritance'))
+        );
+        if (existingParent && existingParent.targetId !== tgtId) {
+          const parentEntity = this.diagram.entities().find((e) => e.id === existingParent.targetId);
+          return `Herencia múltiple no soportada: la clase ya hereda de '${parentEntity?.name || 'otra clase'}'. Java y dgram solo admiten herencia simple entre clases. Para múltiples contratos, utiliza Realización hacia Interfaces.`;
+        }
+      }
+      return null;
+    }
+
+    // 2. Realización (Implementación de interfaz)
+    if (kind.startsWith('realization') || kind.startsWith('implementation')) {
+      if (tgtType !== 'interface') {
+        return 'La Realización solo puede tener como destino una Interfaz.';
+      }
+      if (srcType === 'interface') {
+        return 'Una interfaz no realiza otra interfaz; debe extenderla mediante Generalización.';
+      }
+      if (srcType === 'enumeration' || srcType === 'datatype') {
+        return 'Los enums y datatypes no pueden realizar interfaces.';
+      }
+      return null;
+    }
+
+    // 3. Asociación / Agregación / Composición
+    if (cat === 'Association') {
+      if (srcType === 'enumeration' || tgtType === 'enumeration') {
+        return 'Los enums no se conectan mediante asociaciones de línea; agrégalos como tipo de dato en los atributos de la clase.';
+      }
+    }
+
+    return null;
+  }
+
   private wouldCreateGeneralizationCycle(childId: string, parentId: string, excludeRelId?: string): boolean {
     if (childId === parentId) return true;
 
@@ -710,16 +1359,16 @@ export class CanvasComponent implements AfterViewInit {
   }
 
   resolveSourceConnector(rel: DBRelation): string {
+    // Self-loop: exit from right side
     if (rel.sourceId === rel.targetId) {
-      if (rel.sourceColumn) {
-        const entity = this.diagram.getEntity(rel.sourceId);
-        if (entity?.attributes.some((a) => a.name === rel.sourceColumn)) {
-          return `${rel.sourceId}:${rel.sourceColumn}@out`;
-        }
-      }
-      return `${rel.sourceId}@class-top`;
+      return `${rel.sourceId}@class-out`;
     }
 
+    // 1. Distributed non-clumping connector slot (UML Classifier-to-Classifier)
+    const slotConnector = this.edgeSlotMap().get(rel.id)?.sourceConnector;
+    if (slotConnector) return slotConnector;
+
+    // 2. Explicit Column-level FK connector fallback
     if (rel.sourceColumn) {
       const entity = this.diagram.getEntity(rel.sourceId);
       if (entity?.attributes.some((a) => a.name === rel.sourceColumn)) {
@@ -727,27 +1376,23 @@ export class CanvasComponent implements AfterViewInit {
       }
     }
 
-    const parallelIdx = this.getParallelRelationIndex(rel);
-    if (parallelIdx === 1) {
-      return `${rel.sourceId}@class-top`;
-    } else if (parallelIdx >= 2) {
-      return `${rel.sourceId}@class-bottom`;
-    }
-
-    return `${rel.sourceId}@class-out`;
+    // 3. Fallback: side computed by the edge router
+    const routed = this.edgeRouteMap().get(rel.id);
+    const side = routed?.sourceSide ?? 'right';
+    return this.connectorIdForSide(rel.sourceId, side);
   }
 
   resolveTargetConnector(rel: DBRelation): string {
+    // Self-loop: enter from top side
     if (rel.sourceId === rel.targetId) {
-      if (rel.targetColumn) {
-        const entity = this.diagram.getEntity(rel.targetId);
-        if (entity?.attributes.some((a) => a.name === rel.targetColumn)) {
-          return `${rel.targetId}:${rel.targetColumn}@in`;
-        }
-      }
-      return `${rel.targetId}@class-out`;
+      return `${rel.targetId}@class-top`;
     }
 
+    // 1. Distributed non-clumping connector slot (UML Classifier-to-Classifier)
+    const slotConnector = this.edgeSlotMap().get(rel.id)?.targetConnector;
+    if (slotConnector) return slotConnector;
+
+    // 2. Explicit Column-level FK connector fallback
     if (rel.targetColumn) {
       const entity = this.diagram.getEntity(rel.targetId);
       if (entity?.attributes.some((a) => a.name === rel.targetColumn)) {
@@ -755,21 +1400,42 @@ export class CanvasComponent implements AfterViewInit {
       }
     }
 
-    const parallelIdx = this.getParallelRelationIndex(rel);
-    if (parallelIdx === 1) {
-      return `${rel.targetId}@class-top`;
-    } else if (parallelIdx >= 2) {
-      return `${rel.targetId}@class-bottom`;
-    }
-
-    return `${rel.targetId}@class-in`;
+    // 3. Fallback: side computed by the edge router
+    const routed = this.edgeRouteMap().get(rel.id);
+    const side = routed?.targetSide ?? 'left';
+    return this.connectorIdForSide(rel.targetId, side, true);
   }
 
+  /** Maps a cardinal connector side to the Foblex connector ID for the entity */
+  private connectorIdForSide(entityId: string, side: ConnectorSide, isInput = false): string {
+    switch (side) {
+      case 'top':    return `${entityId}@class-top`;
+      case 'bottom': return `${entityId}@class-bottom`;
+      case 'right':  return `${entityId}@class-out`;
+      case 'left':   return `${entityId}@class-in`;
+      default:       return isInput ? `${entityId}@class-in` : `${entityId}@class-out`;
+    }
+  }
+
+  /** Returns pre-computed Manhattan waypoints for a relation (empty array = straight Foblex segment) */
+  getEdgeWaypoints(rel: DBRelation): IPoint[] {
+    return this.edgeRouteMap().get(rel.id)?.waypoints ?? [];
+  }
+
+  /** All connections use orthogonal segment routing; when pre-computed Manhattan waypoints exist, use straight interpolation to avoid Foblex waypoint re-routing loops */
   getConnectionType(rel: DBRelation): 'segment' | 'bezier' | 'straight' | 'adaptive-curve' {
-    if (rel.sourceId === rel.targetId) return 'bezier';
-    const parallelIdx = this.getParallelRelationIndex(rel);
-    if (parallelIdx > 0) return 'bezier';
-    return this.lineType();
+    if (this.getEdgeWaypoints(rel).length > 0) {
+      return 'straight';
+    }
+    return 'segment';
+  }
+
+  /** Port clearance offset: generous clearance for self-loops to loop cleanly around node corners */
+  getConnectionOffset(rel: DBRelation): number {
+    if (rel.sourceId === rel.targetId) {
+      return 28 + this.getParallelRelationIndex(rel) * 16;
+    }
+    return 16;
   }
 
 
@@ -826,7 +1492,7 @@ export class CanvasComponent implements AfterViewInit {
 
 
   createEntityAtCenter(): void {
-    const id = `entity-${Date.now()}`;
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `entity-${Date.now()}`;
     const name = `Clase${this.diagram.entityCount() + 1}`;
     const x = Math.max(100, Math.round(-this.canvasPan().x + 300));
     const y = Math.max(100, Math.round(-this.canvasPan().y + 200));

@@ -8,30 +8,40 @@
   (contextmenu)="onContextMenu($event)"
   (click)="closeContextMenu()"
 >
+  <!-- Marquee Selection Overlay (Right-Click Drag) -->
+  @if (rightClickBox(); as box) {
+    <div
+      class="fixed pointer-events-none z-50 border border-primary bg-primary/15 rounded-xs shadow-sm transition-none"
+      [style.left.px]="box.x"
+      [style.top.px]="box.y"
+      [style.width.px]="box.w"
+      [style.height.px]="box.h"
+    ></div>
+  }
   <!-- Floating Sidebar Toggle Button when closed -->
   @if (!isSidebarOpen()) {
     <button
-      class="absolute top-4 left-4 z-30 w-8 h-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+      class="absolute top-4 left-4 z-30 size-8 rounded-xl bg-card/80 backdrop-blur-md border border-border shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer"
       (click)="toggleSidebar.emit()"
       title="Abrir Explorador (Ctrl+B)"
     >
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
     </button>
   }
 
   <!-- Tooltip Banner when connecting -->
   @if (selection.activeTool() === 'relation') {
-    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-zinc-900/90 dark:bg-zinc-800/90 text-white rounded-full shadow-2xl backdrop-blur-md text-[12px] font-medium border border-zinc-700/50 pointer-events-auto animate-bounce-short">
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-card/90 text-foreground rounded-full shadow-2xl backdrop-blur-xl text-[12px] font-medium border border-border/80 pointer-events-auto animate-bounce-short">
       <span>
         Conector UML ({{ selection.currentRelationKind() }}):
         @if (selection.pendingSourceId(); as srcId) {
-          Origen: <b class="text-indigo-400 underline">{{ entityName(srcId) }}</b> — Ahora haz click en la Clase Destino
+          Origen: <b class="text-primary underline">{{ entityName(srcId) }}</b> — Ahora haz click en la Clase Destino
         } @else {
           Haz click en la Clase Origen y luego en la Clase Destino (o arrastra desde las manijas)
         }
       </span>
-      <button class="ml-1 w-5 h-5 rounded-full bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-[10px] cursor-pointer" (click)="selection.setTool('select')">
-        <svg class="w-3 h-3 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <button class="ml-1 size-5 rounded-full bg-muted/80 hover:bg-accent text-muted-foreground hover:text-foreground flex items-center justify-center text-[10px] active:scale-95 transition-all cursor-pointer" (click)="selection.setTool('select')">
+        <svg class="size-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
   }
@@ -52,7 +62,7 @@
 
     <!-- Minimap if enabled -->
     @if (showMinimap()) {
-      <f-minimap [fMinSize]="800"></f-minimap>
+      <f-minimap [fMinSize]="500"></f-minimap>
     }
 
     <!-- Background Grid -->
@@ -74,15 +84,16 @@
 
       <!-- Nodes with Focus Chain Highlighting & Collaborative Awareness -->
       <ng-container ngProjectAs="[fNodes]">
-        @for (entity of diagram.entities(); track entity.id) {
+        @for (entity of visibleEntities(); track entity.id) {
           <div
             fNode
             [fNodeId]="entity.id"
+            [attr.data-entity-id]="entity.id"
             [fNodePosition]="entity.position"
             [style.width.px]="entity.width || null"
             [style.height.px]="entity.height || null"
             class="entity-node relative"
-            [class.selected]="selectedEntityId() === entity.id"
+            [class.selected]="selectedEntityId() === entity.id || selectedEntityIds().includes(entity.id)"
             [class.focused-chain]="highlightChain().active && highlightChain().entityIds.has(entity.id)"
             [class.dimmed-chain]="highlightChain().active && !highlightChain().entityIds.has(entity.id)"
             (mouseenter)="hoveredEntityId.set(entity.id)"
@@ -123,10 +134,10 @@
               <button
                 type="button"
                 (click)="openQuickLinker(entity.id, $event)"
-                class="absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 z-40 group/ql animate-in zoom-in-75 duration-150"
+                class="absolute -right-3.5 top-1/2 -translate-y-1/2 size-7 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 flex items-center justify-center transition-all hover:scale-110 active:scale-95 z-40 group/ql animate-in zoom-in-75 duration-150 cursor-pointer"
                 title="Quick Linker: Crear clase conectada o subclase"
               >
-                <svg class="w-3.5 h-3.5 transition-transform group-hover/ql:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <svg class="size-3.5 transition-transform group-hover/ql:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
@@ -144,6 +155,27 @@
               (entityResized)="handleNodeResized($event)"
             />
           </div>
+        }
+
+        <!-- Midpoint anchor nodes for UML Association Classes -->
+        @for (rel of validRelations(); track rel.id + '-midpoint-node') {
+          @if (rel.associationClassId) {
+            <div
+              fNode
+              [fNodeId]="rel.id + '-midpoint-node'"
+              [fNodePosition]="getRelationMidpoint(rel)"
+              class="pointer-events-none select-none z-20"
+              style="position: absolute; width: 0; height: 0;"
+            >
+              <div
+                fConnector
+                fConnectorType="source-target"
+                [fConnectorId]="rel.id + '-midpoint@out'"
+                class="size-2 rounded-full bg-primary shadow-xs -translate-x-1/2 -translate-y-1/2"
+                style="position: absolute; left: 0; top: 0;"
+              ></div>
+            </div>
+          }
         }
       </ng-container>
 
@@ -181,11 +213,13 @@
         @for (rel of validRelations(); track rel.id) {
           <f-connection
             [fConnectionId]="rel.id"
+            [attr.data-rel-id]="rel.id"
             [fOutputId]="resolveSourceConnector(rel)"
             [fInputId]="resolveTargetConnector(rel)"
             [fType]="getConnectionType(rel)"
-            [fBehavior]="rel.sourceId === rel.targetId ? 'fixed' : 'floating'"
-            [fRadius]="12"
+            fBehavior="fixed"
+            [fRadius]="8"
+            [fOffset]="getConnectionOffset(rel)"
             [class.selected]="selectedRelationId() === rel.id"
             [class.focused-chain]="highlightChain().active && highlightChain().relationIds.has(rel.id)"
             [class.dimmed-chain]="highlightChain().active && !highlightChain().relationIds.has(rel.id)"
@@ -193,63 +227,118 @@
             (mouseenter)="hoveredRelationId.set(rel.id)"
             (mouseleave)="hoveredRelationId.set(null)"
           >
-            <!-- UML Relationship Markers -->
+            <!-- Orthogonal Manhattan waypoints (for self-loops or obstacle avoidance) -->
+            @if (getEdgeWaypoints(rel).length > 0) {
+              <f-connection-waypoints
+                [waypoints]="getEdgeWaypoints(rel)"
+                [radius]="6"
+                class="uml-waypoints-no-handles"
+              />
+            }
+
+            <!-- UML Relationship Markers (formal SVG shapes via Foblex fMarker) -->
             @switch (rel.type | relationCategory) {
               @case ('Generalization') {
-                <f-connection-marker-arrow type="END" class="uml-generalization-marker" />
+                <svg fMarker type="all-end" [width]="16" [height]="14" [refX]="15" [refY]="7">
+                  <polygon points="1,1 15,7 1,13" class="uml-marker-triangle" />
+                </svg>
               }
               @case ('Realization') {
-                <f-connection-marker-arrow type="END" class="uml-realization-marker" />
+                <svg fMarker type="all-end" [width]="16" [height]="14" [refX]="15" [refY]="7">
+                  <polygon points="1,1 15,7 1,13" class="uml-marker-triangle" />
+                </svg>
               }
               @case ('Composition') {
-                <f-connection-marker-arrow type="START" class="uml-composition-marker" />
+                <svg fMarker type="all-start" [width]="20" [height]="12" [refX]="0" [refY]="6">
+                  <polygon points="0,6 9,1 18,6 9,11" class="uml-marker-diamond-filled" />
+                </svg>
               }
               @case ('Aggregation') {
-                <f-connection-marker-arrow type="START" class="uml-aggregation-marker" />
+                <svg fMarker type="all-start" [width]="20" [height]="12" [refX]="0" [refY]="6">
+                  <polygon points="0,6 9,1 18,6 9,11" class="uml-marker-diamond-hollow" />
+                </svg>
               }
               @case ('Dependency') {
-                <f-connection-marker-arrow type="END" class="uml-dependency-marker" />
+                <svg fMarker type="all-end" [width]="14" [height]="12" [refX]="12" [refY]="6">
+                  <polyline points="2,1 12,6 2,11" class="uml-marker-open-arrow" />
+                </svg>
               }
               @default {
-                <f-connection-marker-arrow type="END" />
+                <!-- Standard UML Association has NO arrowheads -->
               }
             }
 
-            <!-- Center Relationship Label -->
+            <!-- Center label: role name only (no relation type text) -->
             <div fConnectionContent [position]="0.5" class="relation-center-label">
-              <span
-                class="uml-relation-pill"
-                [class.selected]="selectedRelationId() === rel.id"
-                (click)="onSelectAssociation(rel.id); $event.stopPropagation()"
-                [title]="rel.type"
-              >
-                <span class="uml-rel-icon">{{ rel.type | relationSymbol }}</span>
-                @if (rel.name) {
-                  <span class="uml-rel-name">{{ rel.name }}</span>
-                } @else {
-                  <span class="uml-rel-type">{{ rel.type }}</span>
-                }
-              </span>
+              @if (rel.name) {
+                <span
+                  class="uml-relation-pill uml-rel-name-only"
+                  [class.selected]="selectedRelationId() === rel.id"
+                  (click)="onSelectAssociation(rel.id); $event.stopPropagation()"
+                  [title]="rel.type"
+                >
+                  {{ rel.name }}
+                </span>
+              } @else {
+                <!-- Invisible click area to still allow selection -->
+                <span
+                  class="uml-relation-pill uml-rel-ghost"
+                  (click)="onSelectAssociation(rel.id); $event.stopPropagation()"
+                  [title]="rel.type"
+                ></span>
+              }
             </div>
 
-            <!-- Cardinality & Role text at ends -->
+            <!-- Cardinalities: Always visible for Association, on-hover for other UML relations -->
             @if (rel | relationCardinality:'source'; as srcCard) {
-              <div fConnectionContent [position]="0.15" [offset]="18" class="cardinality-label source-card">
-                <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">
+              <div
+                fConnectionContent
+                [position]="0.05"
+                [offset]="12"
+                class="cardinality-label source-card"
+                [class.hover-only]="(rel.type | relationCategory) !== 'Association'"
+                [class.is-hovered]="hoveredRelationId() === rel.id || selectedRelationId() === rel.id"
+              >
+                <span
+                  (click)="onCardinalityClick(rel.id); $event.stopPropagation()"
+                  [title]="srcCard | multiplicityMeaning"
+                  class="flex items-center gap-0.5"
+                >
                   @if (rel.sourceRole) {
-                    <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 mr-1">+{{ rel.sourceRole }}</span>
+                    <span class="text-[9px] font-semibold text-primary mr-0.5">+{{ rel.sourceRole }}</span>
                   }
-                  {{ srcCard }}
+                  <span class="font-mono font-bold">{{ srcCard }}</span>
+                  @if ((rel.type | relationCategory) !== 'Association' && (hoveredRelationId() === rel.id || selectedRelationId() === rel.id)) {
+                    <span class="text-[8.5px] opacity-80 font-sans ml-1 text-primary-foreground/90 bg-primary px-1 py-0.2 rounded font-normal">
+                      {{ srcCard | multiplicityMeaning }}
+                    </span>
+                  }
                 </span>
               </div>
             }
             @if (rel | relationCardinality:'target'; as tgtCard) {
-              <div fConnectionContent [position]="0.85" [offset]="-18" class="cardinality-label target-card">
-                <span (click)="onCardinalityClick(rel.id); $event.stopPropagation()">
+              <div
+                fConnectionContent
+                [position]="0.95"
+                [offset]="-12"
+                class="cardinality-label target-card"
+                [class.hover-only]="(rel.type | relationCategory) !== 'Association'"
+                [class.is-hovered]="hoveredRelationId() === rel.id || selectedRelationId() === rel.id"
+              >
+                <span
+                  (click)="onCardinalityClick(rel.id); $event.stopPropagation()"
+                  [title]="tgtCard | multiplicityMeaning"
+                  class="flex items-center gap-0.5"
+                >
                   @if (rel.targetRole) {
-                    <span class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 mr-1">+{{ rel.targetRole }}</span>
+                    <span class="text-[9px] font-semibold text-primary mr-0.5">+{{ rel.targetRole }}</span>
                   }
-                  {{ tgtCard }}
+                  <span class="font-mono font-bold">{{ tgtCard }}</span>
+                  @if ((rel.type | relationCategory) !== 'Association' && (hoveredRelationId() === rel.id || selectedRelationId() === rel.id)) {
+                    <span class="text-[8.5px] opacity-80 font-sans ml-1 text-primary-foreground/90 bg-primary px-1 py-0.2 rounded font-normal">
+                      {{ tgtCard | multiplicityMeaning }}
+                    </span>
+                  }
                 </span>
               </div>
             }
@@ -257,22 +346,16 @@
         }
 
         <!-- UML Association Class Dashed Connector -->
-        @for (rel of validRelations(); track rel.id + '-assoc-class') {
+        @for (rel of validRelations(); track rel.id + '-assoc-conn') {
           @if (rel.associationClassId) {
             <f-connection
-              [fConnectionId]="rel.id + '-assoc-class'"
-              [fOutputId]="resolveSourceConnector(rel)"
-              [fInputId]="rel.associationClassId + '@class-top'"
+              [fConnectionId]="rel.id + '-assoc-conn'"
+              [fOutputId]="rel.id + '-midpoint@out'"
+              [fInputId]="getAssocClassInputConnector(rel)"
               fType="straight"
-              fBehavior="floating"
-              [class.dashed-line]="true"
+              fBehavior="fixed"
               class="uml-assoc-class-connector"
             >
-              <div fConnectionContent [position]="0.5">
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-sm">
-                  «association class»
-                </span>
-              </div>
             </f-connection>
           }
         }
@@ -327,45 +410,248 @@
     (distribute)="distributeSelected($event)"
   />
 
+  <!-- Floating Canvas Navigation HUD (Bottom-Right) -->
+  <div class="fixed bottom-4 right-6 z-40 flex items-center gap-1 p-1 bg-card/85 backdrop-blur-xl border border-border/80 shadow-xl rounded-2xl select-none">
+    <!-- Fit to screen / Centrar -->
+    <button
+      type="button"
+      (click)="fitToScreen()"
+      class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/80 active:scale-95 transition-all cursor-pointer"
+      title="Centrar diagrama en pantalla (Fit to screen)"
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+      </svg>
+    </button>
+
+    <div class="w-px h-4 bg-border/60"></div>
+
+    <!-- Toggle Minimap -->
+    <button
+      type="button"
+      (click)="showMinimap.set(!showMinimap())"
+      class="p-2 rounded-xl transition-all active:scale-95 cursor-pointer"
+      [ngClass]="showMinimap() ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'"
+      title="Mostrar / Ocultar Minimapa"
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+        <line x1="9" y1="3" x2="9" y2="18"/>
+        <line x1="15" y1="6" x2="15" y2="21"/>
+      </svg>
+    </button>
+
+    <div class="w-px h-4 bg-border/60"></div>
+
+    <!-- Zoom Out -->
+    <button
+      type="button"
+      (click)="zoomOut()"
+      class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/80 active:scale-95 transition-all cursor-pointer"
+      title="Alejar (Zoom Out)"
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+
+    <!-- Zoom Percentage / Reset to 100% -->
+    <button
+      type="button"
+      (click)="zoomReset()"
+      class="px-2 py-1 text-[11px] font-mono font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-all cursor-pointer"
+      title="Restablecer Zoom (100%)"
+    >
+      {{ zoomPercent() }}%
+    </button>
+
+    <!-- Zoom In -->
+    <button
+      type="button"
+      (click)="zoomIn()"
+      class="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/80 active:scale-95 transition-all cursor-pointer"
+      title="Acercar (Zoom In)"
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+  </div>
+
   <!-- Floating Proactive Hint (Punto 20: Proactividad Controlada) -->
   @if (proactivity.activeHint(); as hint) {
-    <div class="fixed bottom-6 left-6 z-40 max-w-sm bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl rounded-2xl p-4 flex items-start gap-3 animate-in slide-in-from-bottom-3 duration-200">
-      <div class="w-8 h-8 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="fixed bottom-6 left-6 z-40 max-w-sm bg-card/90 backdrop-blur-xl border border-border/80 shadow-2xl rounded-2xl p-4 flex items-start gap-3 animate-in slide-in-from-bottom-3 duration-200">
+      <div class="size-8 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
       </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between gap-2">
-          <h4 class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{{ hint.title }}</h4>
+          <h4 class="text-xs font-semibold text-foreground truncate">{{ hint.title }}</h4>
           <button
             type="button"
             (click)="proactivity.dismissHint()"
-            class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            class="text-muted-foreground hover:text-foreground text-xs p-1 rounded-md hover:bg-accent transition-colors cursor-pointer"
             title="Descartar"
           >
             ✕
           </button>
         </div>
-        <p class="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">{{ hint.message }}</p>
+        <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed">{{ hint.message }}</p>
         @if (hint.actionLabel) {
           <div class="mt-2.5 flex items-center gap-2">
             <button
               type="button"
               (click)="onProactiveAction(hint.actionType)"
-              class="px-3 py-1 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[11px] font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm cursor-pointer"
+              class="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-xs cursor-pointer"
             >
               {{ hint.actionLabel }}
             </button>
             <button
               type="button"
               (click)="proactivity.dismissHint()"
-              class="px-2.5 py-1 rounded-lg text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 text-[11px] font-medium transition-colors cursor-pointer"
+              class="px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground text-[11px] font-medium hover:bg-muted active:scale-[0.98] transition-all cursor-pointer"
             >
               Ahora no
             </button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  <!-- Association Multiplicity Fast Configuration Dialog -->
+  @if (activeMultiplicityRel(); as rel) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs animate-fadeIn"
+      (click)="closeMultiplicityConfig()"
+      (keydown.escape)="closeMultiplicityConfig()"
+    >
+      <div
+        class="bg-popover text-popover-foreground border border-border/90 rounded-2xl shadow-2xl p-5 w-104 max-w-[92vw] animate-in zoom-in-95 duration-150 select-none"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-center justify-between pb-2.5 mb-3.5 border-b border-border">
+          <div class="flex items-center gap-2">
+            <span class="size-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold font-mono">1..*</span>
+            <span class="text-xs font-semibold text-foreground tracking-wide">Configurar Multiplicidad de Asociación</span>
+          </div>
+          <button
+            type="button"
+            class="text-muted-foreground hover:text-foreground text-xs size-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+            (click)="closeMultiplicityConfig()"
+            title="Cerrar (Esc)"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="text-xs text-muted-foreground mb-3 flex items-center justify-between font-mono bg-muted/60 px-3 py-2 rounded-xl border border-border/60">
+          <span class="truncate max-w-[130px] font-semibold text-foreground text-center" [title]="entityName(rel.sourceId)">{{ entityName(rel.sourceId) }}</span>
+          <span class="text-primary font-bold px-2">──────►</span>
+          <span class="truncate max-w-[130px] font-semibold text-foreground text-center" [title]="entityName(rel.targetId)">{{ entityName(rel.targetId) }}</span>
+        </div>
+
+        <!-- Presets -->
+        <div class="mb-3.5">
+          <span class="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Atajos Frecuentes</span>
+          <div class="grid grid-cols-5 gap-1.5">
+            <button
+              type="button"
+              class="px-2 py-1.5 rounded-lg bg-card hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-[11px] font-mono font-medium border border-border transition-all cursor-pointer text-center"
+              [ngClass]="{ 'bg-primary/15 text-primary border-primary/40 font-bold': (rel.sourceMultiplicity || '1') === '1' && (rel.targetMultiplicity || '1') === '1' }"
+              (click)="setMultiplicities(rel.id, '1', '1')"
+            >
+              1 : 1
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1.5 rounded-lg bg-card hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-[11px] font-mono font-medium border border-border transition-all cursor-pointer text-center"
+              [ngClass]="{ 'bg-primary/15 text-primary border-primary/40 font-bold': (rel.sourceMultiplicity || '1') === '1' && (rel.targetMultiplicity || '1') === '1..*' }"
+              (click)="setMultiplicities(rel.id, '1', '1..*')"
+            >
+              1 : 1..*
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1.5 rounded-lg bg-card hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-[11px] font-mono font-medium border border-border transition-all cursor-pointer text-center"
+              [ngClass]="{ 'bg-primary/15 text-primary border-primary/40 font-bold': (rel.sourceMultiplicity || '1') === '1' && (rel.targetMultiplicity || '1') === '0..*' }"
+              (click)="setMultiplicities(rel.id, '1', '0..*')"
+            >
+              1 : 0..*
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1.5 rounded-lg bg-card hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-[11px] font-mono font-medium border border-border transition-all cursor-pointer text-center"
+              [ngClass]="{ 'bg-primary/15 text-primary border-primary/40 font-bold': (rel.sourceMultiplicity || '1') === '0..*' && (rel.targetMultiplicity || '1') === '0..*' }"
+              (click)="setMultiplicities(rel.id, '0..*', '0..*')"
+            >
+              * : *
+            </button>
+            <button
+              type="button"
+              class="px-2 py-1.5 rounded-lg bg-card hover:bg-primary/15 hover:text-primary hover:border-primary/40 text-[11px] font-mono font-medium border border-border transition-all cursor-pointer text-center"
+              [ngClass]="{ 'bg-primary/15 text-primary border-primary/40 font-bold': (rel.sourceMultiplicity || '1') === '0..1' && (rel.targetMultiplicity || '1') === '1' }"
+              (click)="setMultiplicities(rel.id, '0..1', '1')"
+            >
+              0..1 : 1
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Inputs -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-muted/30 p-2.5 rounded-xl border border-border/70">
+            <label class="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 truncate">
+              Origen ({{ entityName(rel.sourceId) }})
+            </label>
+            <input
+              type="text"
+              class="w-full bg-background border border-input rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+              [value]="rel.sourceMultiplicity || '1'"
+              (input)="updateRelSourceMultiplicity(rel.id, $any($event.target).value)"
+              (keydown.enter)="closeMultiplicityConfig()"
+              placeholder="1"
+            />
+            <div class="flex gap-1 mt-1.5">
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelSourceMultiplicity(rel.id, '1')">1</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelSourceMultiplicity(rel.id, '0..1')">0..1</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelSourceMultiplicity(rel.id, '1..*')">1..*</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelSourceMultiplicity(rel.id, '0..*')">0..*</button>
+            </div>
+          </div>
+          <div class="bg-muted/30 p-2.5 rounded-xl border border-border/70">
+            <label class="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 truncate">
+              Destino ({{ entityName(rel.targetId) }})
+            </label>
+            <input
+              type="text"
+              class="w-full bg-background border border-input rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+              [value]="rel.targetMultiplicity || '1'"
+              (input)="updateRelTargetMultiplicity(rel.id, $any($event.target).value)"
+              (keydown.enter)="closeMultiplicityConfig()"
+              placeholder="1"
+            />
+            <div class="flex gap-1 mt-1.5">
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelTargetMultiplicity(rel.id, '1')">1</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelTargetMultiplicity(rel.id, '0..1')">0..1</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelTargetMultiplicity(rel.id, '1..*')">1..*</button>
+              <button type="button" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/60 transition-colors" (click)="updateRelTargetMultiplicity(rel.id, '0..*')">0..*</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[11px] text-muted-foreground">Presiona <kbd class="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px] border border-border">Enter</kbd> para confirmar</span>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold cursor-pointer shadow-md shadow-primary/20 active:scale-95 transition-all"
+            (click)="closeMultiplicityConfig()"
+          >
+            Listo
+          </button>
+        </div>
       </div>
     </div>
   }

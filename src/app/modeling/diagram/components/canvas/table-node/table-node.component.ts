@@ -48,6 +48,11 @@ export class TableNodeComponent {
     return !!e?.isAbstract || e?.elementType === 'abstract_class' || e?.stereotype?.toLowerCase() === 'abstract';
   });
 
+  readonly visibleAttributes = computed(() => {
+    // In pure UML, foreign keys are never attributes of a class; filter out any legacy/redundant fk attributes
+    return (this.entity()?.attributes || []).filter((a) => !a.fk);
+  });
+
   constructor() {
     effect(() => {
       if (this.isPendingEdit()) {
@@ -155,6 +160,7 @@ export class TableNodeComponent {
   }
 
   addAttrInline(): void {
+    if (this.editingAttr()) return;
     const e = this.entity();
     const base = 'newAttr';
     let n = 1;

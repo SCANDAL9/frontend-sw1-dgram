@@ -10,6 +10,7 @@
     fDragBlocker
     fConnectorType="source-target"
     [fConnectorId]="entity().id + '@class-in'"
+    fConnectorConnectableSide="left"
     class="uml-connector uml-connector-left uml-connector-class"
     title="Conectar clase (In)"
   ></div>
@@ -18,6 +19,7 @@
     fDragBlocker
     fConnectorType="source-target"
     [fConnectorId]="entity().id + '@class-out'"
+    fConnectorConnectableSide="right"
     class="uml-connector uml-connector-right uml-connector-class"
     title="Conectar clase (Out)"
   ></div>
@@ -26,6 +28,7 @@
     fDragBlocker
     fConnectorType="source-target"
     [fConnectorId]="entity().id + '@class-top'"
+    fConnectorConnectableSide="top"
     class="uml-connector uml-connector-top"
     title="Conectar clase (Top)"
   ></div>
@@ -34,9 +37,31 @@
     fDragBlocker
     fConnectorType="source-target"
     [fConnectorId]="entity().id + '@class-bottom'"
+    fConnectorConnectableSide="bottom"
     class="uml-connector uml-connector-bottom"
     title="Conectar clase (Bottom)"
   ></div>
+
+  <!-- Distributed Connector Slots for Multi-Edge Anti-Clumping -->
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-left-0'" fConnectorConnectableSide="left" class="uml-connector-slot uml-slot-left-0"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-left-1'" fConnectorConnectableSide="left" class="uml-connector-slot uml-slot-left-1"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-left-2'" fConnectorConnectableSide="left" class="uml-connector-slot uml-slot-left-2"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-left-3'" fConnectorConnectableSide="left" class="uml-connector-slot uml-slot-left-3"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-left-4'" fConnectorConnectableSide="left" class="uml-connector-slot uml-slot-left-4"></div>
+
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-right-0'" fConnectorConnectableSide="right" class="uml-connector-slot uml-slot-right-0"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-right-1'" fConnectorConnectableSide="right" class="uml-connector-slot uml-slot-right-1"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-right-2'" fConnectorConnectableSide="right" class="uml-connector-slot uml-slot-right-2"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-right-3'" fConnectorConnectableSide="right" class="uml-connector-slot uml-slot-right-3"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-right-4'" fConnectorConnectableSide="right" class="uml-connector-slot uml-slot-right-4"></div>
+
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-top-0'" fConnectorConnectableSide="top" class="uml-connector-slot uml-slot-top-0"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-top-1'" fConnectorConnectableSide="top" class="uml-connector-slot uml-slot-top-1"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-top-2'" fConnectorConnectableSide="top" class="uml-connector-slot uml-slot-top-2"></div>
+
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-bottom-0'" fConnectorConnectableSide="bottom" class="uml-connector-slot uml-slot-bottom-0"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-bottom-1'" fConnectorConnectableSide="bottom" class="uml-connector-slot uml-slot-bottom-1"></div>
+  <div fConnector fDragBlocker fConnectorType="source-target" [fConnectorId]="entity().id + '@class-bottom-2'" fConnectorConnectableSide="bottom" class="uml-connector-slot uml-slot-bottom-2"></div>
 
   <!-- Header: Drag header to move class — Double-click to rename -->
   <div
@@ -47,25 +72,25 @@
   >
     <!-- Stereotype Badge -->
     @if (isEnum()) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+      <span class="uml-stereotype border px-2 py-0.5 rounded-full text-[9px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25 shadow-2xs">
         «enumeration»
       </span>
     } @else if (isInterface()) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+      <span class="uml-stereotype border px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 shadow-2xs">
         «interface»
       </span>
     } @else if (isDataType()) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
+      <span class="uml-stereotype border px-2 py-0.5 rounded-full text-[9px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25 shadow-2xs">
         «dataType»
       </span>
     } @else if (entity().stereotype) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-semibold" [ngClass]="getStereotypeClass(entity().stereotype)">
+      <span class="uml-stereotype border px-2 py-0.5 rounded-full text-[9px] font-semibold shadow-2xs" [ngClass]="getStereotypeClass(entity().stereotype)">
         «{{ entity().stereotype }}»
       </span>
     }
 
     @if (packageName()) {
-      <span class="uml-stereotype border px-1.5 py-0.5 rounded-full text-[9px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700" title="Paquete UML">
+      <span class="uml-stereotype border px-2 py-0.5 rounded-full text-[9px] font-mono text-muted-foreground bg-muted/70 border-border/80 shadow-2xs" title="Paquete UML">
         📦 {{ packageName() }}
       </span>
     }
@@ -93,13 +118,13 @@
     }
 
     @if (isAbstract()) {
-      <span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider ml-1">/abs</span>
+      <span class="text-[9px] text-amber-500 font-bold uppercase tracking-wider ml-1">/abs</span>
     }
   </div>
 
   <!-- Attributes compartment — Doble-click vacío = nuevo atributo -->
   <div class="uml-compartment" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
-    @for (col of entity().attributes; track col.name) {
+    @for (col of visibleAttributes(); track col.name) {
       <div
         class="uml-attr-row group/row"
         [class.editing]="editingAttr() === col.name"
@@ -120,7 +145,7 @@
           @if (isEnum()) {
             <input
               id="attr-{{entity().id}}-{{col.name}}"
-              class="uml-attr-input flex-1 min-w-0 font-mono uppercase font-bold text-purple-700 dark:text-purple-300"
+              class="uml-attr-input flex-1 min-w-0 font-mono uppercase font-bold text-purple-400"
               [ngModel]="draftAttrName()"
               (ngModelChange)="draftAttrName.set($event)"
               (keyup.enter)="confirmAttr(col.name)"
@@ -144,7 +169,7 @@
               (click)="$event.stopPropagation()"
               (mousedown)="$event.stopPropagation()"
             />
-            <span class="text-zinc-400 dark:text-zinc-500">:</span>
+            <span class="text-muted-foreground">:</span>
             <input
               class="uml-attr-input-type w-[75px] font-mono"
               [ngModel]="draftAttrType()"
@@ -159,7 +184,7 @@
         } @else {
           @if (isEnum()) {
             <!-- Enum Constant Row -->
-            <span class="uml-attr-name truncate font-mono font-bold text-purple-700 dark:text-purple-300 text-[12px]">
+            <span class="uml-attr-name truncate font-mono font-bold text-purple-400 text-[12px]">
               {{ col.name }}
             </span>
           } @else {
@@ -173,28 +198,25 @@
               <span
                 class="uml-attr-name truncate font-mono"
                 [class.line-through]="col.isDerived"
-                [class.text-zinc-400]="col.isDerived"
+                [class.text-muted-foreground]="col.isDerived"
                 [title]="col.name"
               >
                 {{ col.isDerived ? '/' : '' }}{{ col.name }}
               </span>
 
               @if (col.defaultValue) {
-                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono shrink-0">={{ col.defaultValue }}</span>
+                <span class="text-[10px] text-muted-foreground font-mono shrink-0">={{ col.defaultValue }}</span>
               }
             </div>
 
-            <span class="text-zinc-400 dark:text-zinc-500 text-xs shrink-0">:</span>
+            <span class="text-muted-foreground text-xs shrink-0">:</span>
 
             <!-- Type -->
             <span class="uml-attr-type truncate font-mono text-right" [title]="col.type">{{ col.type }}</span>
 
-            <!-- Flags (PK / FK) -->
+            <!-- Flags (PK) -->
             @if (col.pk) {
-              <span class="px-1 py-0.2 rounded text-[8px] font-mono font-semibold bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 shrink-0">PK</span>
-            }
-            @if (col.fk) {
-              <span class="px-1 py-0.2 rounded text-[8px] font-mono bg-zinc-100 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-750 shrink-0">FK</span>
+              <span class="px-1.5 py-0.5 rounded-sm text-[8px] font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0 tracking-wider">PK</span>
             }
           }
         }
@@ -210,8 +232,9 @@
       </div>
     }
     @empty {
-      <div class="uml-empty" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
-        {{ isEnum() ? '+ Añadir valor' : '+ Añadir atributo' }}
+      <div class="uml-empty border-t border-dashed border-border/70 py-3.5 flex items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-colors cursor-pointer group/empty select-none" (dblclick)="addAttrInline(); $event.stopPropagation()" [title]="isEnum() ? 'Doble click para añadir valor' : 'Doble click para añadir atributo'">
+        <span class="text-xs group-hover/empty:scale-125 transition-transform font-bold leading-none">+</span>
+        <span class="text-[11px] font-medium tracking-tight">{{ isEnum() ? 'Añadir valor (Doble click)' : 'Añadir atributo (Doble click)' }}</span>
       </div>
     }
   </div>
@@ -219,7 +242,7 @@
   <!-- Manual Resize Handle -->
   <div
     fDragBlocker
-    class="uml-resize-handle absolute bottom-0 right-0 w-3.5 h-3.5 cursor-se-resize flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 opacity-60 hover:opacity-100 transition-opacity z-20"
+    class="uml-resize-handle absolute bottom-0.5 right-0.5 size-3.5 cursor-se-resize flex items-center justify-center text-muted-foreground/60 hover:text-foreground opacity-40 hover:opacity-100 transition-all z-20"
     (mousedown)="onResizeStart($event)"
     title="Arrastrar para redimensionar clase"
   >
