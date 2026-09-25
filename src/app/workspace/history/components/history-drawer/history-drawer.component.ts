@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { HistoryItem, HistoryDetail } from '../../models/history.model';
 import { HistoryTimeAgoPipe } from '../../pipes/history-time-ago.pipe';
 import { HistoryCommandIconPipe } from '../../pipes/history-command-icon.pipe';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-history-drawer',
@@ -19,6 +20,7 @@ import { HistoryCommandIconPipe } from '../../pipes/history-command-icon.pipe';
     FormsModule,
     HistoryTimeAgoPipe,
     HistoryCommandIconPipe,
+    ModalComponent,
   ],
   templateUrl: './history-drawer.component.html',
 })

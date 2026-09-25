@@ -17,7 +17,7 @@ export interface InverseResult {
 type InverseFn = (
   cmd: Command,
   snapshot: StateSnapshot
-) => InverseResult | null;
+) => InverseResult | InverseResult[] | null;
 
 // ─── Inverse map ──────────────────────────────────────────────────────────────
 
@@ -29,29 +29,77 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
   }),
 
   DELETE_ENTITY: (cmd, snapshot) => {
-    const entity = snapshot.entities.find((e) => e.id === cmd.payload.entity_id);
+    const id = cmd.payload.entity_id ?? cmd.payload.class_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
     if (!entity) return null;
-    return {
-      type: 'CREATE_ENTITY',
-      payload: {
-        entity_id: entity.id,
-        entity_name: entity.name,
-        columns: (entity.attributes || (entity as any).columns) as any,
-        position: entity.position,
+
+    const results: InverseResult[] = [
+      {
+        type: 'CREATE_ENTITY',
+        payload: {
+          entity_id: entity.id,
+          class_id: entity.id,
+          entity_name: entity.name,
+          class_name: entity.name,
+          columns: (entity.attributes || (entity as any).columns) as any,
+          position: entity.position,
+          width: entity.width,
+          height: entity.height,
+          element_type: entity.elementType,
+          elementType: entity.elementType,
+          stereotype: entity.stereotype || undefined,
+          is_abstract: entity.isAbstract ?? false,
+          isAbstract: entity.isAbstract ?? false,
+          package_id: entity.packageId || undefined,
+        },
       },
-    };
+    ];
+
+    // Restore any relations that were connected to this entity
+    const relsToRestore = snapshot.relations.filter(
+      (r) => r.sourceId === entity.id || r.targetId === entity.id
+    );
+    for (const rel of relsToRestore) {
+      results.push({
+        type: 'CREATE_RELATION',
+        payload: {
+          relation_id: rel.id,
+          source_entity_id: rel.sourceId,
+          target_entity_id: rel.targetId,
+          source_column: rel.sourceColumn,
+          target_column: rel.targetColumn,
+          relation_type: rel.type,
+          name: rel.name || undefined,
+          source_role: rel.sourceRole || undefined,
+          target_role: rel.targetRole || undefined,
+          source_multiplicity: rel.sourceMultiplicity || undefined,
+          target_multiplicity: rel.targetMultiplicity || undefined,
+        },
+      });
+    }
+
+    return results;
   },
 
   UPDATE_ENTITY: (cmd, snapshot) => {
-    const entity = snapshot.entities.find((e) => e.id === cmd.payload.entity_id);
+    const id = cmd.payload.entity_id ?? cmd.payload.class_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
     if (!entity) return null;
     return {
       type: 'UPDATE_ENTITY',
       payload: {
         entity_id: entity.id,
+        class_id: entity.id,
         entity_name: entity.name,
-        stereotype: entity.stereotype ?? null,
+        class_name: entity.name,
+        element_type: entity.elementType,
+        elementType: entity.elementType,
+        stereotype: entity.stereotype || undefined,
         is_abstract: entity.isAbstract ?? false,
+        isAbstract: entity.isAbstract ?? false,
+        package_id: entity.packageId || undefined,
+        width: entity.width,
+        height: entity.height,
       },
     };
   },
@@ -116,6 +164,11 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
         source_column: rel.sourceColumn,
         target_column: rel.targetColumn,
         relation_type: rel.type,
+        name: rel.name || undefined,
+        source_role: rel.sourceRole || undefined,
+        target_role: rel.targetRole || undefined,
+        source_multiplicity: rel.sourceMultiplicity || undefined,
+        target_multiplicity: rel.targetMultiplicity || undefined,
       },
     };
   },
@@ -130,6 +183,11 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
         relation_type: rel.type,
         source_column: rel.sourceColumn,
         target_column: rel.targetColumn,
+        name: rel.name || undefined,
+        source_role: rel.sourceRole || undefined,
+        target_role: rel.targetRole || undefined,
+        source_multiplicity: rel.sourceMultiplicity || undefined,
+        target_multiplicity: rel.targetMultiplicity || undefined,
       },
     };
   },
@@ -210,18 +268,7 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
   }),
 
   DELETE_CLASS: (cmd, snapshot) => {
-    const id = cmd.payload.class_id ?? cmd.payload.entity_id;
-    const entity = snapshot.entities.find((e) => e.id === id);
-    if (!entity) return null;
-    return {
-      type: 'CREATE_ENTITY',
-      payload: {
-        entity_id: entity.id,
-        entity_name: entity.name,
-        columns: (entity.attributes || (entity as any).columns) as any,
-        position: entity.position,
-      },
-    };
+    return INVERSE_MAP.DELETE_ENTITY ? INVERSE_MAP.DELETE_ENTITY(cmd, snapshot) : null;
   },
 
   MOVE_CLASS: (cmd, snapshot) => {
@@ -243,7 +290,7 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
  *
  * Returns null when the command type is not invertible (e.g. pure-ephemeral ops).
  */
-export function invert(cmd: Command, snapshot: StateSnapshot): InverseResult | null {
+export function invert(cmd: Command, snapshot: StateSnapshot): InverseResult | InverseResult[] | null {
   const fn = INVERSE_MAP[cmd.command_type];
   if (!fn) return null;
   try {

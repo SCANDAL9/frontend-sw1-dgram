@@ -1,20 +1,20 @@
 <!-- Slide Drawer Panel (Historial de Versiones) -->
 <aside
-  class="fixed top-11 right-0 bottom-0 w-[440px] max-w-[95vw] bg-white dark:bg-[#0b0f19] border-l border-zinc-200 dark:border-zinc-800 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out select-none"
+  class="fixed top-11 right-0 bottom-0 w-[440px] max-w-[95vw] bg-card text-card-foreground border-l border-border shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out select-none"
   [class.translate-x-0]="isOpen()"
   [class.translate-x-full]="!isOpen()"
 >
   <!-- Header Bar -->
-  <div class="h-12 px-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-[#0e1422]/80 backdrop-blur-md shrink-0">
+  <div class="h-12 px-4 flex items-center justify-between border-b border-border bg-card/90 backdrop-blur-md shrink-0">
     <div class="flex items-center gap-2">
-      <div class="w-6 h-6 rounded-md bg-amber-50 dark:bg-amber-950/70 border border-amber-200/50 dark:border-amber-800/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+      <div class="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
       </div>
-      <span class="text-[13px] font-bold text-zinc-900 dark:text-zinc-100">Historial de Versiones</span>
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold">
+      <span class="text-xs font-semibold text-foreground">Historial de Versiones</span>
+      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border font-semibold">
         v{{ diagramVersion() }}
       </span>
     </div>
@@ -22,7 +22,8 @@
     <!-- Actions: Refresh & Close -->
     <div class="flex items-center gap-1">
       <button
-        class="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+        type="button"
+        class="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="refresh.emit()"
         title="Actualizar historial"
       >
@@ -32,7 +33,8 @@
       </button>
 
       <button
-        class="w-7 h-7 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+        type="button"
+        class="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="close()"
         title="Cerrar panel"
       >
@@ -45,15 +47,16 @@
   </div>
 
   <!-- Filter & Search Bar -->
-  <div class="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/70 bg-zinc-50/40 dark:bg-zinc-900/30 flex flex-col gap-2 shrink-0">
+  <div class="px-4 py-2.5 border-b border-border bg-muted/30 flex flex-col gap-2 shrink-0">
     <!-- Filter Pills (Todos / Usuario / IA) -->
-    <div class="flex items-center gap-1.5">
+    <div class="flex items-center p-1 bg-muted rounded-lg border border-border gap-1">
       <button
         type="button"
-        class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer"
-        [ngClass]="filterActor() === 'all'
-          ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 shadow-xs'
-          : 'bg-zinc-100 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'"
+        class="flex-1 py-1 rounded-md text-[11px] font-semibold transition-all hover:text-foreground cursor-pointer text-center active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        [class.bg-background]="filterActor() === 'all'"
+        [class.text-foreground]="filterActor() === 'all'"
+        [class.shadow-xs]="filterActor() === 'all'"
+        [class.text-muted-foreground]="filterActor() !== 'all'"
         (click)="setFilterActor('all')"
       >
         Todos
@@ -61,13 +64,14 @@
 
       <button
         type="button"
-        class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-        [ngClass]="filterActor() === 'user'
-          ? 'bg-emerald-600 text-white shadow-xs'
-          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'"
+        class="flex-1 py-1 rounded-md text-[11px] font-semibold transition-all hover:text-foreground cursor-pointer flex items-center justify-center gap-1 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        [class.bg-background]="filterActor() === 'user'"
+        [class.text-foreground]="filterActor() === 'user'"
+        [class.shadow-xs]="filterActor() === 'user'"
+        [class.text-muted-foreground]="filterActor() !== 'user'"
         (click)="setFilterActor('user')"
       >
-        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="w-3 h-3 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
@@ -76,16 +80,17 @@
 
       <button
         type="button"
-        class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 cursor-pointer"
-        [ngClass]="filterActor() === 'ai'
-          ? 'bg-indigo-600 text-white shadow-xs'
-          : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'"
+        class="flex-1 py-1 rounded-md text-[11px] font-semibold transition-all hover:text-foreground cursor-pointer flex items-center justify-center gap-1 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        [class.bg-background]="filterActor() === 'ai'"
+        [class.text-foreground]="filterActor() === 'ai'"
+        [class.shadow-xs]="filterActor() === 'ai'"
+        [class.text-muted-foreground]="filterActor() !== 'ai'"
         (click)="setFilterActor('ai')"
       >
-        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="w-3 h-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.17-6.83l-2.83 2.83m-8 8l-2.83 2.83m0-13.66l2.83 2.83m8 8l2.83 2.83"/>
         </svg>
-        <span>IA Vertex</span>
+        <span>Asistente IA</span>
       </button>
     </div>
 
@@ -95,9 +100,9 @@
         type="text"
         [(ngModel)]="searchQuery"
         placeholder="Buscar por entidad o acción..."
-        class="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg pl-7 pr-2.5 py-1 text-[11.5px] text-zinc-900 dark:text-zinc-100 outline-none focus:border-indigo-500 placeholder:text-zinc-400"
+        class="w-full bg-background border border-input rounded-lg pl-7 pr-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring outline-none transition-all"
       />
-      <svg class="w-3.5 h-3.5 text-zinc-400 absolute left-2 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="w-3.5 h-3.5 text-muted-foreground absolute left-2 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/>
         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
@@ -105,24 +110,24 @@
   </div>
 
   <!-- Timeline Content -->
-  <div class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 bg-white dark:bg-[#0b0f19]">
+  <div class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 bg-background/50">
     @if (loading() && items().length === 0) {
       <!-- Loading Skeleton -->
       <div class="flex flex-col items-center justify-center py-16 space-y-3">
-        <div class="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-[12px] text-zinc-400">Cargando línea temporal...</span>
+        <div class="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <span class="text-xs text-muted-foreground">Cargando línea temporal...</span>
       </div>
     } @else if (filteredItems().length === 0) {
       <!-- Empty State -->
       <div class="flex flex-col items-center justify-center py-16 px-4 text-center space-y-3">
-        <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/60 flex items-center justify-center text-zinc-400 border border-zinc-200 dark:border-zinc-700/50">
+        <div class="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center text-muted-foreground border border-border">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
-        <h4 class="text-[13px] font-semibold text-zinc-800 dark:text-zinc-200">Sin registros de cambios</h4>
-        <p class="text-[11.5px] text-zinc-500 dark:text-zinc-400 max-w-[260px] leading-relaxed">
+        <h4 class="text-xs font-semibold text-foreground">Sin registros de cambios</h4>
+        <p class="text-[11.5px] text-muted-foreground max-w-[260px] leading-relaxed">
           Las modificaciones realizadas en el diagrama por usuarios o el asistente de IA se registrarán aquí automáticamente.
         </p>
       </div>
@@ -130,19 +135,17 @@
       <!-- Timeline List -->
       <div class="relative pl-3 space-y-3">
         <!-- Vertical connector line -->
-        <div class="absolute left-6 top-3 bottom-3 w-px bg-zinc-200 dark:bg-zinc-800/80 -z-0"></div>
+        <div class="absolute left-6 top-3 bottom-3 w-px bg-border -z-0"></div>
 
         @for (item of filteredItems(); track item.id) {
-          <div class="relative z-10 bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-2xs">
+          <div class="relative z-10 bg-card border border-border rounded-xl p-3 hover:border-primary/40 hover:bg-accent/30 transition-all shadow-2xs">
             <!-- Header row -->
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-start gap-2 min-w-0">
                 <!-- Icon badge -->
                 <div
                   class="w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5"
-                  [ngClass]="item.actor_type === 'ai'
-                    ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-                    : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'"
+                  [ngClass]="item.actor_type === 'ai' ? 'bg-primary/10 text-primary' : 'bg-emerald-500/10 text-emerald-500'"
                 >
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path [attr.d]="item.command_type | historyCommandIcon" />
@@ -150,17 +153,17 @@
                 </div>
 
                 <div class="min-w-0">
-                  <div class="text-[12px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                  <div class="text-xs font-semibold text-foreground truncate">
                     {{ item.summary || item.command_type }}
                   </div>
-                  <div class="text-[10.5px] text-zinc-400 flex items-center gap-1.5 mt-0.5">
+                  <div class="text-[10.5px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                     <!-- Author Chip -->
                     @if (item.actor_type === 'ai') {
-                      <span class="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 font-medium text-[9.5px]">
-                        IA Vertex
+                      <span class="px-1.5 py-0.2 rounded bg-primary/10 text-primary font-medium text-[9.5px]">
+                        Asistente IA
                       </span>
                     } @else {
-                      <span class="px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 font-medium text-[9.5px]">
+                      <span class="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-500 font-medium text-[9.5px]">
                         Usuario
                       </span>
                     }
@@ -173,17 +176,17 @@
 
               <!-- Version Chip -->
               @if (item.model_version) {
-                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/60 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0 font-medium">
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0 font-medium">
                   v{{ item.model_version }}
                 </span>
               }
             </div>
 
             <!-- Footer Action Row -->
-            <div class="mt-2.5 pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 flex items-center justify-between text-[11px]">
+            <div class="mt-2.5 pt-2 border-t border-border flex items-center justify-between text-xs">
               <button
                 type="button"
-                class="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 cursor-pointer"
+                class="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded"
                 (click)="toggleExpand(item)"
               >
                 <span>{{ expandedItemId() === item.id ? 'Ocultar detalle' : 'Ver detalle' }}</span>
@@ -200,7 +203,7 @@
               @if (item.model_version && item.model_version < diagramVersion()) {
                 <button
                   type="button"
-                  class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center gap-1 px-2 py-0.5 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
+                  class="text-primary hover:text-primary/90 font-medium flex items-center gap-1 px-2 py-0.5 rounded hover:bg-primary/10 transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   (click)="promptRestore(item.model_version)"
                   title="Restaurar el diagrama a este estado histórico"
                 >
@@ -214,28 +217,27 @@
 
             <!-- Expandable Detail / Diff View -->
             @if (expandedItemId() === item.id) {
-              <div class="mt-2 p-2.5 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-[10.5px] font-mono space-y-1.5 animate-fadeIn">
+              <div class="mt-2 p-2.5 rounded-lg bg-muted/40 border border-border text-[10.5px] font-mono space-y-1.5 animate-fadeIn">
                 @if (detailLoading()) {
-                  <div class="py-2 text-center text-zinc-400">Cargando diff...</div>
+                  <div class="py-2 text-center text-muted-foreground">Cargando diff...</div>
                 } @else {
                   @if (selectedDetail(); as det) {
-                    <div class="text-zinc-600 dark:text-zinc-400">
-                      <span class="font-bold text-zinc-800 dark:text-zinc-200">Comando:</span> {{ item.command_type }}
+                    <div class="text-muted-foreground">
+                      <span class="font-bold text-foreground">Comando:</span> {{ item.command_type }}
                     </div>
                     @if (det.diff.changes.length > 0) {
                       <div class="space-y-1 pt-1">
-                        <div class="text-zinc-500 font-semibold uppercase text-[9px] tracking-wider">Parámetros modificados:</div>
+                        <div class="text-muted-foreground font-semibold uppercase text-[9px] tracking-wider">Parámetros modificados:</div>
                         @for (c of det.diff.changes; track c.field) {
-                          <div class="flex items-start gap-1.5 bg-zinc-50 dark:bg-zinc-900 px-1.5 py-1 rounded">
-                            <span class="text-indigo-600 dark:text-indigo-400 font-semibold">{{ c.field }}:</span>
-                            <span class="text-zinc-700 dark:text-zinc-300 break-all">{{ c.value | json }}</span>
+                          <div class="flex items-start gap-1.5 bg-background px-1.5 py-1 rounded border border-border/50">
+                            <span class="text-primary font-semibold">{{ c.field }}:</span>
+                            <span class="text-foreground break-all">{{ c.value | json }}</span>
                           </div>
                         }
                       </div>
                     }
                   }
                 }
-
               </div>
             }
           </div>
@@ -246,34 +248,39 @@
 </aside>
 
 <!-- Confirmation Modal for Version Restoration -->
-@if (confirmRestoreVersion(); as targetVer) {
-  <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn">
-    <div class="bg-white dark:bg-[#0e1422] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4">
+<app-modal
+  [isOpen]="confirmRestoreVersion() !== null"
+  [title]="'Restaurar a versión ' + (confirmRestoreVersion() ?? '')"
+  maxWidth="max-w-md"
+  (closed)="cancelRestore()"
+>
+  @if (confirmRestoreVersion(); as targetVer) {
+    <div class="space-y-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
         </div>
         <div>
-          <h3 class="text-[14px] font-bold text-zinc-900 dark:text-zinc-100">¿Restaurar a versión {{ targetVer }}?</h3>
-          <p class="text-[11.5px] text-zinc-500 dark:text-zinc-400">Reversión segura hacia adelante</p>
+          <h3 class="text-sm font-bold text-foreground">¿Restaurar a versión {{ targetVer }}?</h3>
+          <p class="text-xs text-muted-foreground">Reversión segura hacia adelante</p>
         </div>
       </div>
 
-      <div class="text-[12px] text-zinc-600 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-900/60 p-3 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 space-y-2">
+      <div class="text-xs text-muted-foreground leading-relaxed bg-muted/40 p-3 rounded-xl border border-border space-y-2">
         <p>
-          El diagrama adoptará el estado de las clases, posiciones y relaciones de la <strong>versión {{ targetVer }}</strong>.
+          El diagrama adoptará el estado de las clases, posiciones y relaciones de la <strong class="text-foreground">versión {{ targetVer }}</strong>.
         </p>
-        <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
-          Esta acción incrementará la versión a <strong>v{{ diagramVersion() + 1 }}</strong> y emitirá una actualización en tiempo real a todos los colaboradores conectados. El historial anterior permanece intacto.
+        <p class="text-[11px] text-muted-foreground">
+          Esta acción incrementará la versión a <strong class="text-foreground">v{{ diagramVersion() + 1 }}</strong> y emitirá una actualización en tiempo real a todos los colaboradores conectados. El historial anterior permanece intacto.
         </p>
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
-          class="px-3.5 py-1.5 rounded-lg text-[12px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           [disabled]="restoring()"
           (click)="cancelRestore()"
         >
@@ -282,12 +289,12 @@
 
         <button
           type="button"
-          class="px-4 py-1.5 rounded-lg text-[12px] font-medium bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          class="px-4 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           [disabled]="restoring()"
           (click)="executeRestore()"
         >
           @if (restoring()) {
-            <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div class="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
             <span>Restaurando...</span>
           } @else {
             <span>Confirmar Restauración</span>
@@ -295,5 +302,5 @@
         </button>
       </div>
     </div>
-  </div>
-}
+  }
+</app-modal>
