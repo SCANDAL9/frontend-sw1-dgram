@@ -1,35 +1,35 @@
-<div class="w-[340px] bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden shrink-0 text-[13px] h-full shadow-sm select-none">
+<div class="w-[340px] bg-card/95 backdrop-blur-xl border-l border-border flex flex-col overflow-hidden shrink-0 text-[13px] h-full shadow-lg select-none text-foreground">
   <!-- Header -->
-  <div class="h-10 flex items-center px-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-    <div class="flex items-center gap-1.5">
-      <span class="text-[10px] font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">Inspector UML</span>
+  <div class="h-11 flex items-center justify-between px-4 border-b border-border bg-card/60 backdrop-blur-md">
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">Inspector UML</span>
       @if (entity()?.isAbstract || entity()?.elementType === 'abstract_class') {
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 uppercase">Abstract</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 uppercase shadow-2xs">Abstract</span>
       } @else if (isEnum()) {
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 uppercase">Enum</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25 uppercase shadow-2xs">Enum</span>
       } @else if (entity()?.elementType === 'interface') {
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 uppercase">Interface</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 uppercase shadow-2xs">Interface</span>
       } @else if (entity()?.elementType === 'datatype') {
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 uppercase">DataType</span>
+        <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 uppercase shadow-2xs">DataType</span>
       }
     </div>
-    <div class="ml-auto flex items-center gap-1">
-      <button class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" (click)="deleteEntity()" title="Eliminar elemento">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <div class="flex items-center gap-1">
+      <button class="size-7 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive active:scale-95 transition-all cursor-pointer" (click)="deleteEntity()" title="Eliminar elemento">
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       </button>
-      <button class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 transition-colors cursor-pointer" (click)="close.emit()" title="Cerrar">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <button class="size-7 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground active:scale-95 transition-all cursor-pointer" (click)="close.emit()" title="Cerrar">
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
   </div>
 
   <!-- Class Details Box -->
-  <div class="border-b border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-3">
+  <div class="border-b border-border p-4 bg-muted/20 flex flex-col gap-3">
     <!-- Clasificador UML -->
     <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-1.5 flex-1">
-        <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium shrink-0">Tipo:</span>
-        <select class="w-full px-2 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 outline-none focus:border-indigo-500 cursor-pointer" [ngModel]="entity()?.elementType || (entity()?.isAbstract ? 'abstract_class' : (entity()?.stereotype?.toLowerCase() || 'class'))" (ngModelChange)="updateClassifierType($event)">
+      <div class="flex items-center gap-2 flex-1">
+        <span class="text-[11px] text-muted-foreground font-medium shrink-0">Tipo:</span>
+        <select class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[11.5px] font-semibold text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-all cursor-pointer shadow-2xs" [ngModel]="entity()?.elementType || (entity()?.isAbstract ? 'abstract_class' : (entity()?.stereotype?.toLowerCase() || 'class'))" (ngModelChange)="updateClassifierType($event)">
           @for (ct of classifierTypes; track ct.value) {
             <option [value]="ct.value">{{ ct.label }}</option>
           }
@@ -40,13 +40,14 @@
     <!-- Class Name -->
     <div>
       @if (editingName()) {
-        <input type="text" class="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-indigo-600 rounded-lg text-[14px] font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900" [ngModel]="tempName()" (ngModelChange)="tempName.set($event)" (keyup.enter)="saveName()" (blur)="saveName()" autofocus />
+        <input type="text" class="w-full px-3 py-1.5 bg-background border border-primary rounded-lg text-[14px] font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring" [ngModel]="tempName()" (ngModelChange)="tempName.set($event)" (keyup.enter)="saveName()" (blur)="saveName()" autofocus />
       } @else {
         <div class="flex items-center justify-between gap-2">
-          <h3 class="font-bold text-[16px] text-zinc-900 dark:text-zinc-100 truncate cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" (click)="startRename()" title="Click para renombrar">
-            {{ entity()?.name || 'Class' }}
+          <h3 class="font-bold text-[15px] text-foreground truncate cursor-pointer hover:text-primary transition-colors flex items-center gap-1.5 group" (click)="startRename()" title="Click para renombrar">
+            <span>{{ entity()?.name || 'Class' }}</span>
+            <svg class="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
           </h3>
-          <span class="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-slate-800 dark:bg-zinc-700 text-white font-mono font-medium">
+          <span class="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-mono font-medium border border-border shadow-2xs">
             {{ entity()?.attributes?.length || 0 }} {{ isEnum() ? 'valores' : 'attrs' }}
           </span>
         </div>
@@ -55,99 +56,101 @@
   </div>
 
   <!-- Segmented Tabs -->
-  <div class="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg mx-3 my-2 border border-zinc-200 dark:border-zinc-700">
-    <button class="flex-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all" [class.bg-white]="activeTab()==='attrs'" [class.dark:bg-zinc-900]="activeTab()==='attrs'" [class.text-zinc-900]="activeTab()==='attrs'" [class.dark:text-zinc-100]="activeTab()==='attrs'" [class.shadow-xs]="activeTab()==='attrs'" [class.text-zinc-500]="activeTab()!=='attrs'" [class.dark:text-zinc-400]="activeTab()!=='attrs'" (click)="activeTab.set('attrs')">
+  <div class="flex p-1 bg-secondary/60 backdrop-blur-md rounded-xl mx-3 my-2 border border-border/60 shadow-2xs">
+    <button class="flex-1 px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold transition-all cursor-pointer" [class.bg-card]="activeTab()==='attrs'" [class.text-foreground]="activeTab()==='attrs'" [class.shadow-xs]="activeTab()==='attrs'" [class.ring-1]="activeTab()==='attrs'" [class.ring-border]="activeTab()==='attrs'" [class.text-muted-foreground]="activeTab()!=='attrs'" (click)="activeTab.set('attrs')">
       {{ isEnum() ? 'Valores' : 'Atributos' }}
     </button>
-    <button class="flex-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all" [class.bg-white]="activeTab()==='style'" [class.dark:bg-zinc-900]="activeTab()==='style'" [class.text-zinc-900]="activeTab()==='style'" [class.dark:text-zinc-100]="activeTab()==='style'" [class.shadow-xs]="activeTab()==='style'" [class.text-zinc-500]="activeTab()!=='style'" [class.dark:text-zinc-400]="activeTab()!=='style'" (click)="activeTab.set('style')">Detalles UML</button>
+    <button class="flex-1 px-2.5 py-1.5 rounded-lg text-[11.5px] font-semibold transition-all cursor-pointer" [class.bg-card]="activeTab()==='style'" [class.text-foreground]="activeTab()==='style'" [class.shadow-xs]="activeTab()==='style'" [class.ring-1]="activeTab()==='style'" [class.ring-border]="activeTab()==='style'" [class.text-muted-foreground]="activeTab()!=='style'" (click)="activeTab.set('style')">Detalles UML</button>
   </div>
 
   <!-- Tab Contents -->
   @if (activeTab() === 'attrs') {
-    <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-900">
-      <div class="h-8 flex items-center px-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 text-[10px] font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400 justify-between">
-        <span>{{ isEnum() ? 'Constantes del Enum' : 'Campos de la Clase' }}</span>
-        <button class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 cursor-pointer shadow-xs" (click)="startAddColumn()">
-          {{ isEnum() ? '+ Valor' : '+ Atributo' }}
+    <div class="flex-1 flex flex-col overflow-hidden bg-card">
+      <div class="h-8 flex items-center px-3 bg-card border-b border-border text-[10px] font-semibold tracking-wider uppercase text-muted-foreground justify-between">
+        <span>{{ isEnum() ? 'Constantes del Enum' : (isInterface() ? 'Métodos / Operaciones' : 'Campos de la Clase') }}</span>
+        <button class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary text-primary-foreground text-[10px] font-semibold hover:bg-primary/90 cursor-pointer shadow-xs" (click)="startAddColumn()">
+          {{ isEnum() ? '+ Valor' : (isInterface() ? '+ Método' : '+ Atributo') }}
         </button>
       </div>
 
       <!-- Column List Header (only for non-enums) -->
       @if (!isEnum()) {
-        <div class="grid grid-cols-[20px_1fr_75px_40px_20px] gap-1 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+        <div class="grid grid-cols-[20px_1fr_75px_40px_20px] gap-1 px-3 py-1.5 bg-muted/40 border-b border-border text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           <span>Vis</span>
           <span>Nombre</span>
-          <span>Tipo</span>
-          <span>Flags</span>
+          <span>{{ isInterface() ? 'Retorno' : 'Tipo' }}</span>
+          <span>{{ isInterface() ? '' : 'Flags' }}</span>
           <span></span>
         </div>
       }
 
       <!-- Column List Items -->
-      <div class="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div class="flex-1 overflow-y-auto divide-y divide-border">
         @for (col of entity()?.attributes || []; track col.name) {
-          <div class="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
+          <div class="hover:bg-accent/40 transition-colors">
             @if (isEnum()) {
               <!-- Enum Literal Simple Row -->
               <div class="flex items-center justify-between px-3 py-2 text-[12px]">
-                <span class="font-mono font-bold text-purple-700 dark:text-purple-300">{{ col.name }}</span>
-                <button class="w-5 h-5 flex items-center justify-center rounded hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" (click)="deleteColumn(col.name)" title="Eliminar valor">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span class="font-mono font-bold text-purple-400">{{ col.name }}</span>
+                <button class="size-5 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer" (click)="deleteColumn(col.name)" title="Eliminar valor">
+                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
             } @else {
               <!-- Standard Class Attribute Row -->
               <div class="grid grid-cols-[20px_1fr_75px_40px_20px] gap-1 items-center px-3 py-2 text-[12px]">
                 <!-- Visibility -->
-                <span class="font-mono font-bold text-center text-[12px] cursor-pointer" [class.text-emerald-500]="formatVisibility(col.visibility)==='+'" [class.text-red-500]="formatVisibility(col.visibility)==='-'" [class.text-amber-500]="formatVisibility(col.visibility)==='#'" [class.text-blue-500]="formatVisibility(col.visibility)==='~'" (click)="toggleAttrSelect(col.name)" [title]="'Visibilidad: ' + formatVisibility(col.visibility)">
+                <span class="font-mono font-bold text-center text-[12px] cursor-pointer" [class.text-emerald-500]="formatVisibility(col.visibility)==='+'" [class.text-destructive]="formatVisibility(col.visibility)==='-'" [class.text-amber-500]="formatVisibility(col.visibility)==='#'" [class.text-blue-500]="formatVisibility(col.visibility)==='~'" (click)="toggleAttrSelect(col.name)" [title]="'Visibilidad: ' + formatVisibility(col.visibility)">
                   {{ formatVisibility(col.visibility) }}
                 </span>
 
                 <!-- Name -->
                 <div class="min-w-0 cursor-pointer" (click)="toggleAttrSelect(col.name)">
-                  <span class="truncate block font-mono text-zinc-800 dark:text-zinc-200 text-[12px]" [class.line-through]="col.isDerived" [class.text-zinc-400]="col.isDerived">{{ col.name }}</span>
-                  @if (col.defaultValue) {
-                    <span class="text-[10px] text-zinc-400 font-mono block truncate">= {{ col.defaultValue }}</span>
+                  <span class="truncate block font-mono text-foreground text-[12px]" [class.line-through]="col.isDerived" [class.text-muted-foreground]="col.isDerived">{{ isInterface() ? col.name + '()' : col.name }}</span>
+                  @if (col.defaultValue && !isInterface()) {
+                    <span class="text-[10px] text-muted-foreground font-mono block truncate">= {{ col.defaultValue }}</span>
                   }
                 </div>
 
                 <!-- Type -->
-                <span class="truncate text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">{{ col.type }}</span>
+                <span class="truncate text-muted-foreground font-mono text-[11px]">{{ col.type }}</span>
 
                 <!-- Flags PK/FK/Nullable -->
                 <div class="flex items-center gap-0.5">
-                  @if (col.pk) {
-                    <span class="px-1 py-0.2 rounded text-[8px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800" title="Primary Key">PK</span>
-                  }
-                  @if (col.fk) {
-                    <span class="px-1 py-0.2 rounded text-[8px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800" title="Foreign Key">FK</span>
-                  }
-                  @if (col.isDerived) {
-                    <span class="px-1 py-0.2 rounded text-[8px] font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800" title="Atributo Derivado">/</span>
+                  @if (!isInterface()) {
+                    @if (col.pk) {
+                      <span class="px-1.5 py-0.5 rounded-sm text-[8px] font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="Primary Key">PK</span>
+                    }
+                    @if (col.fk) {
+                      <span class="px-1.5 py-0.5 rounded-sm text-[8px] font-mono font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30" title="Foreign Key">FK</span>
+                    }
+                    @if (col.isDerived) {
+                      <span class="px-1.5 py-0.5 rounded-sm text-[8px] font-mono font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30" title="Atributo Derivado">/</span>
+                    }
                   }
                 </div>
 
                 <!-- Delete -->
-                <button class="w-5 h-5 flex items-center justify-center rounded hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" (click)="deleteColumn(col.name)" title="Eliminar atributo">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <button class="size-5 flex items-center justify-center rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer" (click)="deleteColumn(col.name)" [title]="isInterface() ? 'Eliminar método' : 'Eliminar atributo'">
+                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
               <!-- Expanded Details Editor -->
               @if (selectedAttrName() === col.name) {
-                <div class="p-3 bg-zinc-50 dark:bg-zinc-950/80 border-t border-b border-zinc-200 dark:border-zinc-800 space-y-2 text-[11px]">
+                <div class="p-3 bg-muted/40 border-t border-b border-border flex flex-col gap-2 text-[11px]">
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-[10px] font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Visibilidad</label>
-                      <select class="w-full px-2 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[11px] font-mono text-zinc-800 dark:text-zinc-200" [ngModel]="col.visibility || '+'" (ngModelChange)="updateVisibility(col, $event)">
+                      <label class="block text-[10px] font-medium text-muted-foreground mb-0.5">Visibilidad</label>
+                      <select class="w-full px-2 py-1 bg-background border border-input rounded text-[11px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="col.visibility || '+'" (ngModelChange)="updateVisibility(col, $event)">
                         @for (vo of visibilityOptions; track vo.value) {
                           <option [value]="vo.value">{{ vo.label }} ({{ vo.hint }})</option>
                         }
                       </select>
                     </div>
                     <div>
-                      <label class="block text-[10px] font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Tipo de Dato</label>
-                      <select class="w-full px-2 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[11px] font-mono text-zinc-800 dark:text-zinc-200" [ngModel]="col.type" (ngModelChange)="updateAttr(col, { type: $event })">
+                      <label class="block text-[10px] font-medium text-muted-foreground mb-0.5">{{ isInterface() ? 'Tipo de Retorno' : 'Tipo de Dato' }}</label>
+                      <select class="w-full px-2 py-1 bg-background border border-input rounded text-[11px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="col.type" (ngModelChange)="updateAttr(col, { type: $event })">
                         @for (dt of dataTypesList(); track dt) {
                           <option [value]="dt">{{ dt }}</option>
                         }
@@ -155,111 +158,144 @@
                     </div>
                   </div>
 
-                  <div>
-                    <label class="block text-[10px] font-medium text-zinc-500 dark:text-zinc-400 mb-0.5">Valor por Defecto</label>
-                    <input type="text" class="w-full px-2 py-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[11px] font-mono text-zinc-800 dark:text-zinc-200" [ngModel]="col.defaultValue || ''" (ngModelChange)="updateDefaultValue(col, $event)" placeholder="ej. 'ACTIVO', 0" />
-                  </div>
+                  @if (!isInterface()) {
+                    <div>
+                      <label class="block text-[10px] font-medium text-muted-foreground mb-0.5">Valor por Defecto</label>
+                      @if (getEnumLiterals(col.type); as literals) {
+                        <select class="w-full px-2 py-1 bg-background border border-input rounded text-[11px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="col.defaultValue || ''" (ngModelChange)="updateDefaultValue(col, $event)">
+                          <option value="">(Sin valor por defecto)</option>
+                          @for (lit of literals; track lit) {
+                            <option [value]="lit">{{ lit }}</option>
+                          }
+                        </select>
+                      } @else {
+                        <input type="text" class="w-full px-2 py-1 bg-background border border-input rounded text-[11px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="col.defaultValue || ''" (ngModelChange)="updateDefaultValue(col, $event)" placeholder="ej. 'ACTIVO', 0" />
+                      }
+                    </div>
 
-                  <div class="flex flex-wrap gap-3 pt-1">
-                    <label class="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" [checked]="col.pk" (change)="togglePk(col)" class="rounded text-indigo-600" />
-                      <span class="font-medium text-zinc-700 dark:text-zinc-300">Primary Key (PK)</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" [checked]="col.fk" (change)="toggleFk(col)" class="rounded text-indigo-600" />
-                      <span class="font-medium text-zinc-700 dark:text-zinc-300">Foreign Key (FK)</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" [checked]="col.nullable" (change)="toggleNullable(col)" class="rounded text-indigo-600" />
-                      <span class="font-medium text-zinc-700 dark:text-zinc-300">Nullable</span>
-                    </label>
-                    <label class="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" [checked]="col.isDerived" (change)="toggleDerived(col)" class="rounded text-indigo-600" />
-                      <span class="font-medium text-zinc-700 dark:text-zinc-300">Derivado (/attr)</span>
-                    </label>
-                  </div>
+                    <div class="flex flex-wrap gap-3 pt-1">
+                      <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" [checked]="col.pk" (change)="togglePk(col)" class="rounded text-primary focus:ring-ring" />
+                        <span class="font-medium text-foreground">Primary Key (PK)</span>
+                      </label>
+                      <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" [checked]="col.nullable" (change)="toggleNullable(col)" class="rounded text-primary focus:ring-ring" />
+                        <span class="font-medium text-foreground">Nullable</span>
+                      </label>
+                      <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" [checked]="col.isDerived" (change)="toggleDerived(col)" class="rounded text-primary focus:ring-ring" />
+                        <span class="font-medium text-foreground">Derivado (/attr)</span>
+                      </label>
+                    </div>
+                  }
                 </div>
               }
             }
           </div>
         }
         @empty {
-          <div class="py-8 text-center text-[12px] text-zinc-400">
-            {{ isEnum() ? 'Sin valores definidos en este Enum' : 'Sin atributos definidos' }}
+          <div class="p-6 flex flex-col items-center justify-center text-center gap-2">
+            <div class="size-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground border border-border">
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </div>
+            <div class="text-[12px] font-medium text-foreground">
+              {{ isEnum() ? 'Sin constantes definidas' : 'Sin atributos definidos' }}
+            </div>
+            <p class="text-[11px] text-muted-foreground max-w-[200px]">
+              {{ isEnum() ? 'Añade valores literales para este enumerador UML.' : 'Define campos, tipos de dato y claves primarias para esta clase.' }}
+            </p>
+            <button
+              type="button"
+              class="mt-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-all duration-150 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer shadow-xs"
+              (click)="startAddColumn()"
+            >
+              {{ isEnum() ? '+ Añadir primer valor' : '+ Añadir primer atributo' }}
+            </button>
           </div>
         }
       </div>
 
-      <!-- Add Attribute / Literal Form inside tab -->
+      <!-- Add Attribute / Literal / Method Form inside tab -->
       @if (showAddColumn()) {
-        <div class="border-t border-zinc-200 dark:border-zinc-800 p-3 bg-zinc-50 dark:bg-zinc-950 space-y-2.5">
-          <div class="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
-            {{ isEnum() ? 'Nuevo Valor Constante' : 'Nuevo Atributo' }}
+        <div class="border-t border-border p-3 bg-muted/40 flex flex-col gap-2.5">
+          <div class="text-[11px] font-bold text-foreground">
+            {{ isEnum() ? 'Nuevo Valor Constante' : (isInterface() ? 'Nueva Operación / Método' : 'Nuevo Atributo') }}
           </div>
           
           @if (isEnum()) {
-            <input type="text" placeholder="EJ: ACTIVO, PENDIENTE" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-900 dark:text-zinc-100 outline-none focus:border-indigo-600 uppercase" [ngModel]="newCol().name" (ngModelChange)="setNewColName($event)" (keyup.enter)="confirmAddColumn()" autofocus />
+            <input type="text" placeholder="EJ: ACTIVO, PENDIENTE" class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground outline-none focus:border-ring uppercase" [ngModel]="newCol().name" (ngModelChange)="setNewColName($event)" (keyup.enter)="confirmAddColumn()" autofocus />
           } @else {
             <div class="grid grid-cols-[60px_1fr] gap-2">
-              <select class="px-2 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-800 dark:text-zinc-200 cursor-pointer" [ngModel]="newCol().visibility" (ngModelChange)="setNewColVisibility($event)">
+              <select class="px-2 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground cursor-pointer outline-none focus:border-ring" [ngModel]="newCol().visibility" (ngModelChange)="setNewColVisibility($event)">
                 @for (vo of visibilityOptions; track vo.value) {
                   <option [value]="vo.value">{{ vo.label }}</option>
                 }
               </select>
-              <input type="text" placeholder="nombreAtributo" class="px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-900 dark:text-zinc-100 outline-none focus:border-indigo-600" [ngModel]="newCol().name" (ngModelChange)="setNewColName($event)" (keyup.enter)="confirmAddColumn()" autofocus />
+              <input type="text" [placeholder]="isInterface() ? 'nombreMetodo' : 'nombreAtributo'" class="px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="newCol().name" (ngModelChange)="setNewColName($event)" (keyup.enter)="confirmAddColumn()" autofocus />
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
-              <select class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-800 dark:text-zinc-200 cursor-pointer" [ngModel]="newCol().type" (ngModelChange)="setNewColType($event)">
+            <div [class]="isInterface() ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2'">
+              <select class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground cursor-pointer outline-none focus:border-ring" [ngModel]="newCol().type" (ngModelChange)="setNewColType($event)">
                 @for (dt of dataTypesList(); track dt) {
                   <option [value]="dt">{{ dt }}</option>
                 }
               </select>
-              <input type="text" placeholder="valor default" class="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-900 dark:text-zinc-100 outline-none focus:border-indigo-600" [ngModel]="newCol().defaultValue" (ngModelChange)="setNewColDefaultValue($event)" />
+              @if (!isInterface()) {
+                @if (getEnumLiterals(newCol().type); as newLiterals) {
+                  <select class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground cursor-pointer outline-none focus:border-ring" [ngModel]="newCol().defaultValue || ''" (ngModelChange)="setNewColDefaultValue($event)">
+                    <option value="">(Sin valor por defecto)</option>
+                    @for (lit of newLiterals; track lit) {
+                      <option [value]="lit">{{ lit }}</option>
+                    }
+                  </select>
+                } @else {
+                  <input type="text" placeholder="valor default" class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground outline-none focus:border-ring" [ngModel]="newCol().defaultValue" (ngModelChange)="setNewColDefaultValue($event)" />
+                }
+              }
             </div>
 
-            <div class="flex items-center gap-3 text-[11px] text-zinc-700 dark:text-zinc-300">
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" [checked]="newCol().pk" (change)="toggleNewColPk()" />
-                <span>PK</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" [checked]="newCol().fk" (change)="toggleNewColFk()" />
-                <span>FK</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" [checked]="newCol().nullable" (change)="toggleNewColNullable()" />
-                <span>Nullable</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="checkbox" [checked]="newCol().isDerived" (change)="toggleNewColDerived()" />
-                <span>Derivado</span>
-              </label>
-            </div>
+            @if (!isInterface()) {
+              <div class="flex items-center gap-3 text-[11px] text-foreground">
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" [checked]="newCol().pk" (change)="toggleNewColPk()" class="rounded text-primary focus:ring-ring" />
+                  <span>PK</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" [checked]="newCol().nullable" (change)="toggleNewColNullable()" class="rounded text-primary focus:ring-ring" />
+                  <span>Nullable</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" [checked]="newCol().isDerived" (change)="toggleNewColDerived()" class="rounded text-primary focus:ring-ring" />
+                  <span>Derivado</span>
+                </label>
+              </div>
+            }
           }
 
           <div class="flex gap-2 pt-1">
-            <button class="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer" (click)="showAddColumn.set(false)">Cancelar</button>
-            <button class="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer shadow-xs" (click)="confirmAddColumn()">
-              {{ isEnum() ? 'Añadir Valor' : 'Añadir Atributo' }}
+            <button class="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-medium bg-background border border-border text-foreground hover:bg-accent cursor-pointer transition-colors" (click)="showAddColumn.set(false)">Cancelar</button>
+            <button class="flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-xs transition-colors" (click)="confirmAddColumn()">
+              {{ isEnum() ? 'Añadir Valor' : (isInterface() ? 'Añadir Método' : 'Añadir Atributo') }}
             </button>
           </div>
         </div>
       }
     </div>
   } @else {
-    <div class="flex-1 bg-zinc-50 dark:bg-zinc-950 p-4 space-y-3 overflow-y-auto">
-      <div class="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">Especificación UML 2.5</div>
+    <div class="flex-1 bg-muted/20 p-4 flex flex-col gap-3 overflow-y-auto">
+      <div class="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">Especificación UML 2.5</div>
 
       <!-- Package Selector -->
-      <div class="p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 shadow-xs">
-        <div class="text-[12px] font-medium text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
+      <div class="p-3.5 bg-card border border-border rounded-xl flex flex-col gap-2 shadow-xs">
+        <div class="text-[12px] font-medium text-foreground flex items-center justify-between">
           <span>Paquete UML</span>
-          <span class="text-[10px] text-zinc-400">package</span>
+          <span class="text-[10px] text-muted-foreground">package</span>
         </div>
-        <div class="space-y-1.5">
+        <div class="flex flex-col gap-1.5">
           <select
-            class="w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[12px] font-mono text-zinc-900 dark:text-zinc-100 outline-none focus:border-indigo-600"
+            class="w-full px-2.5 py-1.5 bg-background border border-input rounded-lg text-[12px] font-mono text-foreground outline-none focus:border-ring"
             [ngModel]="entity()?.packageId || ''"
             (ngModelChange)="updatePackage($event)"
           >
@@ -273,12 +309,12 @@
               #newPkgInput
               type="text"
               placeholder="Nuevo paquete..."
-              class="flex-1 px-2 py-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded text-[11px] font-mono outline-none focus:border-indigo-600 text-zinc-800 dark:text-zinc-200"
+              class="flex-1 px-2 py-1 bg-background border border-input rounded text-[11px] font-mono outline-none focus:border-ring text-foreground"
               (keyup.enter)="createPackageAndAssign(newPkgInput.value); newPkgInput.value = ''"
             />
             <button
               type="button"
-              class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px] font-semibold cursor-pointer"
+              class="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-[11px] font-semibold cursor-pointer transition-colors"
               (click)="createPackageAndAssign(newPkgInput.value); newPkgInput.value = ''"
             >
               +
@@ -287,9 +323,9 @@
         </div>
       </div>
 
-      <div class="p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 shadow-xs">
-        <div class="text-[12px] font-medium text-zinc-800 dark:text-zinc-200">Clasificadores y Generación</div>
-        <p class="text-[11px] text-zinc-500 dark:text-zinc-400">
+      <div class="p-3.5 bg-card border border-border rounded-xl flex flex-col gap-2 shadow-xs">
+        <div class="text-[12px] font-medium text-foreground">Clasificadores y Generación</div>
+        <p class="text-[11px] text-muted-foreground">
           - <strong>Clase:</strong> Entidad JPA con repositorio y controlador CRUD.<br>
           - <strong>Enum:</strong> Genera <code class="font-mono">public enum</code> Java y <code class="font-mono">&#64;Enumerated</code>.<br>
           - <strong>Interface:</strong> Define contratos de servicios.<br>

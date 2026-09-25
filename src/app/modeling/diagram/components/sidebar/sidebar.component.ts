@@ -11,6 +11,7 @@ import { DBEntity, DBAttribute, UmlPackage } from '../../models/diagram.model';
 })
 export class SidebarComponent {
   entity = input<DBEntity | null>(null);
+  allEntities = input<DBEntity[]>([]);
   packages = input<UmlPackage[]>([]);
   availableDataTypes = input<string[]>([]);
 
@@ -64,12 +65,30 @@ export class SidebarComponent {
     const custom = (this.availableDataTypes() || []).filter(
       (n: string) => Boolean(n) && n !== this.entity()?.name
     );
-    return Array.from(new Set([...this.baseDataTypes, ...custom]));
+    const types = this.isInterface() ? ['void', ...this.baseDataTypes] : this.baseDataTypes;
+    return Array.from(new Set([...types, ...custom]));
   });
 
   isEnum(): boolean {
     const e = this.entity();
     return e?.elementType === 'enumeration' || e?.stereotype?.toLowerCase() === 'enumeration';
+  }
+
+  isInterface(): boolean {
+    const e = this.entity();
+    return e?.elementType === 'interface' || e?.stereotype?.toLowerCase() === 'interface';
+  }
+
+  getEnumLiterals(typeName: string | undefined | null): string[] | null {
+    if (!typeName) return null;
+    const clean = typeName.trim().toLowerCase();
+    const found = this.allEntities().find(
+      (e) =>
+        e.name.toLowerCase() === clean &&
+        (e.elementType === 'enumeration' || e.stereotype?.toLowerCase() === 'enumeration')
+    );
+    if (!found) return null;
+    return (found.attributes || []).map((a) => a.name);
   }
 
   formatVisibility(vis: string | undefined): string {

@@ -1,39 +1,44 @@
-<div class="fixed inset-0 bg-[#0a0a0f]/75 backdrop-blur-md flex items-center justify-center z-[1000] animate-in fade-in duration-200" (click)="close()">
-  <div class="bg-[#181825] border border-[#313244] rounded-2xl w-full max-w-[520px] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 select-none animate-in fade-in duration-200" (click)="close()">
+  <div class="bg-card text-card-foreground border border-border/80 rounded-3xl w-full max-w-[520px] shadow-2xl overflow-hidden ring-1 ring-border/50 animate-in zoom-in-95 duration-200" (click)="$event.stopPropagation()">
     <!-- Header -->
-    <div class="flex items-center justify-between px-5 py-4 border-b border-[#313244] bg-[#1e1e2e]">
-      <div class="flex items-center gap-2">
-        <span class="flex items-center">
-          <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border bg-card/60 backdrop-blur-md">
+      <div class="flex items-center gap-2.5">
+        <span class="flex items-center justify-center size-7 rounded-lg bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
         </span>
-        <h3 class="m-0 text-[15px] text-[#cdd6f4] font-semibold">Colaboradores del Tablero</h3>
+        <h3 class="m-0 text-sm text-foreground font-semibold tracking-tight">Colaboradores del Tablero</h3>
       </div>
       <button
-        class="bg-transparent border-0 text-[#6c7086] text-lg cursor-pointer rounded-md px-2 py-1 transition-all duration-200 hover:text-[#f38ba8] hover:bg-[#f38ba8]/10"
+        type="button"
+        class="size-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent hover:border-border transition-all cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         (click)="close()"
+        title="Cerrar"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
     </div>
 
-    <div class="p-5">
+    <div class="p-6 flex flex-col gap-5">
       @if (errorMsg()) {
-        <div class="bg-[#f38ba8]/[0.15] border border-[#f38ba8] text-[#f38ba8] px-3 py-2 rounded-lg text-xs mb-3">
-          {{ errorMsg() }}
+        <div class="bg-destructive/10 border border-destructive/25 text-destructive px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2.5 shadow-2xs">
+          <svg class="size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMsg() }}</span>
         </div>
       }
 
       <!-- Invite Form -->
-      <div class="mb-5">
-        <label class="block text-[#a6adc8] text-[11px] font-semibold uppercase tracking-[0.5px] mb-2">Invitar nuevo colaborador</label>
+      <div>
+        <label class="block text-muted-foreground text-[11px] font-semibold uppercase tracking-wider mb-2">Invitar nuevo colaborador</label>
         <form (ngSubmit)="handleInvite()" class="flex gap-2">
           <input
             type="email"
@@ -41,15 +46,15 @@
             name="email"
             placeholder="correo@ejemplo.com"
             required
-            class="flex-1 bg-[#11111b] border border-[#313244] rounded-lg px-3 py-2 text-[#cdd6f4] text-[13px] outline-none focus:border-[#89b4fa]"
+            class="flex-1 bg-background/70 border border-input rounded-xl px-3.5 py-2.5 text-foreground text-xs placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring transition-colors shadow-2xs"
           />
-          <select [(ngModel)]="inviteRole" name="role" class="bg-[#11111b] border border-[#313244] rounded-lg px-2.5 py-2 text-[#cdd6f4] text-xs outline-none cursor-pointer">
+          <select [(ngModel)]="inviteRole" name="role" class="bg-background/70 border border-input rounded-xl px-3 py-2.5 text-foreground text-xs outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-ring transition-colors shadow-2xs">
             <option value="editor">Editor (edita)</option>
             <option value="viewer">Lector (solo lectura)</option>
           </select>
           <button
             type="submit"
-            class="bg-[#89b4fa] text-[#11111b] border-0 rounded-lg px-3.5 py-2 text-xs font-bold cursor-pointer transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-primary text-primary-foreground border-0 rounded-xl px-4 py-2.5 text-xs font-semibold cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none shadow-xs shrink-0"
             [disabled]="inviting() || !inviteEmail.trim()"
           >
             {{ inviting() ? 'Invitando...' : 'Invitar' }}
@@ -59,55 +64,62 @@
 
       <!-- Members List -->
       <div>
-        <label class="block text-[#a6adc8] text-[11px] font-semibold uppercase tracking-[0.5px] mb-2">Miembros activos ({{ members().length }})</label>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">Miembros activos</label>
+          <span class="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">
+            {{ members().length }}
+          </span>
+        </div>
+
         @if (loading()) {
-          <div class="flex items-center justify-center p-5 text-[#a6adc8] text-[13px] gap-2">
-            <div class="w-[18px] h-[18px] border-2 border-[#313244] border-t-[#89b4fa] rounded-full animate-spin"></div>
+          <div class="flex items-center justify-center p-8 text-muted-foreground text-xs gap-2.5">
+            <div class="size-4 border-2 border-border border-t-primary rounded-full animate-spin"></div>
             <span>Cargando miembros...</span>
           </div>
         } @else if (members().length === 0) {
-          <div class="flex items-center justify-center p-5 text-[#a6adc8] text-[13px]">
+          <div class="flex flex-col items-center justify-center p-8 text-muted-foreground text-xs text-center border border-dashed border-border/80 rounded-2xl bg-muted/10">
             <p class="m-0">No hay colaboradores adicionales en este tablero.</p>
           </div>
         } @else {
-          <div class="flex flex-col gap-2 max-h-[240px] overflow-y-auto">
+          <div class="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
             @for (m of members(); track m.user_id) {
-              <div class="flex items-center gap-3 px-3 py-2 bg-[#11111b] border border-[#313244] rounded-lg">
-                <div class="w-8 h-8 rounded-full bg-[#313244] text-[#cdd6f4] flex items-center justify-center font-bold text-xs shrink-0">
+              <div class="flex items-center gap-3.5 px-3.5 py-2.5 bg-muted/20 border border-border/70 rounded-2xl hover:border-border transition-colors shadow-2xs">
+                <div class="size-9 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs font-mono">
                   {{ (m.full_name ? m.full_name.charAt(0).toUpperCase() : 'U') }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-[#cdd6f4] text-[13px] font-semibold truncate">{{ m.full_name }}</div>
-                  <div class="text-[#6c7086] text-[11px] font-mono truncate">{{ m.email }}</div>
+                  <div class="text-foreground text-xs font-semibold truncate">{{ m.full_name }}</div>
+                  <div class="text-muted-foreground text-[11px] font-mono truncate">{{ m.email }}</div>
                 </div>
 
                 <!-- Role badge or selector -->
                 @if (m.role === 'owner') {
-                  <div class="text-[11px] px-2 py-[3px] rounded bg-[#a6e3a1]/15 text-[#a6e3a1] border border-[#a6e3a1] font-semibold shrink-0">
+                  <div class="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-medium shrink-0">
                     Propietario
                   </div>
                 } @else if (isCurrentUserOwner()) {
                   <select
                     [ngModel]="m.role"
                     (ngModelChange)="handleRoleChange(m.user_id, $event)"
-                    class="bg-[#1e1e2e] border border-[#313244] text-[#89b4fa] rounded px-2 py-1 text-xs outline-none cursor-pointer shrink-0"
+                    class="bg-background/80 border border-input text-foreground rounded-lg px-2.5 py-1 text-xs outline-none cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
                   >
                     <option value="editor">Editor</option>
                     <option value="viewer">Lector</option>
                   </select>
                 } @else {
-                  <div class="text-[11px] px-2 py-[3px] rounded bg-[#1e1e2e] text-[#89b4fa] border border-[#313244] font-semibold shrink-0">
+                  <div class="text-[11px] px-2.5 py-1 rounded-lg bg-muted text-muted-foreground border border-border font-medium shrink-0">
                     {{ m.role | memberRole }}
                   </div>
                 }
 
                 @if (m.role !== 'owner' && (isCurrentUserOwner() || m.user_id === currentUserId())) {
                   <button
-                    class="bg-transparent border-0 text-[#6c7086] cursor-pointer px-1.5 py-1 rounded hover:text-[#f38ba8] hover:bg-[#f38ba8]/10 shrink-0"
+                    type="button"
+                    class="size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     (click)="handleRemoveMember(m.user_id)"
                     [title]="m.user_id === currentUserId() ? 'Abandonar tablero' : 'Expulsar colaborador'"
                   >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="18" y1="6" x2="6" y2="18"/>
                       <line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>

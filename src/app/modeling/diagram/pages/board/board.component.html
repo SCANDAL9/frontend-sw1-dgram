@@ -1,4 +1,4 @@
-<div class="flex flex-col h-full bg-[#f8fafc] dark:bg-[#090d16] text-zinc-900 dark:text-zinc-100 select-none overflow-hidden">
+<div class="flex flex-col h-full bg-background text-foreground select-none overflow-hidden">
   <!-- Topbar Toolbar -->
   <app-toolbar
     #toolbarRef
@@ -34,12 +34,14 @@
       (logout)="auth.logout()"
       (toggleSidebar)="toggleSidebar()"
       (toggleExpandEntity)="toggleExpandEntity($event)"
+      (toggleEntityVisibility)="toggleEntityVisibility($event)"
       (toggleAllExpand)="toggleAllEntitiesExpand()"
       (entitySelected)="onEntitySelected($event)"
       (entityJumpRequested)="canvasRef?.jumpToEntity($event)"
       (relationSelected)="onRelationSelected($event)"
       (entityContextMenu)="canvasRef?.onContextMenu($event.event, $event.entityId)"
       (attachClass)="attachProjectClass($event)"
+      (deleteCatalogClass)="handleDeleteCatalogClass($event)"
       (importXmi)="onXmiFileSelected($event)"
       (openCodegen)="showCodegenModal.set(true)"
       (openMembers)="openMembersModal()"
@@ -71,6 +73,7 @@
     @if (selectedEntity(); as entity) {
       <app-sidebar
         [entity]="entity"
+        [allEntities]="diagram.entities()"
         [packages]="diagram.packages()"
         [availableDataTypes]="availableEntityDataTypes()"
         (close)="selectedEntityId.set(null)"
@@ -175,7 +178,7 @@
     />
   }
 
-  <!-- Studio Drawer (Vertex Gemini AI & Collaborative Studio) -->
+  <!-- Studio Drawer (Asistente IA & Collaborative Studio) -->
   <app-studio-drawer
     [boardId]="boardId()"
     [flowHost]="canvasRef?.flowHost?.nativeElement ?? null"
@@ -199,6 +202,16 @@
     (filterActorChange)="loadHistory($event)"
     (itemExpanded)="loadHistoryDetail($event)"
     (restoreRequested)="handleRestoreVersion($event)"
+  />
+
+  <!-- Export Scope Selection Modal -->
+  <app-export-scope-modal
+    [isOpen]="showExportScopeModal()"
+    [format]="exportScopeFormat()"
+    [selectedCount]="canvasRef?.selectedEntityIds()?.length || 0"
+    [totalCount]="diagram.entities().length"
+    (scopeSelected)="handleScopeSelected($event)"
+    (close)="showExportScopeModal.set(false)"
   />
 
   <!-- Toast Container & Agent Guide -->

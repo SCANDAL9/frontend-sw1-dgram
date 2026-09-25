@@ -1,44 +1,44 @@
 <aside
-  class="shrink-0 bg-white dark:bg-[#0c101b] border-r border-zinc-200 dark:border-zinc-800/80 flex flex-col transition-all duration-200 ease-in-out relative z-20"
+  class="shrink-0 bg-card border-r border-border flex flex-col transition-all duration-200 ease-in-out relative z-20 text-foreground"
   [class.w-[270px]]="isOpen()"
   [class.w-0]="!isOpen()"
   [class.opacity-0]="!isOpen()"
   [class.overflow-hidden]="true"
 >
   <!-- Header with title, count & quick tree actions -->
-  <div class="h-10 flex items-center justify-between px-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 bg-zinc-50/50 dark:bg-zinc-950/40">
+  <div class="h-11 flex items-center justify-between px-3.5 border-b border-border shrink-0 bg-card/60 backdrop-blur-md">
     <div class="flex items-center gap-2">
-      <span class="text-[11px] font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">Explorador</span>
-      <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">({{ entities().length }})</span>
+      <span class="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">Explorador</span>
+      <span class="text-[10px] font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full border border-border shadow-2xs">({{ entities().length }})</span>
     </div>
-    <div class="flex items-center gap-0.5">
+    <div class="flex items-center gap-1">
       <!-- Toggle Expand / Collapse All -->
       <button
         type="button"
-        class="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        class="size-6.5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer"
         (click)="toggleAllExpand.emit()"
         [title]="expandedEntityIds().size > 0 ? 'Colapsar todo' : 'Expandir todo'"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/>
         </svg>
       </button>
       <!-- Collapse Sidebar Button -->
       <button
         type="button"
-        class="w-6 h-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        class="size-6.5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer"
         (click)="toggleSidebar.emit()"
         title="Colapsar panel (Ctrl+B)"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
     </div>
   </div>
 
   <!-- Search Filter Input -->
-  <div class="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/60 shrink-0">
-    <div class="flex items-center gap-2 px-2.5 h-8 bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-lg focus-within:border-zinc-400 dark:focus-within:border-zinc-600 transition-colors">
-      <svg class="w-3.5 h-3.5 text-zinc-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div class="px-3 py-2 border-b border-border shrink-0 bg-card/30">
+    <div class="flex items-center gap-2 px-2.5 h-8 bg-background border border-input rounded-lg focus-within:border-ring focus-within:ring-1 focus-within:ring-ring transition-all shadow-2xs">
+      <svg class="size-3.5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
       <input
@@ -46,12 +46,12 @@
         placeholder="Filtrar clases y atributos..."
         [ngModel]="sidebarSearch()"
         (ngModelChange)="sidebarSearch.set($event)"
-        class="w-full bg-transparent text-[11.5px] text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none"
+        class="w-full bg-transparent text-[11.5px] text-foreground placeholder:text-muted-foreground outline-none"
       />
       @if (sidebarSearch()) {
         <button
           type="button"
-          class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer text-[10px] p-0.5 shrink-0"
+          class="text-muted-foreground hover:text-foreground cursor-pointer text-[10px] p-0.5 shrink-0"
           (click)="sidebarSearch.set('')"
           title="Limpiar búsqueda"
         >
@@ -62,16 +62,16 @@
   </div>
 
   <!-- Scrollable Tree View Content -->
-  <div class="flex-1 overflow-y-auto py-2 text-[12px] space-y-2">
+  <div class="flex-1 overflow-y-auto py-2 text-[12px] flex flex-col gap-2">
     <!-- 1. Classes Accordion Section -->
     <div>
       <button
         type="button"
-        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer select-none"
+        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
         (click)="isClassesSectionOpen.set(!isClassesSectionOpen())"
       >
         <div class="flex items-center gap-1.5">
-          <svg class="w-3 h-3 transition-transform duration-150" [class.rotate-90]="isClassesSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isClassesSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
           <span>Clases</span>
@@ -80,15 +80,15 @@
       </button>
 
       @if (isClassesSectionOpen()) {
-        <div class="mt-1 space-y-0.5">
+        <div class="mt-1 flex flex-col gap-0.5">
           @for (entity of filteredEntities(); track entity.id) {
             <div class="px-1.5">
               <!-- Class Row Item -->
               <div
-                class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer group select-none"
+                class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left transition-all duration-150 cursor-pointer group select-none active:scale-[0.99]"
                 [ngClass]="selectedEntityId() === entity.id
-                  ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/40'"
+                  ? 'bg-primary/10 text-primary font-semibold ring-1 ring-primary/20 shadow-2xs'
+                  : 'text-foreground hover:bg-accent/60'"
                 (click)="entitySelected.emit(entity.id)"
                 (dblclick)="entityJumpRequested.emit(entity.id)"
                 (contextmenu)="entityContextMenu.emit({ event: $event, entityId: entity.id })"
@@ -96,43 +96,64 @@
                 <!-- Expand / Collapse Arrow -->
                 <button
                   type="button"
-                  class="w-4 h-4 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-transform duration-150 cursor-pointer shrink-0"
+                  class="size-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-transform duration-150 cursor-pointer shrink-0"
                   [class.rotate-90]="isEntityExpanded(entity.id)"
                   (click)="toggleExpandEntity.emit(entity.id); $event.stopPropagation()"
                   [title]="isEntityExpanded(entity.id) ? 'Ocultar atributos' : 'Mostrar atributos'"
                 >
-                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </button>
 
                 <!-- Class Icon badge -->
                 <span
-                  class="w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center shrink-0 border select-none"
+                  class="size-4.5 rounded-md text-[9px] font-bold flex items-center justify-center shrink-0 border select-none shadow-2xs"
                   [ngClass]="entity.isAbstract
-                    ? 'bg-purple-50 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                    : 'bg-indigo-50 dark:indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'"
+                    ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                    : 'bg-primary/15 text-primary border-primary/30'"
                 >
                   {{ entity.isAbstract ? 'A' : 'C' }}
                 </span>
 
                 <!-- Class Name -->
-                <span class="truncate flex-1 font-medium text-[12px] tracking-tight" [class.italic]="entity.isAbstract">
+                <span class="truncate flex-1 font-medium text-[12px] tracking-tight" [class.italic]="entity.isAbstract" [class.opacity-40]="entity.isVisible === false || entity.is_visible === false">
                   {{ entity.name }}
                 </span>
 
+                <!-- Visibility Toggle Button (Eye Icon) -->
+                <button
+                  type="button"
+                  class="size-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer shrink-0"
+                  (click)="toggleEntityVisibility.emit(entity.id); $event.stopPropagation()"
+                  [title]="(entity.isVisible === false || entity.is_visible === false) ? 'Mostrar en diagrama' : 'Ocultar del diagrama'"
+                >
+                  @if (entity.isVisible === false || entity.is_visible === false) {
+                    <!-- Eye slash icon (hidden) -->
+                    <svg class="size-3.5 opacity-60 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/>
+                    </svg>
+                  } @else {
+                    <!-- Eye icon (visible) -->
+                    <svg class="size-3.5 text-muted-foreground group-hover:text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  }
+                </button>
+
                 <!-- Quick Attribute Count Pill -->
-                <span class="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 px-1 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200/50 dark:border-zinc-700/40 shrink-0">
+                <span class="font-mono text-[9px] text-muted-foreground px-1.5 py-0.2 rounded-full bg-muted border border-border shrink-0 shadow-2xs">
                   {{ entity.attributes.length }}
                 </span>
               </div>
 
               <!-- Nested Attributes List (Tree Branch) -->
               @if (isEntityExpanded(entity.id) && entity.attributes.length > 0) {
-                <div class="ml-5 pl-2 border-l border-zinc-200 dark:border-zinc-800/80 my-1 space-y-0.5">
+                <div class="ml-5 pl-2 border-l border-border/80 my-1 flex flex-col gap-0.5">
                   @for (attr of entity.attributes; track attr.name) {
                     <div
-                      class="flex items-center justify-between gap-1.5 px-2 py-0.5 rounded text-[11px] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 select-none group/attr"
+                      class="flex items-center justify-between gap-1.5 px-2 py-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent/40 select-none group/attr transition-colors"
                       [title]="attr.name + ': ' + attr.type"
                     >
                       <div class="flex items-center gap-1.5 min-w-0 truncate">
@@ -141,7 +162,7 @@
                           class="font-mono text-[10px] font-bold shrink-0 w-2.5 text-center"
                           [ngClass]="{
                             'text-emerald-500': formatVisibility(attr.visibility) === '+',
-                            'text-red-500': formatVisibility(attr.visibility) === '-',
+                            'text-destructive': formatVisibility(attr.visibility) === '-',
                             'text-amber-500': formatVisibility(attr.visibility) === '#',
                             'text-blue-500': formatVisibility(attr.visibility) === '~'
                           }"
@@ -149,19 +170,19 @@
                           {{ formatVisibility(attr.visibility) }}
                         </span>
 
-                        <span class="truncate font-mono" [class.font-semibold]="attr.pk" [class.text-zinc-800]="attr.pk" [class.dark:text-zinc-200]="attr.pk">
+                        <span class="truncate font-mono text-foreground" [class.font-semibold]="attr.pk">
                           {{ attr.name }}
                         </span>
                       </div>
 
                       <div class="flex items-center gap-1 shrink-0">
                         @if (attr.pk) {
-                          <span class="text-[8px] font-mono px-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">PK</span>
+                          <span class="text-[8px] font-mono px-1 rounded-sm bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30">PK</span>
                         }
                         @if (attr.fk) {
-                          <span class="text-[8px] font-mono px-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">FK</span>
+                          <span class="text-[8px] font-mono px-1 rounded-sm bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30">FK</span>
                         }
-                        <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate max-w-[70px]">
+                        <span class="text-[10px] font-mono text-muted-foreground truncate max-w-[70px]">
                           {{ attr.type }}
                         </span>
                       </div>
@@ -172,8 +193,19 @@
             </div>
           }
           @if (filteredEntities().length === 0) {
-            <div class="px-4 py-3 text-center text-zinc-400 dark:text-zinc-500 text-[11px]">
-              No se encontraron clases
+            <div class="px-4 py-6 flex flex-col items-center justify-center text-center gap-2">
+              <span class="text-[11px] text-muted-foreground">
+                {{ sidebarSearch() ? 'No hay clases que coincidan con "' + sidebarSearch() + '"' : 'No hay clases en el diagrama' }}
+              </span>
+              @if (sidebarSearch()) {
+                <button
+                  type="button"
+                  class="text-[10.5px] font-medium text-primary hover:underline cursor-pointer focus-visible:ring-1 focus-visible:ring-ring rounded px-1 transition-colors"
+                  (click)="sidebarSearch.set('')"
+                >
+                  Limpiar filtro de búsqueda
+                </button>
+              }
             </div>
           }
         </div>
@@ -182,14 +214,14 @@
 
     <!-- 2. Relations Accordion Section -->
     @if (relations().length > 0) {
-      <div class="border-t border-zinc-100 dark:border-zinc-800/60 pt-2">
+      <div class="border-t border-border pt-2">
         <button
           type="button"
-          class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer select-none"
+          class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
           (click)="isRelationsSectionOpen.set(!isRelationsSectionOpen())"
         >
           <div class="flex items-center gap-1.5">
-            <svg class="w-3 h-3 transition-transform duration-150" [class.rotate-90]="isRelationsSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isRelationsSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
             <span>Relaciones</span>
@@ -198,26 +230,26 @@
         </button>
 
         @if (isRelationsSectionOpen()) {
-          <div class="mt-1 space-y-0.5 px-1.5">
+          <div class="mt-1 flex flex-col gap-0.5 px-1.5">
             @for (rel of filteredRelations(); track rel.id) {
               <button
                 type="button"
                 class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-[11.5px] transition-colors cursor-pointer"
                 [ngClass]="selectedRelationId() === rel.id
-                  ? 'bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'"
+                  ? 'bg-accent text-accent-foreground font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'"
                 (click)="relationSelected.emit(rel.id)"
                 [title]="getEntityName(rel.sourceId) + ' → ' + getEntityName(rel.targetId)"
               >
                 <!-- Flow: Source -> Target -->
                 <div class="flex items-center gap-1.5 min-w-0 truncate">
-                  <span class="text-zinc-700 dark:text-zinc-300 font-medium truncate text-[11.5px]">{{ getEntityName(rel.sourceId) }}</span>
-                  <span class="text-zinc-400 dark:text-zinc-500 text-[10px] font-mono shrink-0">──▷</span>
-                  <span class="text-zinc-700 dark:text-zinc-300 font-medium truncate text-[11.5px]">{{ getEntityName(rel.targetId) }}</span>
+                  <span class="text-foreground font-medium truncate text-[11.5px]">{{ getEntityName(rel.sourceId) }}</span>
+                  <span class="text-muted-foreground text-[10px] font-mono shrink-0">──▷</span>
+                  <span class="text-foreground font-medium truncate text-[11.5px]">{{ getEntityName(rel.targetId) }}</span>
                 </div>
                 
                 <!-- Type Pill -->
-                <span class="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 px-1 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+                <span class="text-[9px] font-mono text-muted-foreground px-1 py-0.2 rounded bg-muted border border-border shrink-0">
                   {{ rel.type }}
                 </span>
               </button>
@@ -228,14 +260,14 @@
     }
 
     <!-- 3. Project Class Catalog (Enterprise Architect Reusability) -->
-    <div class="border-t border-zinc-100 dark:border-zinc-800/60 pt-2">
+    <div class="border-t border-border pt-2">
       <button
         type="button"
-        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer select-none"
+        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
         (click)="isProjectCatalogOpen.set(!isProjectCatalogOpen())"
       >
         <div class="flex items-center gap-1.5">
-          <svg class="w-3 h-3 transition-transform duration-150" [class.rotate-90]="isProjectCatalogOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isProjectCatalogOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"/>
           </svg>
           <span>Catálogo del Proyecto</span>
@@ -244,57 +276,70 @@
           <input type="file" #xmiFileInput accept=".xmi,.xml" class="hidden" (change)="onXmiSelected($event)">
           <button
             type="button"
-            class="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/80 text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-[9px] font-mono transition-colors cursor-pointer"
+            class="px-1.5 py-0.5 rounded bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary text-[9px] font-mono transition-colors cursor-pointer"
             (click)="xmiFileInput.click(); $event.stopPropagation()"
             title="Importar archivo XMI 2.1 de Enterprise Architect"
           >
             + XMI
           </button>
           @if (isLoadingCatalog()) {
-            <span class="w-2.5 h-2.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>
+            <span class="size-2.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
           }
           <span class="font-mono text-[10px] font-normal normal-case">{{ projectCatalogClasses().length }}</span>
         </div>
       </button>
 
       @if (isProjectCatalogOpen()) {
-        <div class="mt-1 space-y-1 px-1.5">
+        <div class="mt-1 flex flex-col gap-1 px-1.5">
           @for (pCls of projectCatalogClasses(); track pCls.id) {
-            <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/60 text-left">
+            <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-muted/30 border border-border text-left">
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[12px] font-bold text-zinc-800 dark:text-zinc-200 truncate">{{ pCls.name }}</span>
-                  <span class="text-[9px] font-mono text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1 rounded">{{ pCls.attributes.length }} atr</span>
+                  <span class="text-[12px] font-bold text-foreground truncate">{{ pCls.name }}</span>
+                  <span class="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">{{ pCls.attributes.length }} atr</span>
                 </div>
-                <div class="text-[10px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                  <span class="w-1.5 h-1.5 rounded-full" [class.bg-emerald-500]="pCls.is_on_current_board" [class.bg-zinc-400]="!pCls.is_on_current_board"></span>
-                  <span>{{ pCls.is_on_current_board ? 'En este tablero' : 'Disponible' }}</span>
+                <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <span class="size-1.5 rounded-full" [class.bg-emerald-500]="isEntityOnBoard(pCls)" [class.bg-muted-foreground]="!isEntityOnBoard(pCls)"></span>
+                  <span>{{ isEntityOnBoard(pCls) ? 'En este tablero' : 'Disponible' }}</span>
                 </div>
               </div>
 
-              @if (!pCls.is_on_current_board) {
+              <div class="flex items-center gap-1 shrink-0">
+                @if (!isEntityOnBoard(pCls)) {
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10.5px] font-semibold transition-colors cursor-pointer"
+                    (click)="attachClass.emit(pCls)"
+                    title="Agregar esta clase al tablero actual"
+                  >
+                    + Usar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded text-primary hover:text-primary-foreground hover:bg-primary/80 text-[10.5px] font-semibold transition-colors cursor-pointer"
+                    (click)="jumpTo(pCls)"
+                    title="Centrar en el lienzo"
+                  >
+                    Ver
+                  </button>
+                }
+
                 <button
                   type="button"
-                  class="px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-[10.5px] font-semibold transition-colors cursor-pointer shrink-0"
-                  (click)="attachClass.emit(pCls)"
-                  title="Agregar esta clase al tablero actual"
+                  class="p-1 rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                  (click)="deleteCatalogClass.emit(pCls); $event.stopPropagation()"
+                  title="Eliminar clase del catálogo del proyecto"
                 >
-                  + Usar
+                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
                 </button>
-              } @else {
-                <button
-                  type="button"
-                  class="px-1.5 py-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 text-[10px] font-medium transition-colors cursor-pointer shrink-0"
-                  (click)="entityJumpRequested.emit(pCls.id)"
-                  title="Centrar en el lienzo"
-                >
-                  Ver
-                </button>
-              }
+              </div>
             </div>
           }
           @if (projectCatalogClasses().length === 0 && !isLoadingCatalog()) {
-            <div class="mx-1 my-1 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950/40 text-[10.5px] text-zinc-400 text-center italic">
+            <div class="mx-1 my-1 p-2 rounded-lg bg-muted/20 text-[10.5px] text-muted-foreground text-center italic">
               Las clases sincronizadas del proyecto aparecerán aquí para reutilizarse.
             </div>
           }
@@ -304,147 +349,147 @@
   </div>
 
   <!-- Sidebar Bottom Action Bar (Exportar, Equipo, Entrar / Perfil) -->
-  <div class="p-2 border-t border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-950/60 shrink-0 space-y-1.5 relative">
+  <div class="p-2 border-t border-border bg-card/60 shrink-0 flex flex-col gap-1.5 relative">
     <!-- Capsule Group -->
-    <div class="flex items-center justify-between gap-1 p-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xs">
+    <div class="flex items-center justify-between gap-1 p-0.5 bg-muted border border-border rounded-xl shadow-2xs">
       <!-- 1. Export Action Button (Dropdown opens UPWARDS) -->
       <div class="relative flex-1">
         <button
           type="button"
           class="w-full h-7 px-2 rounded-lg flex items-center justify-center gap-1.5 text-[11.5px] font-medium transition-all cursor-pointer"
           [ngClass]="showSidebarExportMenu()
-            ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold'
-            : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'"
+            ? 'bg-card text-foreground font-semibold shadow-xs'
+            : 'text-muted-foreground hover:text-foreground hover:bg-card/50'"
           (click)="toggleExportMenu()"
           title="Opciones de Exportación y Backend"
         >
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           <span>Exportar</span>
-          <svg class="w-2.5 h-2.5 text-zinc-400 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="size-2.5 text-muted-foreground rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
 
         <!-- Vertical List Dropdown opening UPWARDS -->
         @if (showSidebarExportMenu()) {
-          <div class="absolute left-0 bottom-full mb-2 w-60 bg-white dark:bg-[#0c101b] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50 p-2 space-y-1 text-[12px] animate-fadeIn">
-            <div class="px-2.5 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50/80 dark:bg-zinc-950/80 border-b border-zinc-100 dark:border-zinc-800/80 rounded-lg mb-1">Exportar Diagrama</div>
+          <div class="absolute left-0 bottom-full mb-2 w-60 bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl overflow-hidden z-50 p-2 flex flex-col gap-1 text-[12px] animate-fadeIn">
+            <div class="px-2.5 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/60 border-b border-border rounded-lg mb-1">Exportar Diagrama</div>
             
             <button
               type="button"
-              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-foreground hover:bg-accent cursor-pointer transition-colors"
               (click)="openCodegen.emit(); showSidebarExportMenu.set(false)"
             >
-              <span class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span class="size-7 rounded-lg bg-muted flex items-center justify-center text-foreground shrink-0 border border-border">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-medium leading-tight">Spring Boot 3.x</div>
-                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-tight truncate mt-0.5">Entidades JPA y DTOs</div>
+                <div class="text-[10px] text-muted-foreground font-normal leading-tight truncate mt-0.5">Entidades JPA y DTOs</div>
               </div>
             </button>
 
             <button
               type="button"
-              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-foreground hover:bg-accent cursor-pointer transition-colors"
               (click)="exportSql.emit(); showSidebarExportMenu.set(false)"
             >
-              <span class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              <span class="size-7 rounded-lg bg-muted flex items-center justify-center text-foreground shrink-0 border border-border">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-medium leading-tight">Script SQL (DDL)</div>
-                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-tight truncate mt-0.5">PostgreSQL / MySQL / Oracle</div>
+                <div class="text-[10px] text-muted-foreground font-normal leading-tight truncate mt-0.5">PostgreSQL / MySQL / Oracle</div>
               </div>
             </button>
 
             <button
               type="button"
-              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-zinc-700 dark:text-zinc-300 hover:bg-indigo-50/70 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-foreground hover:bg-accent cursor-pointer transition-colors"
               (click)="exportXmi.emit(); showSidebarExportMenu.set(false)"
             >
-              <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-200/80 dark:border-indigo-800">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span class="size-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 border border-primary/30">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-semibold leading-tight">Enterprise Architect</div>
-                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-tight truncate mt-0.5">XMI 2.1 (UML + Diagram Layout)</div>
+                <div class="text-[10px] text-muted-foreground font-normal leading-tight truncate mt-0.5">XMI 2.1 (UML + Diagram Layout)</div>
               </div>
             </button>
 
             <button
               type="button"
-              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-foreground hover:bg-accent cursor-pointer transition-colors"
               (click)="exportJson.emit(); showSidebarExportMenu.set(false)"
             >
-              <span class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span class="size-7 rounded-lg bg-muted flex items-center justify-center text-foreground shrink-0 border border-border">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-medium leading-tight">Esquema JSON</div>
-                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-tight truncate mt-0.5">Estructura normalizada dgram</div>
+                <div class="text-[10px] text-muted-foreground font-normal leading-tight truncate mt-0.5">Estructura normalizada dgram</div>
               </div>
             </button>
 
             <button
               type="button"
-              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-foreground hover:bg-accent cursor-pointer transition-colors"
               (click)="exportPng.emit(); showSidebarExportMenu.set(false)"
             >
-              <span class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shrink-0 border border-zinc-200 dark:border-zinc-700">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span class="size-7 rounded-lg bg-muted flex items-center justify-center text-foreground shrink-0 border border-border">
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </span>
               <div class="min-w-0 flex-1">
                 <div class="text-[12px] font-medium leading-tight">Imagen PNG</div>
-                <div class="text-[10px] text-zinc-400 dark:text-zinc-500 font-normal leading-tight truncate mt-0.5">Captura visual del lienzo</div>
+                <div class="text-[10px] text-muted-foreground font-normal leading-tight truncate mt-0.5">Captura visual del lienzo</div>
               </div>
             </button>
           </div>
         }
       </div>
 
-      <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-800"></div>
+      <div class="w-px h-4 bg-border"></div>
 
       <!-- 2. Team Action Button -->
       <button
         type="button"
-        class="h-7 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-[11.5px] font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all cursor-pointer"
+        class="h-7 px-2.5 rounded-lg flex items-center justify-center gap-1.5 text-[11.5px] font-medium text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all cursor-pointer"
         (click)="openMembers.emit()"
         title="Colaboradores y Permisos"
       >
-        <svg class="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <svg class="size-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Equipo</span>
       </button>
     </div>
 
     <!-- 2. Auth User Profile / Entrar + Theme Toggle Capsule Group -->
-    <div class="flex items-center justify-between gap-1 p-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xs">
+    <div class="flex items-center justify-between gap-1 p-0.5 bg-muted border border-border rounded-xl shadow-2xs">
       <!-- Auth User Profile / Entrar Action Button -->
       <div class="relative flex-1 min-w-0">
         @if (currentUser(); as user) {
           <button
             type="button"
-            class="w-full h-7 px-2 rounded-lg flex items-center justify-between gap-1.5 text-[11.5px] font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all cursor-pointer min-w-0"
+            class="w-full h-7 px-2 rounded-lg flex items-center justify-between gap-1.5 text-[11.5px] font-medium text-foreground hover:bg-card/50 transition-all cursor-pointer min-w-0"
             (click)="toggleUserMenu()"
             title="Perfil de Usuario"
           >
             <div class="flex items-center gap-1.5 min-w-0 truncate">
-              <span class="w-4 h-4 rounded-md bg-zinc-900 dark:bg-zinc-700 text-white flex items-center justify-center text-[9px] font-bold shrink-0">
+              <span class="size-4 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold shrink-0">
                 {{ user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U' }}
               </span>
               <span class="truncate text-[11.5px]">{{ user.full_name }}</span>
             </div>
-            <svg class="w-2.5 h-2.5 text-zinc-400 rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            <svg class="size-2.5 text-muted-foreground rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
 
           <!-- User Menu opening UPWARDS -->
           @if (showSidebarUserMenu()) {
-            <div class="absolute left-0 right-0 bottom-full mb-2 bg-white dark:bg-[#0c101b] border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-50 p-1.5 text-[12px] animate-fadeIn">
-              <div class="px-2.5 py-1.5 border-b border-zinc-100 dark:border-zinc-800 text-[11px] text-zinc-400 truncate">
+            <div class="absolute left-0 right-0 bottom-full mb-2 bg-popover text-popover-foreground border border-border rounded-xl shadow-2xl overflow-hidden z-50 p-1.5 flex flex-col gap-1 text-[12px] animate-fadeIn">
+              <div class="px-2.5 py-1.5 border-b border-border text-[11px] text-muted-foreground truncate">
                 {{ user.email }}
               </div>
-              <button class="w-full text-left px-2.5 py-2 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors" (click)="openProfile.emit(); showSidebarUserMenu.set(false)">
+              <button class="w-full text-left px-2.5 py-2 rounded-lg text-foreground hover:bg-accent cursor-pointer transition-colors" (click)="openProfile.emit(); showSidebarUserMenu.set(false)">
                 Ver Perfil
               </button>
-              <button class="w-full text-left px-2.5 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer transition-colors" (click)="logout.emit(); showSidebarUserMenu.set(false)">
+              <button class="w-full text-left px-2.5 py-2 rounded-lg text-destructive hover:bg-destructive/10 cursor-pointer transition-colors" (click)="logout.emit(); showSidebarUserMenu.set(false)">
                 Cerrar Sesión
               </button>
             </div>
@@ -452,29 +497,29 @@
         } @else {
           <button
             type="button"
-            class="w-full h-7 px-2.5 rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/80 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center gap-1.5 text-[11.5px] font-semibold transition-all cursor-pointer shadow-2xs"
+            class="w-full h-7 px-2.5 rounded-lg bg-card hover:bg-accent text-foreground border border-border flex items-center justify-center gap-1.5 text-[11.5px] font-semibold transition-all cursor-pointer shadow-2xs"
             (click)="openAuth.emit()"
             title="Iniciar Sesión"
           >
-            <svg class="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <svg class="size-3.5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             <span>Entrar</span>
           </button>
         }
       </div>
 
-      <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-800"></div>
+      <div class="w-px h-4 bg-border"></div>
 
       <!-- Theme Toggle Action Button -->
       <button
         type="button"
-        class="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all cursor-pointer shrink-0"
+        class="size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all cursor-pointer shrink-0"
         (click)="theme.toggleTheme()"
         [title]="theme.isDark() ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'"
       >
         @if (theme.isDark()) {
-          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="size-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         } @else {
-          <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="size-3.5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         }
       </button>
     </div>

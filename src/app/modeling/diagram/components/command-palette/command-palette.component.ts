@@ -88,7 +88,7 @@ export class CommandPaletteComponent {
       },
       {
         id: 'action-ai-chat',
-        title: 'Asistente IA (Vertex Gemini)',
+        title: 'Asistente IA',
         subtitle: 'Generar diagrama desde texto o fotos',
         category: 'action',
         action: () => {

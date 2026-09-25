@@ -35,7 +35,7 @@ import { XmiService } from '../../../../generation/schema/services/xmi.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { XmiPreviewResponse } from '../../../../generation/schema/models/xmi-preview.model';
 import { CanWarnGuestLeave } from '../../../../core/guards/guest-leave.guard';
-import { seedDemoDiagramIfEmpty } from '../../utils/demo-diagram-seed';
+import { ExportScopeModalComponent, ExportFormat } from '../../components/export-scope-modal/export-scope-modal.component';
 
 @Component({
   selector: 'app-board-page',
@@ -56,6 +56,7 @@ import { seedDemoDiagramIfEmpty } from '../../utils/demo-diagram-seed';
     ProfileModalComponent,
     HistoryDrawerComponent,
     StudioDrawerComponent,
+    ExportScopeModalComponent,
   ],
   templateUrl: './board.component.html',
   host: { class: 'block w-full h-full overflow-hidden' },
@@ -135,7 +136,13 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
   });
 
   readonly availableEntityDataTypes = computed(() => {
-    return (this.diagram.entities() || []).map((e) => e.name).filter(Boolean);
+    return (this.diagram.entities() || [])
+      .filter((e) => {
+        const t = (e.elementType || e.stereotype || '').toLowerCase();
+        return t === 'enumeration' || t === 'enum' || t === 'datatype' || t === 'data_type';
+      })
+      .map((e) => e.name)
+      .filter(Boolean);
   });
 
   // Project Catalog Classes
@@ -158,18 +165,13 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
     this.persistence.load(id);
     this.persistence.activateSave(id);
 
-    // Seed default demo diagram if completely empty
-    seedDemoDiagramIfEmpty(this.cmd, this.diagram);
-
     // Initialize collaborative WebSocket connection
     const userId = this.auth.currentUser()?.id || `user-${Date.now()}`;
     const token = this.auth.token() || undefined;
     this.ws.connect(id, userId, token);
 
     this.ws.onMessage((msg) => {
-      if (msg.type === 'command:executed') {
-        this.cmd.ingestRemote(msg.data);
-      } else if (msg.type === 'agent:ui_action') {
+      if (msg.type === 'agent:ui_action') {
         const action = msg.data;
         if (action?.action_type === 'highlight' || action?.action_type === 'focus') {
           if (action.target_id) {
@@ -230,6 +232,14 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
       next.add(entityId);
     }
     this.expandedEntityIds.set(next);
+  }
+
+  toggleEntityVisibility(entityId: string): void {
+    const entity = this.diagram.getEntity(entityId);
+    if (!entity) return;
+    const currentVis = entity.isVisible !== false && entity.is_visible !== false;
+    const newVis = !currentVis;
+    this.cmd.setEntityVisibility(entity.id, newVis);
   }
 
   toggleAllEntitiesExpand(): void {
@@ -304,34 +314,73 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
     this.xmiPreviewData.set(null);
   }
 
+  showExportScopeModal = signal(false);
+  exportScopeFormat = signal<ExportFormat>('png');
+
   exportSQL(): void {
-    this.exportSvc.downloadSql();
-    this.toast.success('Script SQL descargado');
+    this.initiateExport('sql');
   }
 
   exportJSON(): void {
-    this.exportSvc.downloadJson();
-    this.toast.success('Esquema JSON descargado');
+    this.initiateExport('json');
   }
 
   exportXMI(): void {
-    const bId = this.boardId();
-    if (!bId || bId === 'default-board') {
-      this.toast.error('Guarda el tablero antes de exportar a XMI');
-      return;
-    }
-    this.exportSvc.downloadXmi(bId);
-    this.toast.success('Archivo XMI 2.1 (Enterprise Architect) generado');
+    this.initiateExport('xmi');
   }
 
   async exportPNG(): Promise<void> {
-    const host = this.canvasRef?.flowHost?.nativeElement;
-    if (!host) return;
-    try {
-      await this.exportSvc.toPng(host, 'diagram.png');
-      this.toast.success('Imagen PNG guardada');
-    } catch {
-      this.toast.error('Error al exportar PNG');
+    this.initiateExport('png');
+  }
+
+  initiateExport(format: ExportFormat): void {
+    const selected = this.canvasRef?.selectedEntityIds() || [];
+    if (selected.length > 0) {
+      this.exportScopeFormat.set(format);
+      this.showExportScopeModal.set(true);
+    } else {
+      this.performExport(format, 'all');
+    }
+  }
+
+  handleScopeSelected(scope: 'selected' | 'all'): void {
+    const format = this.exportScopeFormat();
+    this.showExportScopeModal.set(false);
+    this.performExport(format, scope);
+  }
+
+  async performExport(format: ExportFormat, scope: 'selected' | 'all'): Promise<void> {
+    const selectedIds = scope === 'selected' ? (this.canvasRef?.selectedEntityIds() || []) : undefined;
+    switch (format) {
+      case 'sql':
+        this.exportSvc.downloadSql(selectedIds);
+        this.toast.success(scope === 'selected' ? 'Script SQL (seleccionados) descargado' : 'Script SQL descargado');
+        break;
+      case 'json':
+        this.exportSvc.downloadJson(selectedIds);
+        this.toast.success(scope === 'selected' ? 'Esquema JSON (seleccionados) descargado' : 'Esquema JSON descargado');
+        break;
+      case 'xmi': {
+        const bId = this.boardId();
+        if (!bId || bId === 'default-board') {
+          this.toast.error('Guarda el tablero antes de exportar a XMI');
+          return;
+        }
+        this.exportSvc.downloadXmi(bId, 'diagram.xmi', selectedIds);
+        this.toast.success(scope === 'selected' ? 'Archivo XMI 2.1 (seleccionados) generado' : 'Archivo XMI 2.1 (Enterprise Architect) generado');
+        break;
+      }
+      case 'png': {
+        const host = this.canvasRef?.flowHost?.nativeElement;
+        if (!host) return;
+        try {
+          await this.exportSvc.toPng(host, 'diagram.png', selectedIds);
+          this.toast.success(scope === 'selected' ? 'Imagen PNG (seleccionados) guardada' : 'Imagen PNG guardada');
+        } catch {
+          this.toast.error('Error al exportar PNG');
+        }
+        break;
+      }
     }
   }
 
@@ -424,6 +473,39 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
       });
     } else {
       this.toast.success(`Clase "${name}" eliminada`);
+    }
+  }
+
+  handleDeleteCatalogClass(pCls: ProjectClass): void {
+    if (
+      !confirm(
+        `¿Eliminar definitivamente la clase "${pCls.name}" del catálogo del proyecto?\n\nEsta acción la borrará permanentemente de todos los tableros y del modelo.`
+      )
+    ) {
+      return;
+    }
+    const bId = this.boardId();
+    if (bId && bId !== 'default-board') {
+      this.boardSvc.deleteClassFromModel(bId, pCls.id).subscribe({
+        next: () => {
+          this.toast.success(`Clase "${pCls.name}" eliminada del catálogo`);
+          const onCanvas = this.diagram
+            .entities()
+            .find(
+              (e) =>
+                e.id === pCls.id ||
+                e.name.toLowerCase() === pCls.name.toLowerCase()
+            );
+          if (onCanvas) {
+            this.cmd.deleteEntity(onCanvas.id);
+          }
+          this.loadProjectCatalog();
+        },
+        error: () => {
+          this.toast.error(`Error al eliminar "${pCls.name}" del catálogo`);
+          this.loadProjectCatalog();
+        },
+      });
     }
   }
 

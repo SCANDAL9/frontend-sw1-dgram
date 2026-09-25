@@ -96,21 +96,27 @@ export class ToolbarComponent implements OnInit {
   }
 
   exportSQL(): void {
-    this.exportSvc.downloadSql();
-    this.toast.success('Script SQL descargado');
+    const ids = Array.from(this.selection.ids());
+    const selectedIds = ids.length > 0 ? ids : undefined;
+    this.exportSvc.downloadSql(selectedIds);
+    this.toast.success(selectedIds ? 'Script SQL (seleccionados) descargado' : 'Script SQL descargado');
   }
 
   exportJSON(): void {
-    this.exportSvc.downloadJson();
-    this.toast.success('Esquema JSON descargado');
+    const ids = Array.from(this.selection.ids());
+    const selectedIds = ids.length > 0 ? ids : undefined;
+    this.exportSvc.downloadJson(selectedIds);
+    this.toast.success(selectedIds ? 'Esquema JSON (seleccionados) descargado' : 'Esquema JSON descargado');
   }
 
   async exportPNG(): Promise<void> {
     const host = this.flowHost();
     if (!host) return;
+    const ids = Array.from(this.selection.ids());
+    const selectedIds = ids.length > 0 ? ids : undefined;
     try {
-      await this.exportSvc.toPng(host, 'diagram.png');
-      this.toast.success('Imagen PNG guardada');
+      await this.exportSvc.toPng(host, 'diagram.png', selectedIds);
+      this.toast.success(selectedIds ? 'Imagen PNG (seleccionados) guardada' : 'Imagen PNG guardada');
     } catch {
       this.toast.error('Error al exportar PNG');
     }
@@ -193,16 +199,20 @@ export class ToolbarComponent implements OnInit {
   }
 
   exportSql(): void {
-    this.exportSvc.downloadSql();
-    this.toast.success('SQL DDL exportado');
+    const ids = Array.from(this.selection.ids());
+    const selectedIds = ids.length > 0 ? ids : undefined;
+    this.exportSvc.downloadSql(selectedIds);
+    this.toast.success(selectedIds ? 'SQL DDL (seleccionados) exportado' : 'SQL DDL exportado');
   }
 
   async exportPng(): Promise<void> {
     const host = this.flowHost();
     if (!host) return;
+    const ids = Array.from(this.selection.ids());
+    const selectedIds = ids.length > 0 ? ids : undefined;
     try {
-      await this.exportSvc.toPng(host, 'schema.png');
-      this.toast.success('Imagen PNG guardada');
+      await this.exportSvc.toPng(host, 'schema.png', selectedIds);
+      this.toast.success(selectedIds ? 'Imagen PNG (seleccionados) guardada' : 'Imagen PNG guardada');
     } catch {
       this.toast.error('Error al generar PNG');
     }
@@ -243,7 +253,7 @@ export class ToolbarComponent implements OnInit {
     const names = new Set(this.diagram.entities().map(e => e.name));
     while (names.has(`${prefix}${n}`)) n++;
     const name = `${prefix}${n}`;
-    const id = this.nextUniqueId(name);
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : this.nextUniqueId(name);
 
     const count = this.diagram.entityCount();
     const cols = 3;
@@ -352,6 +362,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   getSourceMultiplicity(rel: DBRelation): string {
+    if (rel.sourceMultiplicity) return rel.sourceMultiplicity;
     const parts = rel.type.split(':');
     if (parts.length === 3) return parts[1];
     if (parts.length === 2) return parts[0];
@@ -359,6 +370,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   getTargetMultiplicity(rel: DBRelation): string {
+    if (rel.targetMultiplicity) return rel.targetMultiplicity;
     const parts = rel.type.split(':');
     if (parts.length === 3) return parts[2];
     if (parts.length === 2) return parts[1];
@@ -416,21 +428,15 @@ export class ToolbarComponent implements OnInit {
   updateSourceMultiplicity(val: string): void {
     const rel = this.selectedRelation();
     if (!rel) return;
-    const kind = this.parseRelationKind(rel.type);
     const tgt = this.getTargetMultiplicity(rel);
-    const cleanVal = val.trim();
-    const type = (!cleanVal && !tgt) ? kind : `${kind}:${cleanVal}:${tgt}`;
-    this.cmd.updateRelation(rel.id, { type });
+    this.cmd.applyMultiplicityChange(rel.id, val, tgt);
   }
 
   updateTargetMultiplicity(val: string): void {
     const rel = this.selectedRelation();
     if (!rel) return;
-    const kind = this.parseRelationKind(rel.type);
     const src = this.getSourceMultiplicity(rel);
-    const cleanVal = val.trim();
-    const type = (!src && !cleanVal) ? kind : `${kind}:${src}:${cleanVal}`;
-    this.cmd.updateRelation(rel.id, { type });
+    this.cmd.applyMultiplicityChange(rel.id, src, val);
   }
 
   private nextTablaName(): string {
@@ -450,41 +456,21 @@ export class ToolbarComponent implements OnInit {
     return id;
   }
 
-  createAndLinkAssociationClass(rel: DBRelation): void {
-    const srcName = this.diagram.getEntity(rel.sourceId)?.name || 'Origen';
-    const tgtName = this.diagram.getEntity(rel.targetId)?.name || 'Destino';
-    const baseName = `${srcName}${tgtName}`;
-    let name = baseName;
-    let n = 1;
-    const names = new Set(this.diagram.entities().map(e => e.name));
-    while (names.has(name)) {
-      name = `${baseName}${n++}`;
-    }
-    const classId = this.nextUniqueId(name);
-
-    const src = this.diagram.getEntity(rel.sourceId);
-    const tgt = this.diagram.getEntity(rel.targetId);
-    const srcPos = src?.position || { x: 100, y: 100 };
-    const tgtPos = tgt?.position || { x: 300, y: 300 };
-    const x = Math.round((srcPos.x + tgtPos.x) / 2);
-    const y = Math.round((srcPos.y + tgtPos.y) / 2) + 120;
-
-    const initialCols = [
-      { name: 'id', type: 'UUID', pk: true, fk: false, nullable: false, references: null, visibility: '+' },
-      { name: 'fecha', type: 'DateTime', pk: false, fk: false, nullable: false, references: null, visibility: '+' },
-    ];
-
-    this.cmd.createEntity(classId, name, initialCols, { x, y }, {
-      element_type: 'class',
-      elementType: 'class',
-    });
-
-    this.cmd.linkAssociationClass(rel.id, classId);
-    this.toast.success(`Clase de asociación ${name} vinculada`);
-  }
-
   unlinkAssociationClass(rel: DBRelation): void {
+    if (!rel.associationClassId) return;
+    const assoc = this.diagram.getEntity(rel.associationClassId);
+    if (assoc && assoc.attributes && assoc.attributes.length > 0) {
+      const ok = typeof window !== 'undefined'
+        ? window.confirm(
+            `¿Deseas desvincular y eliminar la clase intermedia "${assoc.name}" con sus ${assoc.attributes.length} atributo(s)?`
+          )
+        : true;
+      if (!ok) return;
+    }
     this.cmd.unlinkAssociationClass(rel.id);
+    if (assoc) {
+      this.cmd.deleteEntity(assoc.id);
+    }
     this.toast.info('Clase de asociación desvinculada');
   }
 

@@ -28,12 +28,14 @@ export class ExplorerSidebarComponent {
 
   toggleSidebar = output<void>();
   toggleExpandEntity = output<string>();
+  toggleEntityVisibility = output<string>();
   toggleAllExpand = output<void>();
   entitySelected = output<string>();
   entityJumpRequested = output<string>();
   relationSelected = output<string>();
   entityContextMenu = output<{ event: MouseEvent; entityId?: string }>();
   attachClass = output<ProjectClass>();
+  deleteCatalogClass = output<ProjectClass>();
   importXmi = output<File>();
   openCodegen = output<void>();
   openMembers = output<void>();
@@ -73,6 +75,21 @@ export class ExplorerSidebarComponent {
       return src.includes(query) || tgt.includes(query) || r.type.toLowerCase().includes(query);
     });
   });
+
+  isEntityOnBoard(pCls: ProjectClass): boolean {
+    return this.entities().some(
+      (e) => e.id === pCls.id || e.name.toLowerCase() === pCls.name.toLowerCase()
+    );
+  }
+
+  jumpTo(pCls: ProjectClass): void {
+    const existing = this.entities().find(
+      (e) => e.id === pCls.id || e.name.toLowerCase() === pCls.name.toLowerCase()
+    );
+    if (existing) {
+      this.entityJumpRequested.emit(existing.id);
+    }
+  }
 
   getEntityName(id: string): string {
     return this.entities().find((e) => e.id === id)?.name ?? id;
