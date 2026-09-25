@@ -45,7 +45,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     id: 'explore_ai',
-    title: 'Potencia con Vertex AI',
+    title: 'Potencia con Asistente IA',
     description: 'El chat de IA y OCR por visión te permiten generar estructuras completas o digitalizar bocetos de pizarras en segundos.',
     targetKey: 'toolbar:open-studio',
     actionHint: 'Prueba la IA o finaliza el tour cuando desees.',

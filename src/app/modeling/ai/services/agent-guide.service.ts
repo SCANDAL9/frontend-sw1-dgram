@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { AGENT_TARGET_CATALOG, AgentTargetDef } from './agent-target.registry';
 
 export interface GuideResponse {
@@ -90,7 +91,7 @@ export class AgentGuideService {
       return;
     }
 
-    // 2. Target dinámico (ej. una clase o relación creada en el canvas) -> Consultar Vertex AI Guide
+    // 2. Target dinámico (ej. una clase o relación creada en el canvas) -> Consultar Asistente IA Guide
     this.isLoading.set(true);
     try {
       const payload = {
@@ -99,7 +100,7 @@ export class AgentGuideService {
         session_token: this.sessionToken,
       };
       const res = await firstValueFrom(
-        this.http.post<any>(`/api/guide/boards/${boardId}/explain`, payload)
+        this.http.post<any>(`${environment.apiUrl}/guide/boards/${boardId}/explain`, payload)
       );
       this.currentResponse.set({
         title: res.title || 'Guía de Elemento',
@@ -140,7 +141,7 @@ export class AgentGuideService {
         session_token: this.sessionToken,
       };
       const res = await firstValueFrom(
-        this.http.post<any>(`/api/guide/boards/${boardId}/ask`, payload)
+        this.http.post<any>(`${environment.apiUrl}/guide/boards/${boardId}/ask`, payload)
       );
       this.currentResponse.set({
         title: res.title || 'Respuesta del Asistente',

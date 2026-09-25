@@ -17,7 +17,7 @@ export interface AiCommandResponseDto {
 }
 
 /**
- * Adaptador puro para transformar mensajes y comandos del asistente Vertex AI.
+ * Adaptador puro para transformar mensajes y comandos del asistente IA.
  */
 export class AiChatAdapter {
   static toChatMsg(dto: ChatMsgDto): ChatMsg {

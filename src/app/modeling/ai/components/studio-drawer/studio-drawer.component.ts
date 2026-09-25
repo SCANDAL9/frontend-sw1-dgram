@@ -19,7 +19,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AiChatService } from '../../services/ai-chat.service';
 import { SpeechRecognitionService } from '../../services/speech-recognition.service';
 import { ChatMessageFormatPipe } from '../../pipes/chat-message-format.pipe';
-import { ChatMsg, PendingConfirmation } from '../../models/ai-chat.models';
+import { ChatMsg, PendingConfirmation, ChatConversationSession } from '../../models/ai-chat.models';
 
 export type DrawerTab = 'chat' | 'export' | 'team';
 
@@ -45,10 +45,12 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
 
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
 
+  conversations = signal<ChatConversationSession[]>([]);
+  activeConversationId = signal<string | null>(null);
   messages = signal<ChatMsg[]>([]);
   inputText = '';
   aiLoading = signal(false);
-  aiStatus = signal('Generando con Vertex AI...');
+  aiStatus = signal('Generando respuesta...');
   selectedImage = signal<File | null>(null);
   pendingConfirmation = signal<PendingConfirmation | null>(null);
 
@@ -58,14 +60,14 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       if (this.isOpen() && this.boardId()) {
-        this.loadChatHistory();
+        this.loadConversations(false);
       }
     });
   }
 
   ngOnInit(): void {
     if (this.isOpen()) {
-      this.loadChatHistory();
+      this.loadConversations(false);
     }
   }
 
@@ -91,8 +93,69 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadChatHistory(): void {
-    this.aiChat.getHistory(this.boardId()).subscribe({
+  loadConversations(selectLatest: boolean = false): void {
+    this.aiChat.getConversations(this.boardId()).subscribe({
+      next: (convs) => {
+        this.conversations.set(convs || []);
+        if (convs && convs.length > 0) {
+          const currentId = this.activeConversationId();
+          const exists = currentId && convs.some((c) => c.id === currentId);
+          if (!exists || selectLatest) {
+            this.activeConversationId.set(convs[0].id);
+            this.loadChatHistory(convs[0].id);
+          }
+        } else {
+          this.startNewChat();
+        }
+      },
+      error: () => {},
+    });
+  }
+
+  startNewChat(): void {
+    this.aiChat.createConversation(this.boardId(), 'Nuevo Chat').subscribe({
+      next: (conv) => {
+        this.conversations.update((prev) => [conv, ...prev.filter((c) => c.id !== conv.id)]);
+        this.activeConversationId.set(conv.id);
+        this.messages.set([]);
+      },
+      error: () => {
+        this.toast.error('No se pudo iniciar un nuevo chat.');
+      },
+    });
+  }
+
+  switchConversation(conversationId: string): void {
+    if (this.activeConversationId() === conversationId) return;
+    this.activeConversationId.set(conversationId);
+    this.loadChatHistory(conversationId);
+  }
+
+  deleteActiveConversation(): void {
+    const currentId = this.activeConversationId();
+    if (!currentId) return;
+
+    this.aiChat.deleteConversation(this.boardId(), currentId).subscribe({
+      next: () => {
+        const remaining = this.conversations().filter((c) => c.id !== currentId);
+        this.conversations.set(remaining);
+        if (remaining.length > 0) {
+          this.activeConversationId.set(remaining[0].id);
+          this.loadChatHistory(remaining[0].id);
+        } else {
+          this.startNewChat();
+        }
+        this.toast.info('Conversación eliminada.');
+      },
+      error: () => {
+        this.toast.error('No se pudo eliminar la conversación.');
+      },
+    });
+  }
+
+  loadChatHistory(conversationId?: string): void {
+    const targetId = conversationId || this.activeConversationId() || undefined;
+    this.aiChat.getHistory(this.boardId(), targetId).subscribe({
       next: (msgs) => {
         this.messages.set(msgs || []);
         this.scrollToBottom();
@@ -132,9 +195,10 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
 
     this.aiLoading.set(true);
     const userId = this.auth.currentUser()?.id || this.ws.userId();
+    const convId = this.activeConversationId() || undefined;
 
     if (image) {
-      this.aiStatus.set('Analizando boceto con Vertex AI Vision...');
+      this.aiStatus.set('Analizando boceto con visión artificial...');
       this.messages.update((prev) => [
         ...prev,
         {
@@ -146,16 +210,17 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
       this.selectedImage.set(null);
       this.scrollToBottom();
 
-      this.aiChat.sendVision(this.boardId(), image, text, userId).subscribe({
+      this.aiChat.sendVision(this.boardId(), image, text, userId, convId).subscribe({
         next: (res) => {
           this.aiLoading.set(false);
           this.handleAiResponse(res, true);
+          this.loadConversations(false);
         },
         error: () => {
           this.aiLoading.set(false);
           this.messages.update((prev) => [
             ...prev,
-            { sender_type: 'ai', content: 'Ocurrió un error al procesar la imagen con Vertex AI.' },
+            { sender_type: 'ai', content: 'Ocurrió un error al procesar la imagen.' },
           ]);
           this.scrollToBottom();
         },
@@ -169,10 +234,14 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
       this.inputText = '';
       this.scrollToBottom();
 
-      this.aiChat.sendMessage(this.boardId(), text, userId).subscribe({
+      this.aiChat.sendMessage(this.boardId(), text, userId, convId).subscribe({
         next: (res) => {
           this.aiLoading.set(false);
+          if (res.conversation_id && res.conversation_id !== this.activeConversationId()) {
+            this.activeConversationId.set(res.conversation_id);
+          }
           this.handleAiResponse(res, false);
+          this.loadConversations(false);
         },
         error: () => {
           this.aiLoading.set(false);
@@ -285,11 +354,22 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
 
   private executeCommandsDirectly(commands: any[], replyText: string): void {
     for (const cmd of commands) {
+      const payload = { ...(cmd.payload || {}) };
+      if (
+        (cmd.command_type === 'CREATE_ENTITY' || cmd.command_type === 'CREATE_CLASS') &&
+        !payload.entity_id &&
+        !payload.class_id
+      ) {
+        const generatedId = `ent-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        payload.entity_id = generatedId;
+        payload.class_id = generatedId;
+      }
+
       const fullCmd = {
         command_id: cmd.command_id || `ai-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         command_type: cmd.command_type,
-        payload: cmd.payload,
-        actor: 'ai:vertex-gemini',
+        payload,
+        actor: 'ai:copilot',
         timestamp: new Date().toISOString(),
         model_version: this.diagram.version() + 1,
       };

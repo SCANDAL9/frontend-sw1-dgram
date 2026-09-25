@@ -71,7 +71,7 @@ export const AGENT_TARGET_CATALOG: Record<string, AgentTargetDef> = {
     key: 'toolbar:open-studio',
     title: 'Chat IA y Asistente Multimodal',
     explanation:
-      'Abre el panel de IA de Vertex Gemini. Puedes pedirle que cree modelos completos por texto, ' +
+      'Abre el panel de Asistente IA. Puedes pedirle que cree modelos completos por texto, ' +
       'dictarle por voz o subir una fotografía de una pizarra para convertirla en diagrama interactivo.',
     tip: 'Tip: Prueba escribiendo "Crea un modelo de e-commerce con Usuario, Pedido y Producto".',
     nextStep: {
