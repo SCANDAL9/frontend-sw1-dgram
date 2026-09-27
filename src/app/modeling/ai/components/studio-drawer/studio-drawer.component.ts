@@ -4,6 +4,7 @@ import {
   OnDestroy,
   OnInit,
   ViewChild,
+  computed,
   effect,
   inject,
   input,
@@ -17,8 +18,9 @@ import { WebsocketService } from '../../../diagram/services/websocket.service';
 import { AuthService } from '../../../../workspace/authentication/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AiChatService } from '../../services/ai-chat.service';
-import { SpeechRecognitionService } from '../../services/speech-recognition.service';
+import { AudioRecordingService } from '../../services/audio-recording.service';
 import { ChatMessageFormatPipe } from '../../pipes/chat-message-format.pipe';
+import { AuthMediaUrlPipe } from '../../pipes/auth-media-url.pipe';
 import { ChatMsg, PendingConfirmation, ChatConversationSession } from '../../models/ai-chat.models';
 
 export type DrawerTab = 'chat' | 'export' | 'team';
@@ -26,12 +28,12 @@ export type DrawerTab = 'chat' | 'export' | 'team';
 @Component({
   selector: 'app-studio-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChatMessageFormatPipe],
+  imports: [CommonModule, FormsModule, ChatMessageFormatPipe, AuthMediaUrlPipe],
   templateUrl: './studio-drawer.component.html',
 })
 export class StudioDrawerComponent implements OnInit, OnDestroy {
   private aiChat = inject(AiChatService);
-  private speech = inject(SpeechRecognitionService);
+  private audioRecorder = inject(AudioRecordingService);
   public diagram = inject(DiagramService);
   private ws = inject(WebsocketService);
   public auth = inject(AuthService);
@@ -52,10 +54,25 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
   aiLoading = signal(false);
   aiStatus = signal('Generando respuesta...');
   selectedImage = signal<File | null>(null);
+  selectedImageUrl = signal<string | null>(null);
+  selectedAudio = signal<File | null>(null);
+  isAttachmentMenuOpen = signal<boolean>(false);
+
+  // Audio preview playback
+  private audioElement: HTMLAudioElement | null = null;
+  isPlayingAudio = signal<boolean>(false);
+  audioCurrentTime = signal<number>(0);
+  audioDuration = signal<number>(0);
   pendingConfirmation = signal<PendingConfirmation | null>(null);
 
-  isSpeechSupported = this.speech.isSupported;
-  isRecording = this.speech.isRecording;
+  isRecordingAudio = this.audioRecorder.isRecording;
+  recordingSeconds = this.audioRecorder.recordingSeconds;
+  readonly recordingDurationText = computed(() => {
+    const s = this.recordingSeconds();
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  });
 
   constructor() {
     effect(() => {
@@ -72,25 +89,101 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.speech.stop();
+    this.audioRecorder.cancelRecording();
+    this.stopAudioPlayback();
+    if (this.selectedImageUrl()) {
+      URL.revokeObjectURL(this.selectedImageUrl()!);
+    }
   }
 
   close(): void {
-    this.speech.stop();
+    this.audioRecorder.cancelRecording();
+    this.stopAudioPlayback();
     this.closed.emit();
   }
 
-  toggleVoiceRecognition(): void {
-    if (this.isRecording()) {
-      this.speech.stop();
+  async toggleAudioRecording(): Promise<void> {
+    if (this.isRecordingAudio()) {
+      const file = await this.audioRecorder.stopRecording();
+      if (file) {
+        this.selectedAudio.set(file);
+        this.setupAudioPreview(file);
+      }
     } else {
-      const started = this.speech.start((transcript) => {
-        this.inputText = transcript;
-      });
-      if (!started) {
-        this.toast.error('Tu navegador no soporta reconocimiento de voz (Web Speech API).');
+      const ok = await this.audioRecorder.startRecording();
+      if (!ok) {
+        this.toast.error('No se pudo acceder al micrófono para grabar.');
       }
     }
+  }
+
+  cancelAudioRecording(): void {
+    this.audioRecorder.cancelRecording();
+  }
+
+  onAudioFileSelected(e: Event): void {
+    const fileInput = e.target as HTMLInputElement;
+    if (fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      this.selectedAudio.set(file);
+      this.setupAudioPreview(file);
+      fileInput.value = '';
+    }
+  }
+
+  setupAudioPreview(file: File): void {
+    this.stopAudioPlayback();
+    try {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio(url);
+      this.audioElement = audio;
+      audio.onloadedmetadata = () => {
+        this.audioDuration.set(audio.duration || 0);
+      };
+      audio.ontimeupdate = () => {
+        this.audioCurrentTime.set(audio.currentTime || 0);
+      };
+      audio.onended = () => {
+        this.isPlayingAudio.set(false);
+        this.audioCurrentTime.set(0);
+      };
+    } catch {
+      // Audio playback preview fallback
+    }
+  }
+
+  toggleAudioPlayback(): void {
+    if (!this.audioElement) return;
+    if (this.isPlayingAudio()) {
+      this.audioElement.pause();
+      this.isPlayingAudio.set(false);
+    } else {
+      this.audioElement.play().catch(() => {});
+      this.isPlayingAudio.set(true);
+    }
+  }
+
+  stopAudioPlayback(): void {
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.src = '';
+      this.audioElement = null;
+    }
+    this.isPlayingAudio.set(false);
+    this.audioCurrentTime.set(0);
+    this.audioDuration.set(0);
+  }
+
+  formatAudioTime(seconds: number): string {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  removeSelectedAudio(): void {
+    this.stopAudioPlayback();
+    this.selectedAudio.set(null);
   }
 
   loadConversations(selectLatest: boolean = false): void {
@@ -180,24 +273,76 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
   onFileSelected(e: Event): void {
     const fileInput = e.target as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
-      this.selectedImage.set(fileInput.files[0]);
+      const file = fileInput.files[0];
+      this.selectedImage.set(file);
+      if (this.selectedImageUrl()) {
+        URL.revokeObjectURL(this.selectedImageUrl()!);
+      }
+      this.selectedImageUrl.set(URL.createObjectURL(file));
+      fileInput.value = '';
     }
   }
 
   removeSelectedImage(): void {
+    if (this.selectedImageUrl()) {
+      URL.revokeObjectURL(this.selectedImageUrl()!);
+      this.selectedImageUrl.set(null);
+    }
     this.selectedImage.set(null);
   }
 
-  sendChatMessage(): void {
+  async sendChatMessage(): Promise<void> {
+    if (this.isRecordingAudio()) {
+      const recorded = await this.audioRecorder.stopRecording();
+      if (recorded) {
+        this.selectedAudio.set(recorded);
+        this.selectedImage.set(null);
+      }
+    }
+
     const text = this.inputText.trim();
     const image = this.selectedImage();
-    if (!text && !image) return;
+    const audio = this.selectedAudio();
+    if (!text && !image && !audio) return;
 
     this.aiLoading.set(true);
     const userId = this.auth.currentUser()?.id || this.ws.userId();
     const convId = this.activeConversationId() || undefined;
 
-    if (image) {
+    if (audio) {
+      this.aiStatus.set('Transcribiendo audio y ejecutando comandos...');
+      const userContent = text ? `[Nota de voz]: "${text}"` : '🎙️ Nota de voz adjunta para transcripción...';
+      this.messages.update((prev) => [
+        ...prev,
+        {
+          sender_type: 'user',
+          content: userContent,
+        },
+      ]);
+      this.inputText = '';
+      this.stopAudioPlayback();
+      this.selectedAudio.set(null);
+      this.scrollToBottom();
+
+      this.aiChat.sendAudio(this.boardId(), audio, text || undefined, userId, convId).subscribe({
+        next: (res: any) => {
+          this.aiLoading.set(false);
+          if (res.conversation_id && res.conversation_id !== this.activeConversationId()) {
+            this.activeConversationId.set(res.conversation_id);
+          }
+          this.handleAiResponse(res, false);
+          this.loadConversations(false);
+        },
+        error: () => {
+          this.aiLoading.set(false);
+          this.messages.update((prev) => [
+            ...prev,
+            { sender_type: 'ai', content: 'Ocurrió un error al procesar la nota de voz.' },
+          ]);
+          this.scrollToBottom();
+        },
+      });
+    } else if (image) {
       this.aiStatus.set('Analizando boceto con visión artificial...');
       this.messages.update((prev) => [
         ...prev,
@@ -207,7 +352,7 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
         },
       ]);
       this.inputText = '';
-      this.selectedImage.set(null);
+      this.removeSelectedImage();
       this.scrollToBottom();
 
       this.aiChat.sendVision(this.boardId(), image, text, userId, convId).subscribe({

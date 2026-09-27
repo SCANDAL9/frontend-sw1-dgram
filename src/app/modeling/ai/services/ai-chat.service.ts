@@ -82,4 +82,27 @@ export class AiChatService {
       .post<AiCommandResponseDto>(`${environment.apiUrl}/chat/boards/${boardId}/vision`, formData)
       .pipe(map((dto) => AiChatAdapter.toAiCommandResponse(dto)));
   }
+
+  sendAudio(
+    boardId: string,
+    audio: File,
+    prompt?: string,
+    userId?: string,
+    conversationId?: string
+  ): Observable<AiCommandResponse> {
+    const formData = new FormData();
+    formData.append('file', audio);
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
+    if (userId) {
+      formData.append('user_id', userId);
+    }
+    if (conversationId) {
+      formData.append('conversation_id', conversationId);
+    }
+    return this.http
+      .post<AiCommandResponseDto>(`${environment.apiUrl}/chat/boards/${boardId}/audio`, formData)
+      .pipe(map((dto) => AiChatAdapter.toAiCommandResponse(dto)));
+  }
 }
