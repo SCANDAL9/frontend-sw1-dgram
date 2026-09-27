@@ -49,21 +49,29 @@
             <span>{{ fileList().length > 0 ? 'Regenerar' : 'Generar' }}</span>
           }
         </button>
-        <a
+        <button
+          type="button"
           class="bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          [href]="downloadUrl()"
-          target="_blank"
-          download
-          [class.opacity-50]="loading() || fileList().length === 0"
-          [class.pointer-events-none]="loading() || fileList().length === 0"
+          (click)="downloadZip()"
+          [disabled]="loading() || isDownloading() || fileList().length === 0"
+          [class.opacity-50]="loading() || isDownloading() || fileList().length === 0"
+          [class.pointer-events-none]="loading() || isDownloading() || fileList().length === 0"
         >
-          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Descargar .ZIP</span>
-        </a>
+          @if (isDownloading()) {
+            <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+              <path d="M12 2a10 10 0 0 1 10 10"/>
+            </svg>
+            <span>Descargando...</span>
+          } @else {
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Descargar .ZIP</span>
+          }
+        </button>
       </div>
     </div>
 

@@ -21,6 +21,16 @@ export class CodegenService {
       .pipe(map((dto) => CodegenAdapter.toCodegenResponse(dto)));
   }
 
+  downloadZip(
+    boardId: string,
+    basePackage: string = 'com.dgram.generated'
+  ): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiUrl}/codegen/boards/${boardId}/download?base_package=${encodeURIComponent(basePackage)}`,
+      { responseType: 'blob' }
+    );
+  }
+
   downloadCodeZipUrl(
     boardId: string,
     basePackage: string = 'com.dgram.generated'

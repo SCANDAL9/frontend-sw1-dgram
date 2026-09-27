@@ -1,8 +1,11 @@
-import { Component, signal, computed, OnInit, input, output, effect } from '@angular/core';
+import { Component, signal, computed, OnInit, input, output, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { LayerFilterType } from '../../models/codegen.model';
 import { FileBasenamePipe, FileIconPipe } from '../../pipes/file-basename.pipe';
+import { CodegenService } from '../../services/codegen.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-codegen-modal',
@@ -11,6 +14,9 @@ import { FileBasenamePipe, FileIconPipe } from '../../pipes/file-basename.pipe';
   templateUrl: './codegen-modal.component.html',
 })
 export class CodegenModalComponent implements OnInit {
+  private codegenService = inject(CodegenService);
+  private toast = inject(ToastService);
+
   boardId = input.required<string>();
   files = input<Record<string, string>>({});
   loading = input<boolean>(false);
@@ -23,6 +29,7 @@ export class CodegenModalComponent implements OnInit {
   basePackage = signal<string>('com.dgram.generated');
   selectedFile = signal<string | null>(null);
   copied = signal<boolean>(false);
+  isDownloading = signal<boolean>(false);
   layerFilter = signal<LayerFilterType>('ALL');
 
   readonly fileList = computed<string[]>(() => {
@@ -79,6 +86,30 @@ export class CodegenModalComponent implements OnInit {
 
   generateCode(): void {
     this.generate.emit(this.basePackage());
+  }
+
+  async downloadZip(): Promise<void> {
+    if (this.isDownloading() || this.loading() || this.fileList().length === 0) return;
+    this.isDownloading.set(true);
+    try {
+      const blob = await firstValueFrom(
+        this.codegenService.downloadZip(this.boardId(), this.basePackage())
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${this.basePackage().replace(/\./g, '_')}_code.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      this.toast.success('Proyecto .ZIP descargado exitosamente');
+    } catch (err) {
+      console.error('Error al descargar ZIP:', err);
+      this.toast.error('Error al descargar el archivo ZIP');
+    } finally {
+      this.isDownloading.set(false);
+    }
   }
 
   copyCode(): void {
