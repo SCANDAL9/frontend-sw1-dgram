@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 
 import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
 import { ExplorerSidebarComponent } from '../../components/explorer-sidebar/explorer-sidebar.component';
@@ -366,8 +367,17 @@ export class BoardComponent implements OnInit, CanWarnGuestLeave {
           this.toast.error('Guarda el tablero antes de exportar a XMI');
           return;
         }
-        this.exportSvc.downloadXmi(bId, 'diagram.xmi', selectedIds);
-        this.toast.success(scope === 'selected' ? 'Archivo XMI 2.1 (seleccionados) generado' : 'Archivo XMI 2.1 (Enterprise Architect) generado');
+        try {
+          await firstValueFrom(this.exportSvc.downloadXmi(bId, 'diagram.xmi', selectedIds));
+          this.toast.success(
+            scope === 'selected'
+              ? 'Archivo XMI 2.1 (seleccionados) generado'
+              : 'Archivo XMI 2.1 (Enterprise Architect) generado'
+          );
+        } catch (err) {
+          console.error('Error al exportar XMI:', err);
+          this.toast.error('Error al exportar a XMI');
+        }
         break;
       }
       case 'png': {

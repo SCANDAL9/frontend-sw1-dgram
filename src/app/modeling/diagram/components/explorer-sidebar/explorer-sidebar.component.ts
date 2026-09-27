@@ -11,6 +11,9 @@ import { ThemeService } from '../../../../core/services/theme.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './explorer-sidebar.component.html',
+  host: {
+    class: 'h-full flex flex-col shrink-0 overflow-hidden',
+  },
 })
 export class ExplorerSidebarComponent {
   theme = inject(ThemeService);

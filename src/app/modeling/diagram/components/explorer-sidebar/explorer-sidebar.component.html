@@ -1,9 +1,8 @@
 <aside
-  class="shrink-0 bg-card border-r border-border flex flex-col transition-all duration-200 ease-in-out relative z-20 text-foreground"
+  class="h-full max-h-full shrink-0 bg-card border-r border-border flex flex-col transition-all duration-200 ease-in-out relative z-20 text-foreground overflow-hidden"
   [class.w-[270px]]="isOpen()"
   [class.w-0]="!isOpen()"
   [class.opacity-0]="!isOpen()"
-  [class.overflow-hidden]="true"
 >
   <!-- Header with title, count & quick tree actions -->
   <div class="h-11 flex items-center justify-between px-3.5 border-b border-border shrink-0 bg-card/60 backdrop-blur-md">
@@ -62,7 +61,7 @@
   </div>
 
   <!-- Scrollable Tree View Content -->
-  <div class="flex-1 overflow-y-auto py-2 text-[12px] flex flex-col gap-2">
+  <div class="flex-1 min-h-0 overflow-y-auto py-2 text-[12px] flex flex-col gap-2">
     <!-- 1. Classes Accordion Section -->
     <div>
       <button
@@ -349,7 +348,7 @@
   </div>
 
   <!-- Sidebar Bottom Action Bar (Exportar, Equipo, Entrar / Perfil) -->
-  <div class="p-2 border-t border-border bg-card/60 shrink-0 flex flex-col gap-1.5 relative">
+  <div class="p-2 border-t border-border bg-card/95 backdrop-blur-md shrink-0 mt-auto flex flex-col gap-1.5 relative z-30">
     <!-- Capsule Group -->
     <div class="flex items-center justify-between gap-1 p-0.5 bg-muted border border-border rounded-xl shadow-2xs">
       <!-- 1. Export Action Button (Dropdown opens UPWARDS) -->

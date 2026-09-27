@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 import { toPng } from 'html-to-image';
 import { DiagramService } from '../../../modeling/diagram/services/diagram.service';
 import { DBEntity, DBRelation } from '../../../modeling/diagram/models/diagram.model';
@@ -15,6 +17,7 @@ interface InferredForeignKey {
 
 @Injectable({ providedIn: 'root' })
 export class ExportService {
+  private http = inject(HttpClient);
   private diagram = inject(DiagramService);
 
   toSql(selectedIds?: string[]): string {
@@ -241,9 +244,17 @@ export class ExportService {
     this.download('diagram.json', new Blob([this.toJson(selectedIds)], { type: 'application/json' }));
   }
 
-  downloadXmi(boardId: string, filename: string = 'diagram.xmi', selectedIds?: string[]): void {
+  downloadXmi(boardId: string, filename: string = 'diagram.xmi', selectedIds?: string[]): Observable<Blob> {
     const query = selectedIds && selectedIds.length > 0 ? `?class_ids=${selectedIds.join(',')}` : '';
-    window.open(`${environment.apiUrl}/boards/${boardId}/export/xmi${query}`, '_blank');
+    return this.http
+      .get(`${environment.apiUrl}/boards/${boardId}/export/xmi${query}`, {
+        responseType: 'blob',
+      })
+      .pipe(
+        tap((blob) => {
+          this.download(filename, blob);
+        })
+      );
   }
 
   private entitySql(e: DBEntity, extraCols?: Array<{ name: string; type: string }>): string {

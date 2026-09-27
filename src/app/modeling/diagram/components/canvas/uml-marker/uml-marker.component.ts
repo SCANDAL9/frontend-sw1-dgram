@@ -86,10 +86,10 @@ export class UmlMarkerComponent {
         return end === 'END' ? 'triangle-hollow' : 'none';
 
       case 'Composition':
-        return end === 'START' ? 'diamond-filled' : 'none';
+        return end === 'END' ? 'diamond-filled' : 'none';
 
       case 'Aggregation':
-        return end === 'START' ? 'diamond-hollow' : 'none';
+        return end === 'END' ? 'diamond-hollow' : 'none';
 
       case 'Dependency':
         return end === 'END' ? 'open-arrow' : 'none';
