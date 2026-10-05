@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -22,6 +23,7 @@ import { AudioRecordingService } from '../../services/audio-recording.service';
 import { ChatMessageFormatPipe } from '../../pipes/chat-message-format.pipe';
 import { AuthMediaUrlPipe } from '../../pipes/auth-media-url.pipe';
 import { ChatMsg, PendingConfirmation, ChatConversationSession } from '../../models/ai-chat.models';
+import { environment } from '../../../../../environments/environment';
 
 export type DrawerTab = 'chat' | 'export' | 'team';
 
@@ -175,7 +177,7 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
   }
 
   formatAudioTime(seconds: number): string {
-    if (isNaN(seconds) || seconds < 0) return '0:00';
+    if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -270,15 +272,73 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('paste', ['$event'])
+  handlePaste(event: ClipboardEvent): void {
+    if (!this.isOpen() || this.activeTab() !== 'chat') {
+      return;
+    }
+    this.processClipboardPaste(event);
+  }
+
+  processClipboardPaste(event: ClipboardEvent): void {
+    const clipboardData = event.clipboardData;
+    if (!clipboardData) return;
+
+    let imageFile: File | null = null;
+
+    // 1. Inspect clipboard items
+    const items = clipboardData.items;
+    if (items && items.length > 0) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            imageFile = file;
+            break;
+          }
+        }
+      }
+    }
+
+    // 2. Fallback to clipboard files list
+    if (!imageFile && clipboardData.files && clipboardData.files.length > 0) {
+      for (let i = 0; i < clipboardData.files.length; i++) {
+        const file = clipboardData.files[i];
+        if (file.type.startsWith('image/')) {
+          imageFile = file;
+          break;
+        }
+      }
+    }
+
+    // 3. Stage the image and stop native text paste of image binaries
+    if (imageFile) {
+      event.preventDefault();
+      event.stopPropagation();
+      const ext = imageFile.type.split('/')[1] || 'png';
+      const fileName = imageFile.name && imageFile.name !== 'image.png'
+        ? imageFile.name
+        : `clipboard-${Date.now()}.${ext}`;
+      const namedFile = new File([imageFile], fileName, { type: imageFile.type });
+
+      this.setImageFile(namedFile);
+      this.toast.info('Imagen pegada desde el portapapeles');
+    }
+  }
+
+  private setImageFile(file: File): void {
+    if (this.selectedImageUrl()) {
+      URL.revokeObjectURL(this.selectedImageUrl()!);
+    }
+    this.selectedImage.set(file);
+    this.selectedImageUrl.set(URL.createObjectURL(file));
+  }
+
   onFileSelected(e: Event): void {
     const fileInput = e.target as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      this.selectedImage.set(file);
-      if (this.selectedImageUrl()) {
-        URL.revokeObjectURL(this.selectedImageUrl()!);
-      }
-      this.selectedImageUrl.set(URL.createObjectURL(file));
+      this.setImageFile(fileInput.files[0]);
       fileInput.value = '';
     }
   }
@@ -291,12 +351,35 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
     this.selectedImage.set(null);
   }
 
+  toggleMsgAudio(player: HTMLAudioElement): void {
+    if (player.paused) {
+      player.play().catch((err) => console.error('Audio play error:', err));
+    } else {
+      player.pause();
+    }
+  }
+
+  openImagePreview(url: string | null | undefined): void {
+    if (!url) return;
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      window.open(url, '_blank');
+      return;
+    }
+    let fullUrl = url;
+    if (url.startsWith('/api')) {
+      const backendBase = environment.apiUrl.replace(/\/api\/?$/, '');
+      fullUrl = `${backendBase}${url}`;
+    }
+    const token = this.auth.token();
+    const resolvedUrl = token ? `${fullUrl}${fullUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : fullUrl;
+    window.open(resolvedUrl, '_blank');
+  }
+
   async sendChatMessage(): Promise<void> {
     if (this.isRecordingAudio()) {
       const recorded = await this.audioRecorder.stopRecording();
       if (recorded) {
         this.selectedAudio.set(recorded);
-        this.selectedImage.set(null);
       }
     }
 
@@ -309,16 +392,71 @@ export class StudioDrawerComponent implements OnInit, OnDestroy {
     const userId = this.auth.currentUser()?.id || this.ws.userId();
     const convId = this.activeConversationId() || undefined;
 
-    if (audio) {
+    if (audio && image) {
+      this.aiStatus.set('Analizando boceto y nota de voz multimodal...');
+      const userContent = text
+        ? `[Boceto + Nota de voz]: "${text}"`
+        : '🖼️🎙️ Boceto y nota de voz adjuntados para análisis...';
+      const audioBlobUrl = URL.createObjectURL(audio);
+      const userMsg: ChatMsg = {
+        sender_type: 'user',
+        content: userContent,
+        created_at: new Date().toISOString(),
+        attachments: [
+          {
+            id: `att-img-${Date.now()}`,
+            type: 'image',
+            storage_url: this.selectedImageUrl() || '',
+            file_name: image.name,
+          },
+          {
+            id: `att-aud-${Date.now()}`,
+            type: 'audio',
+            storage_url: audioBlobUrl,
+            file_name: audio.name,
+          },
+        ],
+      };
+      this.messages.update((prev) => [...prev, userMsg]);
+      this.inputText = '';
+      this.stopAudioPlayback();
+      this.selectedAudio.set(null);
+      this.removeSelectedImage();
+      this.scrollToBottom();
+
+      this.aiChat.sendVision(this.boardId(), image, text || undefined, userId, convId, audio).subscribe({
+        next: (res) => {
+          this.aiLoading.set(false);
+          this.handleAiResponse(res, true);
+          this.loadConversations(false);
+        },
+        error: () => {
+          this.aiLoading.set(false);
+          this.messages.update((prev) => [
+            ...prev,
+            { sender_type: 'ai', content: 'Ocurrió un error al procesar el boceto y la nota de voz.' },
+          ]);
+          this.scrollToBottom();
+        },
+      });
+    } else if (audio) {
       this.aiStatus.set('Transcribiendo audio y ejecutando comandos...');
       const userContent = text ? `[Nota de voz]: "${text}"` : '🎙️ Nota de voz adjunta para transcripción...';
-      this.messages.update((prev) => [
-        ...prev,
-        {
-          sender_type: 'user',
-          content: userContent,
-        },
-      ]);
+      const audioBlobUrl = URL.createObjectURL(audio);
+      const userMsg: ChatMsg = {
+        sender_type: 'user',
+        content: userContent,
+        created_at: new Date().toISOString(),
+        attachments: [
+          {
+            id: `att-aud-${Date.now()}`,
+            type: 'audio',
+            storage_url: audioBlobUrl,
+            file_name: audio.name,
+          },
+        ],
+      };
+      this.messages.update((prev) => [...prev, userMsg]);
       this.inputText = '';
       this.stopAudioPlayback();
       this.selectedAudio.set(null);

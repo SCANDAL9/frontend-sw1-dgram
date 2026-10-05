@@ -1,5 +1,5 @@
 export interface ChatAttachmentItem {
-  id: string;
+  id?: string;
   type: 'image' | 'audio' | 'document' | 'other';
   storage_url: string;
   file_name?: string | null;

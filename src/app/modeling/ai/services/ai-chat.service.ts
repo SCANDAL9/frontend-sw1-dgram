@@ -65,10 +65,14 @@ export class AiChatService {
     image: File,
     prompt?: string,
     userId?: string,
-    conversationId?: string
+    conversationId?: string,
+    audio?: File
   ): Observable<AiCommandResponse> {
     const formData = new FormData();
     formData.append('file', image);
+    if (audio) {
+      formData.append('audio_file', audio);
+    }
     if (prompt) {
       formData.append('prompt', prompt);
     }

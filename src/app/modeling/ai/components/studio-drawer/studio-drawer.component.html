@@ -119,16 +119,38 @@
         </div>
         <div [innerHTML]="msg.content | chatMessageFormat"></div>
         @if (msg.attachments && msg.attachments.length > 0) {
-        <div class="mt-2.5 flex flex-col gap-2">
-          @for (att of msg.attachments; track att.id) {
+        <div class="mt-2.5 flex flex-wrap gap-2 items-center">
+          @for (att of msg.attachments; track att.id || $index) {
           @if (att.type === 'image') {
-          <div class="overflow-hidden rounded-xl border border-border/50 max-w-[260px] bg-background/50 shadow-2xs">
+          <div class="group relative overflow-hidden rounded-lg border border-white/10 max-w-[130px] bg-black/40 shadow-2xs cursor-pointer shrink-0"
+            (click)="openImagePreview(att.storage_url)" title="Clic para ampliar imagen">
             <img [src]="att.storage_url | authMediaUrl" [alt]="att.file_name || 'Boceto / Imagen OCR'"
-              class="max-h-44 w-auto object-cover rounded-lg" loading="lazy" />
+              class="w-full max-h-20 object-cover rounded-md transition-transform duration-200 group-hover:scale-105" loading="lazy" />
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-medium transition-opacity">
+              Ampliar
+            </div>
           </div>
           } @else if (att.type === 'audio') {
-          <div class="flex items-center gap-2 p-2 rounded-xl bg-background/60 border border-border/50 shadow-2xs">
-            <audio [src]="att.storage_url | authMediaUrl" controls class="h-7 max-w-[200px]"></audio>
+          <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-black/25 border border-white/10 text-xs select-none max-w-[210px] shrink-0">
+            <audio #msgAudio [src]="att.storage_url | authMediaUrl" preload="metadata" class="hidden"></audio>
+            <button type="button"
+              class="size-6 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
+              (click)="toggleMsgAudio(msgAudio)" [title]="msgAudio.paused ? 'Reproducir nota de voz' : 'Pausar nota de voz'">
+              @if (msgAudio.paused) {
+                <svg class="size-3 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              } @else {
+                <svg class="size-3 fill-current" viewBox="0 0 24 24">
+                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                  <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+              }
+            </button>
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="text-[10px] opacity-80 truncate">{{ att.file_name || 'Nota de voz' }}</span>
+              <span class="text-[9.5px] font-mono opacity-60">
+                {{ formatAudioTime(msgAudio.currentTime || 0) }} / {{ formatAudioTime(msgAudio.duration || 0) }}
+              </span>
+            </div>
           </div>
           }
           }
