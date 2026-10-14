@@ -4,10 +4,10 @@
     [searchQuery]="searchQuery()"
     [currentUser]="auth.currentUser()"
     [isDark]="theme.isDark()"
-    (searchQueryChange)="searchQuery.set($event)"
+    (searchQueryChange)="onSearchChange($event)"
     (toggleTheme)="theme.toggleTheme()"
-    (openProfile)="auth.showProfileModal.set(true)"
-    (openAuth)="showAuthModal.set(true)"
+    (openProfile)="authDialog.openProfile()"
+    (openAuth)="authDialog.openAuth()"
     (logout)="auth.logout()"
     (createBoard)="openCreateBoard()"
   />
@@ -142,7 +142,7 @@
             <button
               type="button"
               class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-all cursor-pointer shadow-sm shadow-primary/20 active:scale-[0.97]"
-              (click)="showAuthModal.set(true)"
+              (click)="authDialog.openAuth()"
             >
               Iniciar Sesión
             </button>
@@ -236,17 +236,17 @@
 }
 
 <!-- Auth Modal Component (Dumb) -->
-@if (showAuthModal() || auth.showAuthModal()) {
+@if (auth.showAuthModal()) {
   <app-auth-modal
-    [loading]="authLoading()"
-    [errorMsg]="authError()"
-    [successMsg]="authSuccess()"
+    [loading]="authDialog.authLoading()"
+    [errorMsg]="authDialog.authError()"
+    [successMsg]="authDialog.authSuccess()"
     [initialResetToken]="auth.resetToken()"
     (loginSubmitted)="handleLogin($event)"
     (registerSubmitted)="handleRegister($event)"
     (forgotPasswordSubmitted)="handleForgotPassword($event)"
     (resetPasswordSubmitted)="handleResetPassword($event)"
-    (closed)="showAuthModal.set(false); auth.showAuthModal.set(false)"
+    (closed)="authDialog.closeAuth()"
   />
 }
 
@@ -254,12 +254,12 @@
 @if (auth.showProfileModal()) {
   <app-profile-modal
     [currentUser]="auth.currentUser()"
-    [loading]="profileLoading()"
-    [errorMsg]="profileError()"
-    [successMsg]="profileSuccess()"
+    [loading]="authDialog.profileLoading()"
+    [errorMsg]="authDialog.profileError()"
+    [successMsg]="authDialog.profileSuccess()"
     (updateProfileSubmitted)="handleUpdateProfile($event)"
     (changePasswordSubmitted)="handleChangePassword($event)"
     (logout)="auth.logout()"
-    (closed)="auth.showProfileModal.set(false)"
+    (closed)="authDialog.closeProfile()"
   />
 }

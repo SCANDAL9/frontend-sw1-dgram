@@ -81,6 +81,10 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
     return results;
   },
 
+  DETACH_ENTITY: (cmd, snapshot) => {
+    return INVERSE_MAP.DELETE_ENTITY ? INVERSE_MAP.DELETE_ENTITY(cmd, snapshot) : null;
+  },
+
   UPDATE_ENTITY: (cmd, snapshot) => {
     const id = cmd.payload.entity_id ?? cmd.payload.class_id;
     const entity = snapshot.entities.find((e) => e.id === id);
@@ -180,6 +184,8 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
       type: 'UPDATE_RELATION',
       payload: {
         relation_id: rel.id,
+        source_entity_id: rel.sourceId,
+        target_entity_id: rel.targetId,
         relation_type: rel.type,
         source_column: rel.sourceColumn,
         target_column: rel.targetColumn,
@@ -188,6 +194,39 @@ const INVERSE_MAP: Partial<Record<CommandType, InverseFn>> = {
         target_role: rel.targetRole || undefined,
         source_multiplicity: rel.sourceMultiplicity || undefined,
         target_multiplicity: rel.targetMultiplicity || undefined,
+      },
+    };
+  },
+
+  CREATE_ASSOCIATION_CLASS: (cmd) => {
+    const relId = cmd.payload.relation_id || cmd.payload.association_id;
+    const cid = cmd.payload.class_id || cmd.payload.entity_id;
+    const results: InverseResult[] = [];
+    if (relId) {
+      results.push({
+        type: 'UNLINK_ASSOCIATION_CLASS',
+        payload: { relation_id: relId },
+      });
+    }
+    if (cid) {
+      results.push({
+        type: 'DELETE_ENTITY',
+        payload: { entity_id: cid },
+      });
+    }
+    return results;
+  },
+
+  REORDER_ATTRIBUTES: (cmd, snapshot) => {
+    const id = cmd.payload.entity_id ?? cmd.payload.class_id;
+    const entity = snapshot.entities.find((e) => e.id === id);
+    if (!entity) return null;
+    const prevNames = (entity.attributes || (entity as any).columns || []).map((c: any) => c.name);
+    return {
+      type: 'REORDER_ATTRIBUTES',
+      payload: {
+        entity_id: id,
+        ordered_attribute_names: prevNames,
       },
     };
   },

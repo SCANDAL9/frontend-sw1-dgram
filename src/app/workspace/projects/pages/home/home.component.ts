@@ -1,8 +1,10 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { BoardService, Board } from '../../../../modeling/diagram/services/board.service';
 import { AuthService } from '../../../authentication/services/auth.service';
+import { AuthDialogService } from '../../../authentication/services/auth-dialog.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { AuthModalComponent } from '../../../authentication/components/auth-modal/auth-modal.component';
 import { ProfileModalComponent } from '../../../authentication/components/profile-modal/profile-modal.component';
@@ -37,13 +39,14 @@ import { ToastService } from '../../../../core/services/toast.service';
   templateUrl: './home.component.html',
   host: { class: 'block w-full h-full' },
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   private boards = inject(BoardService);
   private xmiService = inject(XmiService);
   private projectService = inject(ProjectService);
   private router = inject(Router);
   private toast = inject(ToastService);
   public auth = inject(AuthService);
+  public authDialog = inject(AuthDialogService);
   public theme = inject(ThemeService);
 
   activeTab = signal<'boards' | 'projects'>('boards');
@@ -69,13 +72,8 @@ export class HomeComponent implements OnInit {
   deleteProjectTarget = signal<Project | null>(null);
   deleting = signal(false);
 
-  showAuthModal = signal(false);
-  authLoading = signal(false);
-  authError = signal<string | null>(null);
-  authSuccess = signal<string | null>(null);
-  profileLoading = signal(false);
-  profileError = signal<string | null>(null);
-  profileSuccess = signal<string | null>(null);
+  private searchSubject = new Subject<string>();
+  private searchSub?: Subscription;
 
   filteredBoards = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -98,6 +96,23 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.refresh();
     this.loadProjects();
+
+    this.searchSub = this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((query) => {
+        if (this.activeTab() === 'projects') {
+          this.loadProjects(query);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
+
+  onSearchChange(query: string): void {
+    this.searchQuery.set(query);
+    this.searchSubject.next(query);
   }
 
   refresh(): void {
@@ -116,9 +131,9 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  loadProjects(): void {
+  loadProjects(search?: string): void {
     this.loadingProjects.set(true);
-    this.projectService.listProjects().subscribe({
+    this.projectService.listProjects(search).subscribe({
       next: (list) => {
         this.projectsList.set(list || []);
         this.loadingProjects.set(false);
@@ -133,7 +148,7 @@ export class HomeComponent implements OnInit {
   // --- Board Actions ---
   openCreateBoard(): void {
     if (!this.auth.isAuthenticated()) {
-      this.showAuthModal.set(true);
+      this.authDialog.openAuth();
       return;
     }
     this.showCreateBoard.set(true);
@@ -159,7 +174,7 @@ export class HomeComponent implements OnInit {
 
   onImportXmi(file: File): void {
     if (!this.auth.isAuthenticated()) {
-      this.showAuthModal.set(true);
+      this.authDialog.openAuth();
       return;
     }
     this.creatingBoard.set(true);
@@ -245,7 +260,7 @@ export class HomeComponent implements OnInit {
   // --- Project Actions ---
   openCreateProject(): void {
     if (!this.auth.isAuthenticated()) {
-      this.showAuthModal.set(true);
+      this.authDialog.openAuth();
       return;
     }
     this.showCreateProject.set(true);
@@ -302,72 +317,25 @@ export class HomeComponent implements OnInit {
   }
 
   handleLogin(creds: { email: string; password: string }): void {
-    this.authLoading.set(true);
-    this.authError.set(null);
-    this.auth.login(creds.email, creds.password).subscribe({
-      next: () => {
-        this.authLoading.set(false);
-        this.showAuthModal.set(false);
-        this.toast.success('Sesión iniciada correctamente');
-        this.refresh();
-        this.loadProjects();
-      },
-      error: (err) => {
-        this.authLoading.set(false);
-        this.authError.set(err.error?.detail || 'Error al iniciar sesión');
-      },
+    this.authDialog.handleLogin(creds, () => {
+      this.refresh();
+      this.loadProjects();
     });
   }
 
   handleRegister(payload: { email: string; fullName: string; password: string }): void {
-    this.authLoading.set(true);
-    this.authError.set(null);
-    this.auth.register(payload.email, payload.fullName, payload.password).subscribe({
-      next: () => {
-        this.authLoading.set(false);
-        this.showAuthModal.set(false);
-        this.toast.success('Cuenta creada exitosamente');
-        this.refresh();
-        this.loadProjects();
-      },
-      error: (err) => {
-        this.authLoading.set(false);
-        this.authError.set(err.error?.detail || 'Error al registrarse');
-      },
+    this.authDialog.handleRegister(payload, () => {
+      this.refresh();
+      this.loadProjects();
     });
   }
 
   handleForgotPassword(email: string): void {
-    this.authLoading.set(true);
-    this.authError.set(null);
-    this.authSuccess.set(null);
-    this.auth.forgotPassword(email).subscribe({
-      next: (res) => {
-        this.authLoading.set(false);
-        this.authSuccess.set(res.message);
-      },
-      error: (err) => {
-        this.authLoading.set(false);
-        this.authError.set(err.error?.detail || 'Error al solicitar recuperación');
-      },
-    });
+    this.authDialog.handleForgotPassword(email);
   }
 
   handleResetPassword(payload: { token: string; newPassword: string }): void {
-    this.authLoading.set(true);
-    this.authError.set(null);
-    this.authSuccess.set(null);
-    this.auth.resetPassword(payload.token, payload.newPassword).subscribe({
-      next: (res) => {
-        this.authLoading.set(false);
-        this.authSuccess.set(res.message);
-        this.toast.success('Contraseña restablecida correctamente');
-      },
-      error: (err) => {
-        this.authLoading.set(false);
-        this.authError.set(err.error?.detail || 'Error al restablecer contraseña');
-      },
-    });
+    this.authDialog.handleResetPassword(payload);
   }
 
   onTabChange(tab: 'boards' | 'projects'): void {
@@ -378,41 +346,10 @@ export class HomeComponent implements OnInit {
   }
 
   handleUpdateProfile(payload: { fullName: string; avatarUrl?: string }): void {
-    this.profileLoading.set(true);
-    this.profileError.set(null);
-    this.profileSuccess.set(null);
-    this.auth
-      .updateProfile({
-        full_name: payload.fullName,
-        avatar_url: payload.avatarUrl,
-      })
-      .subscribe({
-      next: () => {
-        this.profileLoading.set(false);
-        this.profileSuccess.set('Perfil actualizado exitosamente');
-        this.toast.success('Perfil actualizado');
-      },
-      error: (err) => {
-        this.profileLoading.set(false);
-        this.profileError.set(err.error?.detail || 'Error al actualizar perfil');
-      },
-    });
+    this.authDialog.handleUpdateProfile(payload);
   }
 
   handleChangePassword(payload: { currentPassword: string; newPassword: string }): void {
-    this.profileLoading.set(true);
-    this.profileError.set(null);
-    this.profileSuccess.set(null);
-    this.auth.changePassword(payload.currentPassword, payload.newPassword).subscribe({
-      next: (res) => {
-        this.profileLoading.set(false);
-        this.profileSuccess.set(res.message);
-        this.toast.success('Contraseña cambiada');
-      },
-      error: (err) => {
-        this.profileLoading.set(false);
-        this.profileError.set(err.error?.detail || 'Error al cambiar contraseña');
-      },
-    });
+    this.authDialog.handleChangePassword(payload);
   }
 }
