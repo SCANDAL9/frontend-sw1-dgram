@@ -18,6 +18,7 @@ export class PersistenceService {
 
   private boardId = '';
   private readonly key = (boardId: string) => `dgram:${boardId}`;
+  private readonly onBeforeUnload = () => this.saveNow();
 
   load(boardId: string): void {
     this.boardId = boardId;
@@ -33,9 +34,19 @@ export class PersistenceService {
   }
 
   activateSave(boardId: string): void {
+    this.deactivateSave();
     this.boardId = boardId;
     this.cmd.setPersistHandler(() => this.saveNow());
-    window.addEventListener('beforeunload', () => this.saveNow());
+    window.addEventListener('beforeunload', this.onBeforeUnload);
+  }
+
+  deactivateSave(): void {
+    if (this.boardId) {
+      this.saveNow();
+    }
+    window.removeEventListener('beforeunload', this.onBeforeUnload);
+    this.cmd.setPersistHandler(() => {});
+    this.boardId = '';
   }
 
   saveNow(): void {

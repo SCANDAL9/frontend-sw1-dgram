@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClassifierType } from '../../../models/diagram.model';
 
@@ -13,6 +13,7 @@ export interface QuickLinkerPosition {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './quick-linker.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuickLinkerComponent {
   position = input<QuickLinkerPosition | null>(null);

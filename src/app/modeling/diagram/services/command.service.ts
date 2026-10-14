@@ -213,6 +213,16 @@ export class CommandService {
     this.ws.sendSelection([]);
   }
 
+  detachEntity(id: string): void {
+    for (const r of this.diagram.relations()) {
+      if (r.associationClassId === id) {
+        this.unlinkAssociationClass(r.id);
+      }
+    }
+    this._createAndApply('DETACH_ENTITY', { entity_id: id });
+    this.ws.sendSelection([]);
+  }
+
   updateEntity(
     id: string,
     name: string,
@@ -335,6 +345,8 @@ export class CommandService {
     id: string,
     changes: {
       type?: string;
+      sourceId?: string;
+      targetId?: string;
       sourceColumn?: string;
       targetColumn?: string;
       name?: string | null;
@@ -347,6 +359,8 @@ export class CommandService {
     this._createAndApply('UPDATE_RELATION', {
       relation_id: id,
       relation_type: changes.type,
+      source_entity_id: changes.sourceId,
+      target_entity_id: changes.targetId,
       source_column: changes.sourceColumn,
       target_column: changes.targetColumn,
       name: changes.name,

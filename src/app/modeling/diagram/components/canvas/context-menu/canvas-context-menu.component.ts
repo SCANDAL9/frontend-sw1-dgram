@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface CanvasContextMenuState {
@@ -12,6 +12,7 @@ export interface CanvasContextMenuState {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './canvas-context-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CanvasContextMenuComponent {
   menu = input<CanvasContextMenuState | null>(null);

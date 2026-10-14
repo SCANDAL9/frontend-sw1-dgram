@@ -217,6 +217,10 @@ export class WebsocketService {
     }
     this.ws?.close();
     this.ws = null;
+    this.online.set(false);
+    this.peers.set([]);
+    this.cursors.set({});
+    this.handlers = [];
   }
 
   private _dispatch(msg: any): void {

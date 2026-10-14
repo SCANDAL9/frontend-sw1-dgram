@@ -1,4 +1,4 @@
-import { Component, input, output, signal, effect, computed } from '@angular/core';
+import { Component, input, output, signal, effect, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FFlowModule } from '@foblex/flow';
@@ -9,6 +9,7 @@ import { DBEntity, DBAttribute } from '../../../models/diagram.model';
   standalone: true,
   imports: [CommonModule, FFlowModule, FormsModule],
   templateUrl: './table-node.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TableNodeComponent {
   entity = input.required<DBEntity>();
