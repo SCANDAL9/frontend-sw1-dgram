@@ -132,7 +132,11 @@ div[fNode],
   display: block !important;
 }
 
-.f-connection path {
+.f-connection path,
+.f-connection-line,
+path.f-connection-drag-handle-path,
+svg.f-connection path {
+  fill: none !important;
   shape-rendering: geometricPrecision;
   stroke: #64748b !important;
   stroke-width: 1.5px !important;
@@ -141,7 +145,16 @@ div[fNode],
   transition: stroke 0.15s ease, stroke-width 0.15s ease;
 }
 
-html.dark .f-connection path {
+.f-connection-selection,
+path[fConnectionSelection] {
+  fill: none !important;
+  stroke: none !important;
+}
+
+html.dark .f-connection path,
+html.dark .f-connection-line,
+html.dark svg.f-connection path {
+  fill: none !important;
   stroke: #475569 !important;
 }
 
