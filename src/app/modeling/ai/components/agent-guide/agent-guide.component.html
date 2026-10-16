@@ -4,8 +4,8 @@
 <div
   #bubbleEl
   class="fixed z-50 select-none touch-none transition-transform duration-75"
-  [style.left.px]="guide.bubblePos().x"
-  [style.top.px]="guide.bubblePos().y"
+  [style.left.px]="effectiveBubblePos().x"
+  [style.top.px]="effectiveBubblePos().y"
   [class.cursor-grab]="!isDragging()"
   [class.cursor-grabbing]="isDragging()"
 >

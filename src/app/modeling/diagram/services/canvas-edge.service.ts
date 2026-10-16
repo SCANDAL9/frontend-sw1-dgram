@@ -193,8 +193,15 @@ export class CanvasEdgeService {
     return this.calcPolylineMidpoint(polyline);
   }
 
+  isEntityVisible(entityId: string): boolean {
+    const e = this.diagram.getEntity(entityId);
+    return !!e && e.is_visible !== false && e.isVisible !== false;
+  }
+
   refreshAssocMidpoints(): void {
-    const relations = this.validRelations().filter((r) => r.associationClassId);
+    const relations = this.validRelations().filter(
+      (r) => r.associationClassId && this.isEntityVisible(r.associationClassId)
+    );
     if (relations.length === 0) return;
 
     const current = this.assocMidpointMap();

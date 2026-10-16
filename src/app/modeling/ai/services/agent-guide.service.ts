@@ -36,20 +36,23 @@ export class AgentGuideService {
   private sessionToken = this.getOrCreateSessionToken();
 
   private getInitialPosition(): { x: number; y: number } {
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
     try {
       const saved = localStorage.getItem('dgram_guide_pos');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          return parsed;
+          const safeX = parsed.x > winW - 360 ? Math.max(80, winW - 420) : parsed.x;
+          return { x: safeX, y: parsed.y };
         }
       }
     } catch {
       // ignore
     }
-    // Posición predeterminada: abajo a la derecha
-    const x = typeof window !== 'undefined' ? window.innerWidth - 100 : 800;
-    const y = typeof window !== 'undefined' ? window.innerHeight - 100 : 600;
+    // Posición predeterminada: a la izquierda del inspector (340px)
+    const x = Math.max(80, winW - 420);
+    const y = Math.max(80, winH - 90);
     return { x, y };
   }
 

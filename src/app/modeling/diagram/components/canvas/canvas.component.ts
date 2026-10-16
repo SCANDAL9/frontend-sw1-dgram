@@ -14,6 +14,7 @@ import {
   afterRender,
   NgZone,
   ChangeDetectionStrategy,
+  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -223,6 +224,20 @@ export class CanvasComponent implements AfterViewInit, OnDestroy {
       });
     }
   });
+
+  private visibleEntitiesGuard = effect(() => {
+    const _ = this.visibleEntities();
+    untracked(() => {
+      setTimeout(() => {
+        this.canvas?.redraw();
+        this.edge.refreshAssocMidpoints();
+      }, 0);
+    });
+  });
+
+  isEntityVisible(entityId: string): boolean {
+    return this.edge.isEntityVisible(entityId);
+  }
 
   constructor() {
     afterRender(() => this.edge.refreshAssocMidpoints());

@@ -23,6 +23,7 @@ import { OnboardingService } from '../../services/onboarding.service';
 })
 export class AgentGuideComponent implements OnDestroy {
   boardId = input.required<string>();
+  isInspectorOpen = input<boolean>(false);
 
   guide = inject(AgentGuideService);
   onboarding = inject(OnboardingService);
@@ -38,9 +39,22 @@ export class AgentGuideComponent implements OnDestroy {
   private bubbleStartPos = { x: 0, y: 0 };
   private hasMoved = false;
 
+  readonly effectiveBubblePos = computed(() => {
+    const base = this.guide.bubblePos();
+    if (this.isDragging()) return base;
+    if (this.isInspectorOpen()) {
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+      const maxX = windowWidth - 410;
+      if (base.x > maxX) {
+        return { x: maxX, y: base.y };
+      }
+    }
+    return base;
+  });
+
   // Offset dinámico del panel para que no se salga de la pantalla
   readonly panelOffset = computed(() => {
-    const pos = this.guide.bubblePos();
+    const pos = this.effectiveBubblePos();
     const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
