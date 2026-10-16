@@ -73,6 +73,12 @@ export class CommandService {
     this._refreshUndoState();
   }
 
+  clearHistory(): void {
+    this.localHistory = [];
+    this.localPointer = -1;
+    this._refreshUndoState();
+  }
+
 
 
   private _schedulePersist(): void {

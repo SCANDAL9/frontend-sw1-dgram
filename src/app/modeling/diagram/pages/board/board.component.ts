@@ -445,5 +445,7 @@ export class BoardComponent implements OnInit, OnDestroy, CanWarnGuestLeave {
   ngOnDestroy(): void {
     this.ws.disconnect();
     this.persistence.deactivateSave();
+    this.diagram.clearState();
+    this.cmd.clearHistory();
   }
 }

@@ -24,12 +24,18 @@ export class PersistenceService {
     this.boardId = boardId;
     try {
       const raw = localStorage.getItem(this.key(boardId));
-      if (!raw) return;
+      if (!raw) {
+        this.diagram.clearState();
+        this.cmd.clearHistory();
+        return;
+      }
       const data = JSON.parse(raw) as PersistedBoard;
       this.diagram.loadState(data.state as any);
       this.cmd.restoreHistory(data.history as any[]);
     } catch (err) {
       console.warn('Failed to load persisted board', err);
+      this.diagram.clearState();
+      this.cmd.clearHistory();
     }
   }
 

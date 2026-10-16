@@ -342,6 +342,14 @@ export class DiagramService {
     this.version.set(state.version || 0);
   }
 
+  clearState(): void {
+    this.entities.set([]);
+    this.relations.set([]);
+    this.packages.set([]);
+    this.version.set(0);
+    this.pendingEditId.set(null);
+  }
+
   getState(): DiagramState {
     const ents = this.entities();
     const rels = this.relations();
