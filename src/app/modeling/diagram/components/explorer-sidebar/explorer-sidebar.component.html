@@ -4,347 +4,293 @@
   [class.w-0]="!isOpen()"
   [class.opacity-0]="!isOpen()"
 >
-  <!-- Header with title, count & quick tree actions -->
-  <div class="h-11 flex items-center justify-between px-3.5 border-b border-border shrink-0 bg-card/60 backdrop-blur-md">
-    <div class="flex items-center gap-2">
-      <span class="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">Explorador</span>
-      <span class="text-[10px] font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full border border-border shadow-2xs">({{ entities().length }})</span>
+  <!-- Header: Title, count, actions (+XMI, Catalog, Expand/Collapse, Close) -->
+  <div class="h-10 flex items-center justify-between px-3 border-b border-border shrink-0 bg-card/80 backdrop-blur-md select-none">
+    <div class="flex items-center gap-1.5 min-w-0">
+      <span class="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">Capas</span>
+      <span class="text-[10px] font-mono text-muted-foreground bg-secondary px-1.5 py-0.2 rounded-full border border-border shadow-2xs">
+        {{ entities().length }}
+      </span>
     </div>
+
     <div class="flex items-center gap-1">
-      <!-- Toggle Expand / Collapse All -->
+      <input type="file" #xmiFileInput accept=".xmi,.xml" class="hidden" (change)="onXmiSelected($event)">
+      
+      <!-- Import XMI Button -->
       <button
         type="button"
-        class="size-6.5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer"
-        (click)="toggleAllExpand.emit()"
-        [title]="expandedEntityIds().size > 0 ? 'Colapsar todo' : 'Expandir todo'"
+        class="h-6 px-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer flex items-center gap-1 border border-border/60"
+        (click)="xmiFileInput.click()"
+        title="Importar archivo XMI 2.1 / XML"
       >
-        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/>
+        <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
         </svg>
+        <span>XMI</span>
       </button>
+
+      <!-- Project Catalog Trigger (Modal on Demand) -->
+      @if (projectCatalogClasses().length > 0) {
+        <button
+          type="button"
+          class="h-6 px-1.5 rounded-md text-[10px] font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer flex items-center gap-1 border border-border/60"
+          (click)="showCatalogModal.set(true)"
+          title="Ver biblioteca de clases del proyecto"
+        >
+          <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="7" height="7" x="3" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="3" rx="1"/>
+            <rect width="7" height="7" x="14" y="14" rx="1"/>
+            <rect width="7" height="7" x="3" y="14" rx="1"/>
+          </svg>
+          <span class="font-mono text-[9px]">{{ projectCatalogClasses().length }}</span>
+        </button>
+      }
+
+      <!-- Toggle Expand / Collapse All -->
+      @if (entities().length > 0) {
+        <button
+          type="button"
+          class="size-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer"
+          (click)="toggleAllExpand.emit()"
+          [title]="expandedEntityIds().size > 0 ? 'Colapsar todo' : 'Expandir todo'"
+        >
+          <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/>
+          </svg>
+        </button>
+      }
+
       <!-- Collapse Sidebar Button -->
       <button
         type="button"
-        class="size-6.5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all cursor-pointer"
+        class="size-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer"
         (click)="toggleSidebar.emit()"
         title="Colapsar panel (Ctrl+B)"
       >
-        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
     </div>
   </div>
 
-  <!-- Search Filter Input -->
-  <div class="px-3 py-2 border-b border-border shrink-0 bg-card/30">
-    <div class="flex items-center gap-2 px-2.5 h-8 bg-background border border-input rounded-lg focus-within:border-ring focus-within:ring-1 focus-within:ring-ring transition-all shadow-2xs">
-      <svg class="size-3.5 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input
-        type="text"
-        placeholder="Filtrar clases y atributos..."
-        [ngModel]="sidebarSearch()"
-        (ngModelChange)="sidebarSearch.set($event)"
-        class="w-full bg-transparent text-[11.5px] text-foreground placeholder:text-muted-foreground outline-none"
-      />
-      @if (sidebarSearch()) {
-        <button
-          type="button"
-          class="text-muted-foreground hover:text-foreground cursor-pointer text-[10px] p-0.5 shrink-0"
-          (click)="sidebarSearch.set('')"
-          title="Limpiar búsqueda"
-        >
-          ✕
-        </button>
-      }
+  <!-- Search Filter Input (Only if there are entities or active filter) -->
+  @if (entities().length > 0 || sidebarSearch()) {
+    <div class="px-2.5 py-1.5 border-b border-border shrink-0 bg-card/40">
+      <div class="flex items-center gap-1.5 px-2 h-7 bg-background border border-input rounded-md focus-within:border-ring focus-within:ring-1 focus-within:ring-ring transition-all shadow-2xs">
+        <svg class="size-3 text-muted-foreground shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Buscar capas o atributos..."
+          [ngModel]="sidebarSearch()"
+          (ngModelChange)="sidebarSearch.set($event)"
+          class="w-full bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground outline-none"
+        />
+        @if (sidebarSearch()) {
+          <button
+            type="button"
+            class="text-muted-foreground hover:text-foreground cursor-pointer text-[9px] p-0.5 shrink-0"
+            (click)="sidebarSearch.set('')"
+            title="Limpiar búsqueda"
+          >
+            ✕
+          </button>
+        }
+      </div>
     </div>
-  </div>
+  }
 
-  <!-- Scrollable Tree View Content -->
-  <div class="flex-1 min-h-0 overflow-y-auto py-2 text-[12px] flex flex-col gap-2">
-    <!-- 1. Classes Accordion Section -->
-    <div>
-      <button
-        type="button"
-        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
-        (click)="isClassesSectionOpen.set(!isClassesSectionOpen())"
-      >
-        <div class="flex items-center gap-1.5">
-          <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isClassesSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="9 18 15 12 9 6"/>
+  <!-- Body: Clean Figma / VS Code Layers Tree OR Elegant Empty State -->
+  <div class="flex-1 min-h-0 overflow-y-auto py-1 text-[12px] flex flex-col">
+    @if (entities().length === 0 && !sidebarSearch()) {
+      <!-- Elegant Empty State for Fresh Boards -->
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center select-none">
+        <div class="size-11 rounded-xl bg-muted/60 border border-border flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
+          <svg class="size-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
           </svg>
-          <span>Clases</span>
         </div>
-        <span class="font-mono text-[10px] font-normal normal-case">{{ filteredEntities().length }}</span>
-      </button>
+        <h3 class="text-[12.5px] font-semibold text-foreground tracking-tight">Tablero en blanco</h3>
+        <p class="text-[11px] text-muted-foreground mt-1 max-w-[200px] leading-relaxed">
+          Usa la barra inferior para crear entidades o importa un modelo.
+        </p>
 
-      @if (isClassesSectionOpen()) {
-        <div class="mt-1 flex flex-col gap-0.5">
-          @for (entity of filteredEntities(); track entity.id) {
-            <div class="px-1.5">
-              <!-- Class Row Item -->
-              <div
-                class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left transition-all duration-150 cursor-pointer group select-none active:scale-[0.99]"
-                [ngClass]="selectedEntityId() === entity.id
-                  ? 'bg-primary/10 text-primary font-semibold ring-1 ring-primary/20 shadow-2xs'
-                  : 'text-foreground hover:bg-accent/60'"
-                (click)="entitySelected.emit(entity.id)"
-                (dblclick)="entityJumpRequested.emit(entity.id)"
-                (contextmenu)="entityContextMenu.emit({ event: $event, entityId: entity.id })"
-              >
-                <!-- Expand / Collapse Arrow -->
+        <div class="flex flex-col gap-1.5 w-full mt-5">
+          <button
+            type="button"
+            class="w-full h-7.5 px-3 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 border border-primary/20"
+            (click)="xmiFileInput.click()"
+          >
+            <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            <span>Importar XMI / XML</span>
+          </button>
+
+          @if (projectCatalogClasses().length > 0) {
+            <button
+              type="button"
+              class="w-full h-7.5 px-3 rounded-lg bg-muted hover:bg-accent text-foreground text-[11px] font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 border border-border"
+              (click)="showCatalogModal.set(true)"
+            >
+              <svg class="size-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="7" height="7" x="3" y="3" rx="1"/>
+                <rect width="7" height="7" x="14" y="3" rx="1"/>
+                <rect width="7" height="7" x="14" y="14" rx="1"/>
+                <rect width="7" height="7" x="3" y="14" rx="1"/>
+              </svg>
+              <span>Explorar catálogo ({{ projectCatalogClasses().length }})</span>
+            </button>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- Compact 28px Figma/VSCode Entities Tree -->
+      <div class="flex flex-col gap-0.5 px-1.5">
+        @for (entity of filteredEntities(); track entity.id) {
+          <div class="flex flex-col">
+            <!-- Entity Row: 28px height, ultra-clean -->
+            <div
+              class="w-full h-7 flex items-center gap-1.5 px-1.5 rounded-md text-left transition-all duration-100 cursor-pointer group select-none"
+              [ngClass]="selectedEntityId() === entity.id
+                ? 'bg-primary/15 text-primary font-semibold ring-1 ring-primary/30 shadow-2xs'
+                : 'text-foreground hover:bg-accent/60'"
+              (click)="entitySelected.emit(entity.id)"
+              (dblclick)="entityJumpRequested.emit(entity.id)"
+              (contextmenu)="entityContextMenu.emit({ event: $event, entityId: entity.id })"
+              [title]="entity.name + ' (Doble clic para centrar)'"
+            >
+              <!-- Expand / Collapse Arrow (only if attributes exist) -->
+              @if (entity.attributes.length > 0) {
                 <button
                   type="button"
-                  class="size-4 flex items-center justify-center text-muted-foreground hover:text-foreground transition-transform duration-150 cursor-pointer shrink-0"
+                  class="size-4 flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-transform duration-100 cursor-pointer shrink-0"
                   [class.rotate-90]="isEntityExpanded(entity.id)"
                   (click)="toggleExpandEntity.emit(entity.id); $event.stopPropagation()"
-                  [title]="isEntityExpanded(entity.id) ? 'Ocultar atributos' : 'Mostrar atributos'"
                 >
-                  <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <svg class="size-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </button>
-
-                <!-- Class Icon badge -->
-                <span
-                  class="size-4.5 rounded-md text-[9px] font-bold flex items-center justify-center shrink-0 border select-none shadow-2xs"
-                  [ngClass]="entity.isAbstract
-                    ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-                    : 'bg-primary/15 text-primary border-primary/30'"
-                >
-                  {{ entity.isAbstract ? 'A' : 'C' }}
-                </span>
-
-                <!-- Class Name -->
-                <span class="truncate flex-1 font-medium text-[12px] tracking-tight" [class.italic]="entity.isAbstract" [class.opacity-40]="entity.isVisible === false || entity.is_visible === false">
-                  {{ entity.name }}
-                </span>
-
-                <!-- Visibility Toggle Button (Eye Icon) -->
-                <button
-                  type="button"
-                  class="size-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer shrink-0"
-                  (click)="toggleEntityVisibility.emit(entity.id); $event.stopPropagation()"
-                  [title]="(entity.isVisible === false || entity.is_visible === false) ? 'Mostrar en diagrama' : 'Ocultar del diagrama'"
-                >
-                  @if (entity.isVisible === false || entity.is_visible === false) {
-                    <!-- Eye slash icon (hidden) -->
-                    <svg class="size-3.5 opacity-60 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/>
-                    </svg>
-                  } @else {
-                    <!-- Eye icon (visible) -->
-                    <svg class="size-3.5 text-muted-foreground group-hover:text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  }
-                </button>
-
-                <!-- Quick Attribute Count Pill -->
-                <span class="font-mono text-[9px] text-muted-foreground px-1.5 py-0.2 rounded-full bg-muted border border-border shrink-0 shadow-2xs">
-                  {{ entity.attributes.length }}
-                </span>
-              </div>
-
-              <!-- Nested Attributes List (Tree Branch) -->
-              @if (isEntityExpanded(entity.id) && entity.attributes.length > 0) {
-                <div class="ml-5 pl-2 border-l border-border/80 my-1 flex flex-col gap-0.5">
-                  @for (attr of entity.attributes; track attr.name) {
-                    <div
-                      class="flex items-center justify-between gap-1.5 px-2 py-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent/40 select-none group/attr transition-colors"
-                      [title]="attr.name + ': ' + attr.type"
-                    >
-                      <div class="flex items-center gap-1.5 min-w-0 truncate">
-                        <!-- Visibility indicator (+, -, #, ~) -->
-                        <span
-                          class="font-mono text-[10px] font-bold shrink-0 w-2.5 text-center"
-                          [ngClass]="{
-                            'text-emerald-500': formatVisibility(attr.visibility) === '+',
-                            'text-destructive': formatVisibility(attr.visibility) === '-',
-                            'text-amber-500': formatVisibility(attr.visibility) === '#',
-                            'text-blue-500': formatVisibility(attr.visibility) === '~'
-                          }"
-                        >
-                          {{ formatVisibility(attr.visibility) }}
-                        </span>
-
-                        <span class="truncate font-mono text-foreground" [class.font-semibold]="attr.pk">
-                          {{ attr.name }}
-                        </span>
-                      </div>
-
-                      <div class="flex items-center gap-1 shrink-0">
-                        @if (attr.pk) {
-                          <span class="text-[8px] font-mono px-1 rounded-sm bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30">PK</span>
-                        }
-                        @if (attr.fk) {
-                          <span class="text-[8px] font-mono px-1 rounded-sm bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30">FK</span>
-                        }
-                        <span class="text-[10px] font-mono text-muted-foreground truncate max-w-[70px]">
-                          {{ attr.type }}
-                        </span>
-                      </div>
-                    </div>
-                  }
-                </div>
+              } @else {
+                <span class="size-4 shrink-0"></span>
               }
-            </div>
-          }
-          @if (filteredEntities().length === 0) {
-            <div class="px-4 py-6 flex flex-col items-center justify-center text-center gap-2">
-              <span class="text-[11px] text-muted-foreground">
-                {{ sidebarSearch() ? 'No hay clases que coincidan con "' + sidebarSearch() + '"' : 'No hay clases en el diagrama' }}
+
+              <!-- Icon Badge: C (Class) / A (Abstract) / E (Enum) -->
+              <span
+                class="size-4 rounded text-[9px] font-bold flex items-center justify-center shrink-0 border select-none leading-none"
+                [ngClass]="entity.isAbstract
+                  ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                  : 'bg-primary/15 text-primary border-primary/30'"
+              >
+                {{ entity.isAbstract ? 'A' : 'C' }}
               </span>
-              @if (sidebarSearch()) {
-                <button
-                  type="button"
-                  class="text-[10.5px] font-medium text-primary hover:underline cursor-pointer focus-visible:ring-1 focus-visible:ring-ring rounded px-1 transition-colors"
-                  (click)="sidebarSearch.set('')"
-                >
-                  Limpiar filtro de búsqueda
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-    </div>
 
-    <!-- 2. Relations Accordion Section -->
-    @if (relations().length > 0) {
-      <div class="border-t border-border pt-2">
-        <button
-          type="button"
-          class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
-          (click)="isRelationsSectionOpen.set(!isRelationsSectionOpen())"
-        >
-          <div class="flex items-center gap-1.5">
-            <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isRelationsSectionOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-            <span>Relaciones</span>
-          </div>
-          <span class="font-mono text-[10px] font-normal normal-case">{{ filteredRelations().length }}</span>
-        </button>
+              <!-- Entity Name -->
+              <span
+                class="truncate flex-1 text-[11.5px] tracking-tight leading-tight"
+                [class.italic]="entity.isAbstract"
+                [class.opacity-40]="entity.isVisible === false || entity.is_visible === false"
+                [class.line-through]="entity.isVisible === false || entity.is_visible === false"
+              >
+                {{ entity.name }}
+              </span>
 
-        @if (isRelationsSectionOpen()) {
-          <div class="mt-1 flex flex-col gap-0.5 px-1.5">
-            @for (rel of filteredRelations(); track rel.id) {
+              <!-- Right: Attribute Count (shown by default, hidden on hover to reveal eye) -->
+              <span
+                class="font-mono text-[9px] text-muted-foreground/60 px-1 py-0.2 rounded bg-muted/60 shrink-0 group-hover:hidden"
+                [class.hidden]="entity.isVisible === false || entity.is_visible === false"
+              >
+                {{ entity.attributes.length }}
+              </span>
+
+              <!-- Visibility Toggle Button (Eye Icon) -->
               <button
                 type="button"
-                class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-[11.5px] transition-colors cursor-pointer"
-                [ngClass]="selectedRelationId() === rel.id
-                  ? 'bg-accent text-accent-foreground font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'"
-                (click)="relationSelected.emit(rel.id)"
-                [title]="getEntityName(rel.sourceId) + ' → ' + getEntityName(rel.targetId)"
+                class="size-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer shrink-0"
+                [ngClass]="(entity.isVisible === false || entity.is_visible === false) ? 'flex' : 'hidden group-hover:flex'"
+                (click)="toggleEntityVisibility.emit(entity.id); $event.stopPropagation()"
+                [title]="(entity.isVisible === false || entity.is_visible === false) ? 'Mostrar en diagrama' : 'Ocultar del diagrama'"
               >
-                <!-- Flow: Source -> Target -->
-                <div class="flex items-center gap-1.5 min-w-0 truncate">
-                  <span class="text-foreground font-medium truncate text-[11.5px]">{{ getEntityName(rel.sourceId) }}</span>
-                  <span class="text-muted-foreground text-[10px] font-mono shrink-0">──▷</span>
-                  <span class="text-foreground font-medium truncate text-[11.5px]">{{ getEntityName(rel.targetId) }}</span>
-                </div>
-                
-                <!-- Type Pill -->
-                <span class="text-[9px] font-mono text-muted-foreground px-1 py-0.2 rounded bg-muted border border-border shrink-0">
-                  {{ rel.type }}
-                </span>
+                @if (entity.isVisible === false || entity.is_visible === false) {
+                  <svg class="size-3.5 text-muted-foreground opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/>
+                  </svg>
+                } @else {
+                  <svg class="size-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                }
               </button>
+            </div>
+
+            <!-- Nested Subtree: Attributes (VS Code style 20px rows) -->
+            @if (isEntityExpanded(entity.id) && entity.attributes.length > 0) {
+              <div class="ml-4 pl-2 border-l border-border/70 my-0.5 flex flex-col gap-0.5">
+                @for (attr of entity.attributes; track attr.name) {
+                  <div
+                    class="h-5 flex items-center justify-between gap-1.5 px-1.5 rounded text-[10.5px] text-muted-foreground hover:text-foreground hover:bg-accent/40 select-none transition-colors"
+                    [title]="attr.name + ': ' + attr.type"
+                  >
+                    <div class="flex items-center gap-1 min-w-0 truncate">
+                      <span
+                        class="font-mono text-[9.5px] font-bold shrink-0 w-2 text-center"
+                        [ngClass]="{
+                          'text-emerald-500': formatVisibility(attr.visibility) === '+',
+                          'text-destructive': formatVisibility(attr.visibility) === '-',
+                          'text-amber-500': formatVisibility(attr.visibility) === '#',
+                          'text-blue-500': formatVisibility(attr.visibility) === '~'
+                        }"
+                      >
+                        {{ formatVisibility(attr.visibility) }}
+                      </span>
+                      <span class="truncate font-mono text-foreground/90 text-[11px]" [class.font-semibold]="attr.pk">
+                        {{ attr.name }}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center gap-1 shrink-0 font-mono">
+                      @if (attr.pk) {
+                        <span class="text-[7.5px] px-1 rounded-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30">PK</span>
+                      }
+                      @if (attr.fk) {
+                        <span class="text-[7.5px] px-1 rounded-xs bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30">FK</span>
+                      }
+                      <span class="text-[9.5px] text-muted-foreground/70 truncate max-w-[65px]">
+                        {{ attr.type }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
             }
+          </div>
+        }
+
+        <!-- Empty search results -->
+        @if (filteredEntities().length === 0 && sidebarSearch()) {
+          <div class="px-3 py-6 flex flex-col items-center justify-center text-center gap-1.5 select-none">
+            <span class="text-[11px] text-muted-foreground">
+              Sin resultados para "{{ sidebarSearch() }}"
+            </span>
+            <button
+              type="button"
+              class="text-[10px] font-medium text-primary hover:underline cursor-pointer"
+              (click)="sidebarSearch.set('')"
+            >
+              Limpiar búsqueda
+            </button>
           </div>
         }
       </div>
     }
-
-    <!-- 3. Project Class Catalog (Enterprise Architect Reusability) -->
-    <div class="border-t border-border pt-2">
-      <button
-        type="button"
-        class="w-full px-3 py-1 flex items-center justify-between text-[10.5px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
-        (click)="isProjectCatalogOpen.set(!isProjectCatalogOpen())"
-      >
-        <div class="flex items-center gap-1.5">
-          <svg class="size-3 transition-transform duration-150" [class.rotate-90]="isProjectCatalogOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-          <span>Catálogo del Proyecto</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <input type="file" #xmiFileInput accept=".xmi,.xml" class="hidden" (change)="onXmiSelected($event)">
-          <button
-            type="button"
-            class="px-1.5 py-0.5 rounded bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary text-[9px] font-mono transition-colors cursor-pointer"
-            (click)="xmiFileInput.click(); $event.stopPropagation()"
-            title="Importar archivo XMI 2.1 de Enterprise Architect"
-          >
-            + XMI
-          </button>
-          @if (isLoadingCatalog()) {
-            <span class="size-2.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-          }
-          <span class="font-mono text-[10px] font-normal normal-case">{{ projectCatalogClasses().length }}</span>
-        </div>
-      </button>
-
-      @if (isProjectCatalogOpen()) {
-        <div class="mt-1 flex flex-col gap-1 px-1.5">
-          @for (pCls of projectCatalogClasses(); track pCls.id) {
-            <div class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg bg-muted/30 border border-border text-left">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-[12px] font-bold text-foreground truncate">{{ pCls.name }}</span>
-                  <span class="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">{{ pCls.attributes.length }} atr</span>
-                </div>
-                <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <span class="size-1.5 rounded-full" [class.bg-emerald-500]="isEntityOnBoard(pCls)" [class.bg-muted-foreground]="!isEntityOnBoard(pCls)"></span>
-                  <span>{{ isEntityOnBoard(pCls) ? 'En este tablero' : 'Disponible' }}</span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-1 shrink-0">
-                @if (!isEntityOnBoard(pCls)) {
-                  <button
-                    type="button"
-                    class="px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 text-[10.5px] font-semibold transition-colors cursor-pointer"
-                    (click)="attachClass.emit(pCls)"
-                    title="Agregar esta clase al tablero actual"
-                  >
-                    + Usar
-                  </button>
-                } @else {
-                  <button
-                    type="button"
-                    class="px-2 py-1 rounded text-primary hover:text-primary-foreground hover:bg-primary/80 text-[10.5px] font-semibold transition-colors cursor-pointer"
-                    (click)="jumpTo(pCls)"
-                    title="Centrar en el lienzo"
-                  >
-                    Ver
-                  </button>
-                }
-
-                <button
-                  type="button"
-                  class="p-1 rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-                  (click)="deleteCatalogClass.emit(pCls); $event.stopPropagation()"
-                  title="Eliminar clase del catálogo del proyecto"
-                >
-                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          }
-          @if (projectCatalogClasses().length === 0 && !isLoadingCatalog()) {
-            <div class="mx-1 my-1 p-2 rounded-lg bg-muted/20 text-[10.5px] text-muted-foreground text-center italic">
-              Las clases sincronizadas del proyecto aparecerán aquí para reutilizarse.
-            </div>
-          }
-        </div>
-      }
-    </div>
   </div>
 
   <!-- Sidebar Bottom Action Bar (Exportar, Equipo, Entrar / Perfil) -->
@@ -523,4 +469,106 @@
       </button>
     </div>
   </div>
+
+  <!-- Modal: Catálogo del Proyecto (Bajo demanda explícita) -->
+  @if (showCatalogModal()) {
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+      <div class="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <!-- Modal Header -->
+        <div class="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-muted/40">
+          <div class="flex items-center gap-2">
+            <span class="text-[13px] font-semibold text-foreground">Catálogo de Clases del Proyecto</span>
+            <span class="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
+              {{ projectCatalogClasses().length }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="size-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
+            (click)="showCatalogModal.set(false)"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Search -->
+        <div class="px-4 py-2 border-b border-border shrink-0 bg-background">
+          <input
+            type="text"
+            placeholder="Filtrar clases del catálogo..."
+            [ngModel]="catalogSearch()"
+            (ngModelChange)="catalogSearch.set($event)"
+            class="w-full h-8 px-2.5 rounded-lg bg-muted/50 border border-input text-[11.5px] text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+          />
+        </div>
+
+        <!-- Modal Body: Class list -->
+        <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
+          @for (pCls of filteredCatalogClasses(); track pCls.id) {
+            <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/20 border border-border/80 hover:bg-muted/40 transition-colors">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[12px] font-bold text-foreground truncate">{{ pCls.name }}</span>
+                  <span class="text-[9.5px] font-mono text-muted-foreground bg-muted px-1 rounded">{{ pCls.attributes.length }} atr</span>
+                </div>
+                <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <span class="size-1.5 rounded-full" [class.bg-emerald-500]="isEntityOnBoard(pCls)" [class.bg-muted-foreground]="!isEntityOnBoard(pCls)"></span>
+                  <span>{{ isEntityOnBoard(pCls) ? 'En este tablero' : 'Disponible' }}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1 shrink-0">
+                @if (!isEntityOnBoard(pCls)) {
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 text-[10.5px] font-semibold transition-colors cursor-pointer"
+                    (click)="attachClass.emit(pCls); showCatalogModal.set(false)"
+                    title="Agregar esta clase al tablero actual"
+                  >
+                    + Usar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 rounded-md text-primary hover:bg-primary/10 text-[10.5px] font-semibold transition-colors cursor-pointer"
+                    (click)="jumpTo(pCls); showCatalogModal.set(false)"
+                    title="Centrar en el lienzo"
+                  >
+                    Ver
+                  </button>
+                }
+
+                <button
+                  type="button"
+                  class="p-1 rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                  (click)="deleteCatalogClass.emit(pCls); $event.stopPropagation()"
+                  title="Eliminar clase del catálogo del proyecto"
+                >
+                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+          @if (filteredCatalogClasses().length === 0) {
+            <div class="p-6 text-center text-[11px] text-muted-foreground italic">
+              No hay clases disponibles en el catálogo del proyecto.
+            </div>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-2.5 border-t border-border flex justify-end shrink-0 bg-muted/30">
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg bg-secondary hover:bg-accent text-secondary-foreground text-[11px] font-medium transition-colors cursor-pointer"
+            (click)="showCatalogModal.set(false)"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </aside>

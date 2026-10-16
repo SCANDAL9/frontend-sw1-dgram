@@ -51,9 +51,8 @@ export class ExplorerSidebarComponent {
   exportPng = output<void>();
 
   readonly sidebarSearch = signal('');
-  readonly isClassesSectionOpen = signal(true);
-  readonly isRelationsSectionOpen = signal(true);
-  readonly isProjectCatalogOpen = signal(true);
+  readonly showCatalogModal = signal(false);
+  readonly catalogSearch = signal('');
   readonly showSidebarExportMenu = signal(false);
   readonly showSidebarUserMenu = signal(false);
 
@@ -66,6 +65,13 @@ export class ExplorerSidebarComponent {
         e.name.toLowerCase().includes(query) ||
         e.attributes.some((a) => a.name.toLowerCase().includes(query))
     );
+  });
+
+  readonly filteredCatalogClasses = computed(() => {
+    const query = this.catalogSearch().trim().toLowerCase();
+    const list = this.projectCatalogClasses();
+    if (!query) return list;
+    return list.filter((c) => c.name.toLowerCase().includes(query));
   });
 
   readonly filteredRelations = computed(() => {
